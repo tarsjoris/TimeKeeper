@@ -7,8 +7,8 @@ import android.media.AudioTrack;
 public class SoundGenerator
 {
 	private static final int kFREQ = 44100;
-	private static final int kTONE_TIME = 20;
-	private static final int kTONE_FREQ = 440;
+	private static final int kTONE_TIME = 10;
+	private static final int kTONE_FREQ = 880;
 	
 	private final AudioTrack fAudioTrack;
 	

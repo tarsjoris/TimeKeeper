@@ -1,176 +1,90 @@
 package com.tjoris.timekeeper;
 
-import com.tjoris.timekeeper.util.SystemUiHider;
-
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- * 
- * @see SystemUiHider
- */
 public class MainActivity extends Activity
 {
-	/**
-	 * Whether or not the system UI should be auto-hidden after
-	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-	 */
-	private static final boolean AUTO_HIDE = true;
+	private static final String[][] kPLAYLIST = new String[][] { { "Run to you", "120" }, { "AC/DC", "160" } };
 
-	/**
-	 * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-	 * user interaction before hiding the system UI.
-	 */
-	private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-	/**
-	 * If set, will toggle the system UI visibility upon interaction. Otherwise,
-	 * will show the system UI visibility upon interaction.
-	 */
-	private static final boolean TOGGLE_ON_CLICK = true;
-
-	/**
-	 * The flags to pass to {@link SystemUiHider#getInstance}.
-	 */
-	private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-
-	/**
-	 * The instance of the {@link SystemUiHider} for this activity.
-	 */
-	private SystemUiHider mSystemUiHider;
+	private SoundGenerator fSoundGenerator = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-
 		setContentView(R.layout.activity_main);
 
-		final View controlsView = findViewById(R.id.fullscreen_content_controls);
-		final View contentView = findViewById(R.id.fullscreen_content);
-
-		// Set up an instance of SystemUiHider to control the system UI for
-		// this activity.
-		mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-		mSystemUiHider.setup();
-		mSystemUiHider.setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener()
-		{
-			// Cached values.
-			int mControlsHeight;
-			int mShortAnimTime;
-
-			@Override
-			@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-			public void onVisibilityChange(boolean visible)
-			{
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2)
-				{
-					// If the ViewPropertyAnimator API is available
-					// (Honeycomb MR2 and later), use it to animate the
-					// in-layout UI controls at the bottom of the
-					// screen.
-					if (mControlsHeight == 0)
-					{
-						mControlsHeight = controlsView.getHeight();
-					}
-					if (mShortAnimTime == 0)
-					{
-						mShortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-					}
-					controlsView.animate().translationY(visible ? 0 : mControlsHeight).setDuration(mShortAnimTime);
-				}
-				else
-				{
-					// If the ViewPropertyAnimator APIs aren't
-					// available, simply show or hide the in-layout UI
-					// controls.
-					controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
-				}
-
-				if (visible && AUTO_HIDE)
-				{
-					// Schedule a hide().
-					delayedHide(AUTO_HIDE_DELAY_MILLIS);
-				}
-			}
-		});
-
-		// Set up the user interaction to manually show or hide the system UI.
-		contentView.setOnClickListener(new View.OnClickListener()
+		fillList();
+		register(R.id.button_reset, new View.OnClickListener()
 		{
 			@Override
-			public void onClick(View view)
+			public void onClick(final View v)
 			{
-				if (TOGGLE_ON_CLICK)
-				{
-					mSystemUiHider.toggle();
-				}
-				else
-				{
-					mSystemUiHider.show();
-				}
+				doReset();
 			}
 		});
-
-		// Upon interacting with UI controls, delay any scheduled hide()
-		// operations to prevent the jarring behavior of controls going away
-		// while interacting with the UI.
-		findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
-	}
-
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState)
-	{
-		super.onPostCreate(savedInstanceState);
-
-		// Trigger the initial hide() shortly after the activity has been
-		// created, to briefly hint to the user that UI controls
-		// are available.
-		delayedHide(100);
-	}
-
-	/**
-	 * Touch listener to use for in-layout UI controls to delay hiding the
-	 * system UI. This is to prevent the jarring behavior of controls going away
-	 * while interacting with activity UI.
-	 */
-	View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener()
-	{
-		@Override
-		public boolean onTouch(View view, MotionEvent motionEvent)
+		register(R.id.button_stop, new View.OnClickListener()
 		{
-			if (AUTO_HIDE)
+			@Override
+			public void onClick(final View v)
 			{
-				delayedHide(AUTO_HIDE_DELAY_MILLIS);
+				doStop();
 			}
-			return false;
-		}
-	};
+		});
+	}
 
-	Handler mHideHandler = new Handler();
-	Runnable mHideRunnable = new Runnable()
+	private void fillList()
 	{
-		@Override
-		public void run()
+		final TableLayout playlist = (TableLayout) findViewById(R.id.playlist);
+		if (playlist != null)
 		{
-			mSystemUiHider.hide();
+			for (final String[] entry : kPLAYLIST)
+			{
+				final TableRow row = new TableRow(this);
+				row.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+				for (final String data : entry)
+				{
+					final TextView tv = new TextView(this);
+					tv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+					tv.setText(data);
+					row.addView(tv);
+				}
+				playlist.addView(row);
+			}
 		}
-	};
+	}
 
-	/**
-	 * Schedules a call to hide() in [delay] milliseconds, canceling any
-	 * previously scheduled calls.
-	 */
-	private void delayedHide(int delayMillis)
+	private void register(final int id, final View.OnClickListener listener)
 	{
-		mHideHandler.removeCallbacks(mHideRunnable);
-		mHideHandler.postDelayed(mHideRunnable, delayMillis);
+		final Button button = (Button) findViewById(id);
+		if (button != null)
+		{
+			button.setOnClickListener(listener);
+		}
+	}
+
+	private void doReset()
+	{
+		if (fSoundGenerator != null)
+		{
+			fSoundGenerator.stop();
+		}
+		fSoundGenerator = new SoundGenerator(120);
+	}
+
+	private void doStop()
+	{
+		if (fSoundGenerator != null)
+		{
+			fSoundGenerator.stop();
+			fSoundGenerator = null;
+		}
 	}
 }
