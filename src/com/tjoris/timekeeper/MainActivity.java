@@ -2,6 +2,7 @@ package com.tjoris.timekeeper;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -13,7 +14,7 @@ public class MainActivity extends Activity
 {
 	private static final String[][] kPLAYLIST = new String[][] { { "Run to you", "120" }, { "AC/DC", "160" } };
 
-	private SoundGenerator fSoundGenerator = null;
+	private final SoundGenerator fSoundGenerator = new SoundGenerator();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -22,22 +23,39 @@ public class MainActivity extends Activity
 		setContentView(R.layout.activity_main);
 
 		fillList();
-		register(R.id.button_reset, new View.OnClickListener()
+		register(R.id.button_start, new View.OnTouchListener()
 		{
 			@Override
-			public void onClick(final View v)
+			public boolean onTouch(final View v, final MotionEvent event)
 			{
-				doReset();
+				if (event.getAction() == MotionEvent.ACTION_DOWN)
+				{
+					doStart();
+					return true;
+				}
+				return false;
 			}
 		});
-		register(R.id.button_stop, new View.OnClickListener()
+		register(R.id.button_stop, new View.OnTouchListener()
 		{
 			@Override
-			public void onClick(final View v)
+			public boolean onTouch(final View v, final MotionEvent event)
 			{
-				doStop();
+				if (event.getAction() == MotionEvent.ACTION_DOWN)
+				{
+					doStop();
+					return true;
+				}
+				return false;
 			}
 		});
+	}
+	
+	@Override
+	protected void onDestroy()
+	{
+		fSoundGenerator.close();
+	    super.onDestroy();
 	}
 
 	private void fillList()
@@ -61,30 +79,22 @@ public class MainActivity extends Activity
 		}
 	}
 
-	private void register(final int id, final View.OnClickListener listener)
+	private void register(final int id, final View.OnTouchListener listener)
 	{
 		final Button button = (Button) findViewById(id);
 		if (button != null)
 		{
-			button.setOnClickListener(listener);
+			button.setOnTouchListener(listener);
 		}
 	}
 
-	private void doReset()
+	private void doStart()
 	{
-		if (fSoundGenerator != null)
-		{
-			fSoundGenerator.stop();
-		}
-		fSoundGenerator = new SoundGenerator(120);
+		fSoundGenerator.start();
 	}
 
 	private void doStop()
 	{
-		if (fSoundGenerator != null)
-		{
-			fSoundGenerator.stop();
-			fSoundGenerator = null;
-		}
+		fSoundGenerator.stop();
 	}
 }
