@@ -12,14 +12,14 @@ public class SoundGenerator
 	private static final int kTONE_TIME = 10;
 	private static final int kTONE_FREQ = 880;
 
-	private final AudioTrack fAudioTrack;
+	private final AudioTrack[] fAudioTracks;
+	private int fDeck = 0;
 	private int fLoopPoint;
 
 	public SoundGenerator()
 	{
 		final int totalSamples = kFREQ * 60 / kLOWEST_BPM;
 		final int toneSamples = kFREQ * kTONE_TIME / 1000;
-		fAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, kFREQ, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, totalSamples, AudioTrack.MODE_STATIC);
 		final byte[] buffer = new byte[totalSamples];
 		final double f = 2d * Math.PI * ((double) kTONE_FREQ) / ((double) kFREQ);
 		for (int i = 0; i < toneSamples; ++i)
@@ -27,20 +27,29 @@ public class SoundGenerator
 			final double value = Math.sin(((double) i) * f) * 255d;
 			buffer[i] = (byte) Math.round(value);
 		}
-		fAudioTrack.write(buffer, 0, buffer.length);
+		fAudioTracks = new AudioTrack[2];
+		for (int i = 0; i < fAudioTracks.length; ++i)
+		{
+			fAudioTracks[i] = new AudioTrack(AudioManager.STREAM_MUSIC, kFREQ, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, totalSamples, AudioTrack.MODE_STATIC);
+			fAudioTracks[i].write(buffer, 0, buffer.length);
+		}
 		configure(120);
 	}
 	
 	public void close()
 	{
 		stop();
-		fAudioTrack.release();
+		for (final AudioTrack track : fAudioTracks)
+		{
+			track.release();
+		}
 		Log.i("TimeKeeper", "Stopped.");
 	}
 
 	private void configure(final int bpm)
 	{
 		fLoopPoint = kFREQ * 60 / Math.max(kLOWEST_BPM, bpm);
+		prepareOtherDeck();
 	}
 
 	public void start(final int bpm)
@@ -52,17 +61,25 @@ public class SoundGenerator
 	public void start()
 	{
 		stop();
-		fAudioTrack.setPlaybackHeadPosition(0);
-		fAudioTrack.setLoopPoints(0, fLoopPoint, -1);
-		fAudioTrack.play();
+		fDeck = 1 - fDeck;
+		fAudioTracks[fDeck].play();
+		prepareOtherDeck();
 	}
 
 	public void stop()
 	{
-		if (fAudioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING)
+		final AudioTrack track = fAudioTracks[fDeck];
+		if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING)
 		{
-			fAudioTrack.stop();
-			fAudioTrack.reloadStaticData();
+			track.stop();
 		}
+	}
+	
+	private void prepareOtherDeck()
+	{
+		final AudioTrack track = fAudioTracks[1 - fDeck];
+		track.reloadStaticData();
+		track.setPlaybackHeadPosition(0);
+		track.setLoopPoints(0, fLoopPoint, -1);
 	}
 }
