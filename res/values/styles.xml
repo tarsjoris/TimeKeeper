@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
         Base application theme, dependent on API level. This theme is replaced
@@ -14,7 +14,38 @@
 
     <!-- Application theme. -->
     <style name="AppTheme" parent="AppBaseTheme">
-        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
-
+    
+    <style name="button">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:layout_margin">2dp</item>
+	    <item name="android:layout_gravity">fill_horizontal|fill_vertical</item>
+	    <item name="android:adjustViewBounds">false</item>
+	    <item name="android:cropToPadding">true</item>
+	    <item name="android:padding">0dp</item>
+	    <item name="android:background">@drawable/button_selector</item>
+	    <item name="android:textColor">#FFFFFF</item>
+	    <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    
+    <style name="entry_name">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:layout_margin">2dp</item>
+		<item name="android:duplicateParentState">true</item>
+		<item name="android:textColor">@color/entry_selector</item>
+	</style>
+	
+    <style name="entry_tempo">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">3</item>
+		<item name="android:layout_margin">2dp</item>
+		<item name="android:duplicateParentState">true</item>
+		<item name="android:textColor">@color/entry_selector</item>
+	</style>
 </resources>

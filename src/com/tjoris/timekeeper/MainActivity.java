@@ -1,18 +1,24 @@
 package com.tjoris.timekeeper;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 public class MainActivity extends Activity
 {
 	private static final String[][] kPLAYLIST = new String[][] { { "Run to you", "120" }, { "AC/DC", "160" } };
+	private static final String kKEY_NAME = "name";
+	private static final String kKEY_TEMPO = "tempo";
 
 	private final SoundGenerator fSoundGenerator = new SoundGenerator();
 
@@ -22,32 +28,34 @@ public class MainActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		fillList();
-		register(R.id.button_start, new View.OnTouchListener()
+		final ListView playlist = (ListView) findViewById(R.id.playlist);
+		playlist.setOnItemClickListener(new OnItemClickListener()
 		{
 			@Override
-			public boolean onTouch(final View v, final MotionEvent event)
-			{
-				if (event.getAction() == MotionEvent.ACTION_DOWN)
-				{
-					doStart();
-					return true;
-				}
-				return false;
-			}
+            public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id)
+            {
+				final String tempo = kPLAYLIST[position][1];
+				final int bpm = Integer.parseInt(tempo);
+				fSoundGenerator.start(bpm);
+				view.setSelected(true);
+            }
 		});
-		register(R.id.button_stop, new View.OnTouchListener()
+		fillList();
+		register(R.id.button_start, new View.OnClickListener()
 		{
 			@Override
-			public boolean onTouch(final View v, final MotionEvent event)
-			{
-				if (event.getAction() == MotionEvent.ACTION_DOWN)
-				{
-					doStop();
-					return true;
-				}
-				return false;
-			}
+            public void onClick(final View v)
+            {
+				doStart();
+            }
+		});
+		register(R.id.button_stop, new View.OnClickListener()
+		{
+			@Override
+            public void onClick(final View v)
+            {
+				doStop();
+            }
 		});
 	}
 	
@@ -60,31 +68,24 @@ public class MainActivity extends Activity
 
 	private void fillList()
 	{
-		final TableLayout playlist = (TableLayout) findViewById(R.id.playlist);
-		if (playlist != null)
+		final ListView playlist = (ListView) findViewById(R.id.playlist);
+		final List<Map<String, String>> data = new ArrayList<Map<String,String>>();
+		for (final String[] entry : kPLAYLIST)
 		{
-			for (final String[] entry : kPLAYLIST)
-			{
-				final TableRow row = new TableRow(this);
-				row.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-				for (final String data : entry)
-				{
-					final TextView tv = new TextView(this);
-					tv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-					tv.setText(data);
-					row.addView(tv);
-				}
-				playlist.addView(row);
-			}
+			final Map<String, String> map = new HashMap<String, String>();
+			map.put(kKEY_NAME, entry[0]);
+			map.put(kKEY_TEMPO, entry[1]);
+			data.add(map);
 		}
+		playlist.setAdapter(new SimpleAdapter(this, data, R.layout.list_entry, new String[] {"name", "tempo"}, new int[] {R.id.entry_name, R.id.entry_tempo}));
 	}
 
-	private void register(final int id, final View.OnTouchListener listener)
+	private void register(final int id, final View.OnClickListener listener)
 	{
 		final Button button = (Button) findViewById(id);
 		if (button != null)
 		{
-			button.setOnTouchListener(listener);
+			button.setOnClickListener(listener);
 		}
 	}
 
