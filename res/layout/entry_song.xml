@@ -8,10 +8,10 @@
     
 	<TextView
         android:id="@+id/entry_name"
-        style="@style/entry_name"
+        style="@style/song_name"
         />
     <TextView
         android:id="@+id/entry_tempo"
-        style="@style/entry_tempo"
+        style="@style/song_tempo"
         />
 </LinearLayout>

@@ -31,7 +31,16 @@
         <item name="android:textStyle">bold</item>
     </style>
     
-    <style name="entry_name">
+    <style name="playlist_name">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:layout_margin">10dp</item>
+		<item name="android:background">@drawable/entry_selector</item>
+		<item name="android:textColor">@color/entry_selector</item>
+	</style>
+	
+    <style name="song_name">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">fill_parent</item>
 		<item name="android:layout_weight">1</item>
@@ -40,7 +49,7 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="entry_tempo">
+    <style name="song_tempo">
         <item name="android:gravity">right</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">fill_parent</item>

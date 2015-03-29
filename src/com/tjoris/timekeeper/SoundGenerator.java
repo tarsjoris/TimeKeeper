@@ -46,7 +46,7 @@ public class SoundGenerator
 		Log.i("TimeKeeper", "Stopped.");
 	}
 
-	private void configure(final int bpm)
+	public void configure(final int bpm)
 	{
 		fLoopPoint = kFREQ * 60 / Math.max(kLOWEST_BPM, bpm);
 		prepareOtherDeck();
