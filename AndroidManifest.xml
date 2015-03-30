@@ -28,6 +28,11 @@
             android:label="@string/playlist"
             android:parentActivityName="com.tjoris.timekeeper.OverviewActivity" >
         </activity>
-    </application>
 
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/settings"
+            android:parentActivityName="com.tjoris.timekeeper.OverviewActivity" >
+        </activity>
+    </application>
 </manifest>

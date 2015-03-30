@@ -7,6 +7,7 @@ import java.util.Map;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -24,7 +25,7 @@ public class PlaylistActivity extends Activity
 	private static final String kKEY_NAME = "name";
 	private static final String kKEY_TEMPO = "tempo";
 
-	private final SoundGenerator fSoundGenerator = new SoundGenerator();
+	private SoundGenerator fSoundGenerator;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
 
@@ -73,7 +74,25 @@ public class PlaylistActivity extends Activity
 				doNext();
 			}
 		});
+		
+		final int frequency = getIntPreference(SettingsActivity.kFREQUENCY, 440);
+		final int duration = getIntPreference(SettingsActivity.kDURATION, 20);
+		fSoundGenerator = new SoundGenerator(frequency, duration);
+		
 		loadIntent();
+	}
+	
+	private int getIntPreference(final String key, final int defaultValue)
+	{
+		final String result = PreferenceManager.getDefaultSharedPreferences(this).getString(key, Integer.toString(defaultValue));
+		try
+		{
+			return Integer.parseInt(result);
+		}
+		catch (final NumberFormatException e)
+		{
+			return defaultValue;
+		}
 	}
 	
 	private void loadIntent()

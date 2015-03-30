@@ -3,5 +3,10 @@
 
     <string name="app_name">TimeKeeper</string>
     <string name="playlist">Playlist</string>
+    <string name="settings">Settings</string>
+    <string name="pref_title_frequency">Frequency</string>
+    <string name="pref_summary_frequency">The frequency of the beep in Hz</string>
+    <string name="pref_title_duration">Duration</string>
+    <string name="pref_summary_duration">The duration of the beep in ms</string>
 
 </resources>

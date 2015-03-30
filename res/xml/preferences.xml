@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <EditTextPreference
+		android:key="frequency"
+		android:title="@string/pref_title_frequency"
+		android:summary="@string/pref_summary_frequency"
+		android:inputType="number"
+		android:defaultValue="440"
+		 />
+    <EditTextPreference
+		android:key="duration"
+		android:title="@string/pref_title_duration"
+		android:summary="@string/pref_summary_duration"
+		android:inputType="number"
+		android:defaultValue="20"
+		/>
+</PreferenceScreen>

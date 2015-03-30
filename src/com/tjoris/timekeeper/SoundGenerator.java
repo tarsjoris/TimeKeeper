@@ -9,19 +9,17 @@ public class SoundGenerator
 {
 	private static final int kLOWEST_BPM = 50;
 	private static final int kFREQ = 44100;
-	private static final int kTONE_TIME = 10;
-	private static final int kTONE_FREQ = 880;
 
 	private final AudioTrack[] fAudioTracks;
 	private int fDeck = 0;
 	private int fLoopPoint;
 
-	public SoundGenerator()
+	public SoundGenerator(final int beepFrequency, final int beepDuration)
 	{
 		final int totalSamples = kFREQ * 60 / kLOWEST_BPM;
-		final int toneSamples = kFREQ * kTONE_TIME / 1000;
+		final int toneSamples = kFREQ * beepDuration / 1000;
 		final byte[] buffer = new byte[totalSamples];
-		final double f = 2d * Math.PI * ((double) kTONE_FREQ) / ((double) kFREQ);
+		final double f = 2d * Math.PI * ((double) beepFrequency) / ((double) kFREQ);
 		for (int i = 0; i < toneSamples; ++i)
 		{
 			final double value = Math.sin(((double) i) * f) * 255d;

@@ -5,6 +5,9 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -38,6 +41,8 @@ public class OverviewActivity extends Activity
 				trigger(position);
 			}
 		});
+		
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 	}
 
 	@Override
@@ -45,6 +50,31 @@ public class OverviewActivity extends Activity
 	{
 		super.onResume();
 		fillList();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu)
+	{
+		getMenuInflater().inflate(R.menu.overview_actions, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item)
+	{
+		// Handle presses on the action bar items
+		switch (item.getItemId())
+		{
+		case R.id.settings:
+		{
+			startActivity(new Intent(this, SettingsActivity.class));
+			return true;
+		}
+		default:
+		{
+			return super.onOptionsItemSelected(item);
+		}
+		}
 	}
 
 	private void fillList()
