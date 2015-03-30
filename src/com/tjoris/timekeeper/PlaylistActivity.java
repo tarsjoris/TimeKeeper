@@ -147,8 +147,19 @@ public class PlaylistActivity extends Activity
 		final int pos = playlist.getCheckedItemPosition();
 		if (pos < fPlaylist.getSongs().size() - 1)
 		{
-			trigger(pos + 1);
-			// playlist.scrollTo(0, playlist.getPositionForView(view));
+			final int newPos = pos + 1;
+			trigger(newPos);
+			final int first = playlist.getFirstVisiblePosition();
+			final int last = playlist.getLastVisiblePosition();
+			final int middle = (last - first) / 2 + first;
+			if (newPos <= first)
+			{
+				playlist.smoothScrollToPosition(newPos);
+			}
+			else if (newPos > middle)
+			{
+				playlist.smoothScrollToPosition(last + newPos - middle);
+			}
 		}
 	}
 
