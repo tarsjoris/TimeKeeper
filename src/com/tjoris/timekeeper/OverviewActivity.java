@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,20 +16,38 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.tjoris.timekeeper.data.Playlist;
 import com.tjoris.timekeeper.data.PlaylistHeader;
 import com.tjoris.timekeeper.data.PlaylistStore;
 
-public class OverviewActivity extends Activity implements PlaylistNameDialog.IListener
+public class OverviewActivity extends Activity
 {
 	private final PlaylistNameDialog fAddPlaylistDialog;
+	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
 	private List<PlaylistHeader> fPlaylists;
+	private ActionMode fActionMode = null;
 
 	public OverviewActivity()
 	{
 		fStore = new PlaylistStore(this);
-		fAddPlaylistDialog = new PlaylistNameDialog(this);
+		fAddPlaylistDialog = new PlaylistNameDialog(new PlaylistNameDialog.IListener()
+		{
+			@Override
+			public void addItem(final CharSequence name)
+			{
+				final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
+				fStore.storePlaylistHeader(new PlaylistHeader(name.toString(), weight));
+				fillList();
+			}
+		});
+		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, new ConfirmationDialog.IListener()
+		{
+			@Override
+			public void confirm()
+			{
+				deleteSelectedItems();
+			}
+		});
 	}
 
 	@Override
@@ -58,13 +77,15 @@ public class OverviewActivity extends Activity implements PlaylistNameDialog.ILi
 			@Override
 			public void onDestroyActionMode(final ActionMode mode)
 			{
+				fActionMode = null;
 			}
 
 			@Override
 			public boolean onCreateActionMode(final ActionMode mode, final Menu menu)
 			{
+				fActionMode = mode;
 				mode.getMenuInflater().inflate(R.menu.overview_contextactions, menu);
-		        return true;
+				return true;
 			}
 
 			@Override
@@ -74,8 +95,7 @@ public class OverviewActivity extends Activity implements PlaylistNameDialog.ILi
 				{
 				case R.id.overview_action_delete:
 				{
-					//deleteSelectedItems();
-					mode.finish();
+					fDeleteDialog.show(getFragmentManager(), "delete_playlists");
 					return true;
 				}
 				default:
@@ -131,14 +151,6 @@ public class OverviewActivity extends Activity implements PlaylistNameDialog.ILi
 		}
 	}
 
-	@Override
-	public void add(final CharSequence name)
-	{
-		final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
-		fStore.storePlaylist(new Playlist(name.toString(), weight));
-		fillList();
-	}
-
 	private void fillList()
 	{
 		fPlaylists = fStore.readAllPlaylists();
@@ -155,6 +167,24 @@ public class OverviewActivity extends Activity implements PlaylistNameDialog.ILi
 		final Intent intent = new Intent(this, PlaylistActivity.class);
 		intent.putExtra("playlist", fPlaylists.get(selection).getID());
 		startActivity(intent);
+	}
+
+	private void deleteSelectedItems()
+	{
+		final ListView overview = getOverview();
+		final SparseBooleanArray selection = overview.getCheckedItemPositions();
+		for (int i = 0; i < overview.getChildCount(); ++i)
+		{
+			if (selection.get(i))
+			{
+				fStore.deletePlaylist(fPlaylists.get(i));
+			}
+		}
+		if (fActionMode != null)
+		{
+			fActionMode.finish();
+		}
+		fillList();
 	}
 
 	private ListView getOverview()

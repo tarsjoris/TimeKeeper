@@ -5,19 +5,20 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.widget.EditText;
 
-public class PlaylistNameDialog extends DialogFragment
+public class ConfirmationDialog extends DialogFragment
 {
 	public interface IListener
 	{
-		public void addItem(CharSequence name);
+		public void confirm();
 	}
 	
+	private final int fMessage;
 	private final IListener fListener;
 	
-	public PlaylistNameDialog(final IListener listener)
+	public ConfirmationDialog(final int message, final IListener listener)
 	{
+		fMessage = message;
 		fListener = listener;
 	}
 	
@@ -25,13 +26,13 @@ public class PlaylistNameDialog extends DialogFragment
 	public Dialog onCreateDialog(final Bundle savedInstanceState)
 	{
 		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		builder.setTitle(R.string.overview_action_addplaylist).setView(R.layout.dialog_addplaylist).setPositiveButton(R.string.overview_addplaylist_add, new DialogInterface.OnClickListener()
+		builder.setMessage(fMessage).setPositiveButton(R.string.overview_delete_yes, new DialogInterface.OnClickListener()
 		{
 			public void onClick(final DialogInterface dialog, final int id)
 			{
-				fListener.addItem(((EditText)getDialog().findViewById(R.id.overiew_addplaylist_name)).getText());
+				fListener.confirm();
 			}
-		}).setNegativeButton(R.string.overview_addplaylist_cancel, null);
+		}).setNegativeButton(R.string.overview_delete_no, null);
 		return builder.create();
 	}
 }

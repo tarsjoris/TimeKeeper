@@ -65,7 +65,7 @@ public class PlaylistStore extends SQLiteOpenHelper
 		playlist.addSong(new Song("Welcome To The Jungle (2/2)", 11, 120));
 		playlist.addSong(new Song("Jerusalem", 12, 132));
 		playlist.addSong(new Song("Girl", 13, 136));
-        storePlaylist(db, playlist);
+		addPlaylist(db, playlist);
     }
     
     @Override
@@ -100,12 +100,28 @@ public class PlaylistStore extends SQLiteOpenHelper
     	return null;
     }
     
-    public void storePlaylist(final Playlist playlist)
+    public void storePlaylistHeader(final PlaylistHeader playlist)
     {
-    	storePlaylist(getWritableDatabase(), playlist);
+    	storePlaylistHeader(getWritableDatabase(), playlist);
     }
     
-    private void storePlaylist(final SQLiteDatabase db, final Playlist playlist)
+    public void deletePlaylist(final PlaylistHeader playlist)
+    {
+    	final String idObject = Long.toString(playlist.getID());
+		getWritableDatabase().delete(kSONG_TABLE_NAME, kSONG_PLAYLIST + " = ?", new String[] {idObject});
+		getWritableDatabase().delete(kPLAYLIST_TABLE_NAME, kPLAYLIST_ID + " = ?", new String[] {idObject});
+    }
+    
+    private void addPlaylist(final SQLiteDatabase db, final Playlist playlist)
+    {
+    	storePlaylistHeader(db, playlist);
+    	for (final Song song : playlist.getSongs())
+    	{
+    		storeSong(db, playlist, song);
+    	}
+    }
+    
+    private void storePlaylistHeader(final SQLiteDatabase db, final PlaylistHeader playlist)
     {
     	final ContentValues values = new ContentValues(1);
     	values.put(kPLAYLIST_NAME, playlist.getName());
@@ -119,13 +135,14 @@ public class PlaylistStore extends SQLiteOpenHelper
     	{
     		db.update(kPLAYLIST_TABLE_NAME, values, kPLAYLIST_ID + " = ?", new String[] {Long.toString(playlist.getID())});
     	}
-    	for (final Song song : playlist.getSongs())
-    	{
-    		storeSong(db, playlist, song);
-    	}
     }
     
-    private void storeSong(final SQLiteDatabase db, final Playlist playlist, final Song song)
+    public void storeSong(final PlaylistHeader playlist, final Song song)
+    {
+    	storeSong(getWritableDatabase(), playlist, song);
+    }
+    
+    private void storeSong(final SQLiteDatabase db, final PlaylistHeader playlist, final Song song)
     {
     	final ContentValues values = new ContentValues(3);
     	values.put(kSONG_NAME, song.getName());
@@ -141,5 +158,10 @@ public class PlaylistStore extends SQLiteOpenHelper
     	{
     		db.update(kSONG_TABLE_NAME, values, kSONG_ID + " = ?", new String[] {Long.toString(song.getID())});
     	}
+    }
+    
+    public void deleteSong(final Song song)
+    {
+    	getWritableDatabase().delete(kSONG_TABLE_NAME, kSONG_ID + " = ?", new String[] {Long.toString(song.getID())});
     }
 }
