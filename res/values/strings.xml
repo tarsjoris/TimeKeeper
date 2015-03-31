@@ -2,6 +2,11 @@
 <resources>
 
     <string name="app_name">TimeKeeper</string>
+    <string name="overview_action_addplaylist">Add playlist</string>
+    <string name="overview_action_delete">Delete</string>
+    <string name="overview_addplaylist_add">Add</string>
+    <string name="overview_addplaylist_cancel">Cancel</string>
+    <string name="overview_addplaylist_name">Name</string>
     <string name="playlist">Playlist</string>
     <string name="settings">Settings</string>
     <string name="pref_title_frequency">Frequency</string>
