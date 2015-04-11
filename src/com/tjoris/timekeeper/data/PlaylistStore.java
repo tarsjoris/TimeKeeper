@@ -65,6 +65,21 @@ public class PlaylistStore extends SQLiteOpenHelper
 		playlist.addSong(new Song("Welcome To The Jungle (2/2)", 11, 120));
 		playlist.addSong(new Song("Jerusalem", 12, 132));
 		playlist.addSong(new Song("Girl", 13, 136));
+		playlist.addSong(new Song("Are You Gonna Go My Way", 14, 130));
+		playlist.addSong(new Song("Always On The Run", 15, 88));
+		playlist.addSong(new Song("Heavy Cross", 16, 118));
+		playlist.addSong(new Song("Dirty Diana", 17, 131));
+		playlist.addSong(new Song("Sweet Child O' Mine", 18, 126));
+		playlist.addSong(new Song("Paradise City (1/2)", 19, 100));
+		playlist.addSong(new Song("Paradise City (2/2)", 20, 216));
+		playlist.addSong(new Song("The Pretender", 21, 87));
+		playlist.addSong(new Song("Still Lovin' You", 22, 106));
+		playlist.addSong(new Song("Pride", 23, 105));
+		playlist.addSong(new Song("R U Kiddin' Me", 24, 178));
+		playlist.addSong(new Song("Black Is Black", 25, 96));
+		playlist.addSong(new Song("Thunder", 26, 132));
+		playlist.addSong(new Song("All Night Long", 27, 138));
+		playlist.addSong(new Song("Highway To Hell", 28, 120));
 		addPlaylist(db, playlist);
     }
     
