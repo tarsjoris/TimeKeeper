@@ -8,7 +8,9 @@ import java.util.Map;
 import android.app.Activity;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -50,34 +52,46 @@ public class PlaylistActivity extends Activity
 				trigger(position);
 			}
 		});
-		((Button) findViewById(R.id.button_start)).setOnClickListener(new View.OnClickListener()
+		((Button) findViewById(R.id.button_start)).setOnTouchListener(new OnTouchListener()
 		{
 			@Override
-			public void onClick(final View v)
+			public boolean onTouch(final View v, final MotionEvent event)
 			{
-				doStart();
+				if (event.getAction() == MotionEvent.ACTION_DOWN)
+				{
+					doStart();
+				}
+				return false;
 			}
 		});
-		((Button) findViewById(R.id.button_stop)).setOnClickListener(new View.OnClickListener()
+		((Button) findViewById(R.id.button_stop)).setOnTouchListener(new OnTouchListener()
 		{
 			@Override
-			public void onClick(final View v)
+			public boolean onTouch(final View v, final MotionEvent event)
 			{
-				doStop();
+				if (event.getAction() == MotionEvent.ACTION_DOWN)
+				{
+					doStop();
+				}
+				return false;
 			}
 		});
-		((Button) findViewById(R.id.button_next)).setOnClickListener(new View.OnClickListener()
+		((Button) findViewById(R.id.button_next)).setOnTouchListener(new OnTouchListener()
 		{
 			@Override
-			public void onClick(final View v)
+			public boolean onTouch(final View v, final MotionEvent event)
 			{
-				doNext();
+				if (event.getAction() == MotionEvent.ACTION_DOWN)
+				{
+					doNext();
+				}
+				return false;
 			}
 		});
 		
 		final int frequency = getIntPreference(SettingsActivity.kFREQUENCY, 440);
 		final int duration = getIntPreference(SettingsActivity.kDURATION, 20);
-		fSoundGenerator = new SoundGenerator(frequency, duration);
+		fSoundGenerator = new SoundGenerator(this);
 		
 		loadIntent();
 	}

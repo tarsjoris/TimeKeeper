@@ -1,53 +1,59 @@
 package com.tjoris.timekeeper;
 
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
+import java.io.FileDescriptor;
+import java.io.IOException;
+
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.util.Log;
 
 public class SoundGenerator
 {
-	private static final int kLOWEST_BPM = 50;
-	private static final int kFREQ = 44100;
+	private static final int kSAMPLES_PER_SECOND = 44100;
+	private static final int kBYTES_PER_SAMPLE = 2;
+	private static final int kLOWEST_BPM = 30;
+	
+	private final FileDescriptor fFileDescriptor;
+	private final SoundPool fSoundPool;
+	private int fSoundID = -1;
 
-	private final AudioTrack[] fAudioTracks;
-	private int fDeck = 0;
-	private int fLoopPoint;
-
-	public SoundGenerator(final int beepFrequency, final int beepDuration)
+	public SoundGenerator(final Context context)
 	{
-		final int totalSamples = kFREQ * 60 / kLOWEST_BPM;
-		final int toneSamples = kFREQ * beepDuration / 1000;
-		final byte[] buffer = new byte[totalSamples];
-		final double f = 2d * Math.PI * ((double) beepFrequency) / ((double) kFREQ);
-		for (int i = 0; i < toneSamples; ++i)
+		try
 		{
-			final double value = Math.sin(((double) i) * f) * 255d;
-			buffer[i] = (byte) Math.round(value);
+			fFileDescriptor = context.getAssets().openFd("beep.wav").getFileDescriptor();
 		}
-		fAudioTracks = new AudioTrack[2];
-		for (int i = 0; i < fAudioTracks.length; ++i)
+		catch (final IOException e)
 		{
-			fAudioTracks[i] = new AudioTrack(AudioManager.STREAM_MUSIC, kFREQ, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_8BIT, totalSamples, AudioTrack.MODE_STATIC);
-			fAudioTracks[i].write(buffer, 0, buffer.length);
+			Log.e("TimeKeeper", "Could not load beep", e);
+			throw new RuntimeException("Could not load beep", e);
 		}
+		final AudioAttributes.Builder audioAttributesBuilder = new AudioAttributes.Builder();
+		audioAttributesBuilder.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+		final SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
+		soundPoolBuilder.setAudioAttributes(audioAttributesBuilder.build());
+		soundPoolBuilder.setMaxStreams(1);
+		fSoundPool = soundPoolBuilder.build();
 		configure(120);
 	}
 	
 	public void close()
 	{
 		stop();
-		for (final AudioTrack track : fAudioTracks)
-		{
-			track.release();
-		}
+		fSoundPool.release();
 		Log.i("TimeKeeper", "Stopped.");
 	}
 
 	public void configure(final int bpm)
 	{
-		fLoopPoint = kFREQ * 60 / Math.max(kLOWEST_BPM, bpm);
-		prepareOtherDeck();
+		stop();
+		if (fSoundID != -1)
+		{
+			fSoundPool.unload(fSoundID);
+		}
+		final int loopPoint = kSAMPLES_PER_SECOND * 60 * kBYTES_PER_SAMPLE / Math.max(kLOWEST_BPM, bpm);
+		fSoundID = fSoundPool.load(fFileDescriptor, 945, loopPoint, 1);
 	}
 
 	public void start(final int bpm)
@@ -58,26 +64,12 @@ public class SoundGenerator
 	
 	public void start()
 	{
-		stop();
-		fDeck = 1 - fDeck;
-		fAudioTracks[fDeck].play();
-		prepareOtherDeck();
+		fSoundPool.autoPause();
+		fSoundPool.play(fSoundID, 1F, 1F, 1, -1, 1F);
 	}
 
 	public void stop()
 	{
-		final AudioTrack track = fAudioTracks[fDeck];
-		if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING)
-		{
-			track.stop();
-		}
-	}
-	
-	private void prepareOtherDeck()
-	{
-		final AudioTrack track = fAudioTracks[1 - fDeck];
-		track.reloadStaticData();
-		track.setPlaybackHeadPosition(0);
-		track.setLoopPoints(0, fLoopPoint, -1);
+		fSoundPool.autoPause();
 	}
 }
