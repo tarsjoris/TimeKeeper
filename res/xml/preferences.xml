@@ -5,7 +5,7 @@
 		android:title="@string/pref_title_frequency"
 		android:summary="@string/pref_summary_frequency"
 		android:inputType="number"
-		android:defaultValue="440"
+		android:defaultValue="880"
 		 />
     <EditTextPreference
 		android:key="duration"

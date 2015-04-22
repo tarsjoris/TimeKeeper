@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -36,7 +37,8 @@ public class PlaylistActivity extends Activity
 		fStore = new PlaylistStore(this);
 	}
 
-	@Override
+	@SuppressLint("ClickableViewAccessibility")
+    @Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -89,9 +91,9 @@ public class PlaylistActivity extends Activity
 			}
 		});
 		
-		final int frequency = getIntPreference(SettingsActivity.kFREQUENCY, 440);
+		final int frequency = getIntPreference(SettingsActivity.kFREQUENCY, 880);
 		final int duration = getIntPreference(SettingsActivity.kDURATION, 20);
-		fSoundGenerator = new SoundGenerator(this);
+		fSoundGenerator = new SoundGenerator(this, frequency, duration);
 		
 		loadIntent();
 	}
