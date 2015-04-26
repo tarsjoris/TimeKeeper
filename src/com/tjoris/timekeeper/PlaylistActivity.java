@@ -7,8 +7,11 @@ import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -127,6 +130,16 @@ public class PlaylistActivity extends Activity
 			loadPlaylist(null);
 		}
 	}
+	
+	@Override
+	protected void onResume()
+	{
+	    if (fPlaylist != null)
+	    {
+			loadPlaylist(fStore.readPlaylist(fPlaylist.getID()));
+	    }
+	    super.onResume();
+	}
 
 	@Override
 	protected void onDestroy()
@@ -134,6 +147,34 @@ public class PlaylistActivity extends Activity
 		fSoundGenerator.close();
 		fStore.close();
 		super.onDestroy();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu)
+	{
+		getMenuInflater().inflate(R.menu.playlist_actions, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item)
+	{
+		// Handle presses on the action bar items
+		switch (item.getItemId())
+		{
+		case R.id.playlist_action_edit:
+		{
+			doStop();
+			final Intent intent = new Intent(this, PlaylistEditActivity.class);
+			intent.putExtra("playlist", fPlaylist.getID());
+			startActivity(intent);
+			return true;
+		}
+		default:
+		{
+			return super.onOptionsItemSelected(item);
+		}
+		}
 	}
 
 	private void loadPlaylist(final Playlist playlist)
@@ -156,7 +197,7 @@ public class PlaylistActivity extends Activity
 			getActionBar().setTitle("<no playlist>");
 		}
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.entry_song, new String[] { "name", "tempo" }, new int[] { R.id.entry_name, R.id.entry_tempo }));
+		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.entry_song, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.entry_name, R.id.entry_tempo }));
 		
 		if (fPlaylist != null && !fPlaylist.getSongs().isEmpty())
 		{

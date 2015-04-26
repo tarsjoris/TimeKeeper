@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/entry_selector"
+    >
+    
+	<TextView
+        android:id="@+id/entry_name"
+        style="@style/song_name"
+        />
+    <Button
+        android:id="@+id/entry_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/listbutton"
+        android:icon="@drawable/ic_action_discard"
+        android:text="X"
+        />
+    <Button
+        android:id="@+id/entry_up"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/listbutton"
+        android:icon="@drawable/ic_action_collapse"
+        android:text="U"
+        />
+    <Button
+        android:id="@+id/entry_down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/listbutton"
+        android:icon="@drawable/ic_action_expand"
+        android:text="D"
+        />
+</LinearLayout>

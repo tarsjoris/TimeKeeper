@@ -4,9 +4,9 @@ public class Song extends AbstractEntry
 {
 	private int fTempo;
 
-	public Song(final String name, final int weight, final int tempo)
+	public Song(final String name, final int tempo)
 	{
-		this(kID_NEW, name, weight, tempo);
+		this(kID_NEW, name, -1, tempo);
 	}
 	
 	public Song(final long id, final String name, final int weight, final int tempo)

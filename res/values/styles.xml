@@ -58,4 +58,8 @@
 		<item name="android:duplicateParentState">true</item>
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
+	
+    <style name="listbutton">
+        <item name="android:padding">1dip</item>/
+    </style>
 </resources>

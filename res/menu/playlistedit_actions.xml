@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+	<item android:id="@+id/playlistedit_action_addsong"
+          android:icon="@drawable/ic_action_new"
+          android:title="@string/playlistedit_action_addsong"
+          android:showAsAction="ifRoom" />
+</menu>

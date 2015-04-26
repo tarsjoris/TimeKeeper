@@ -3,6 +3,7 @@ package com.tjoris.timekeeper;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import com.tjoris.timekeeper.data.PlaylistHeader;
@@ -21,7 +23,7 @@ import com.tjoris.timekeeper.data.PlaylistStore;
 
 public class OverviewActivity extends Activity
 {
-	private final PlaylistNameDialog fAddPlaylistDialog;
+	private final InputDialog fAddPlaylistDialog;
 	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
 	private List<PlaylistHeader> fPlaylists;
@@ -30,16 +32,22 @@ public class OverviewActivity extends Activity
 	public OverviewActivity()
 	{
 		fStore = new PlaylistStore(this);
-		fAddPlaylistDialog = new PlaylistNameDialog(new PlaylistNameDialog.IListener()
+		fAddPlaylistDialog = new InputDialog(R.string.overview_action_addplaylist,
+				R.layout.dialog_addplaylist,
+				R.string.overview_addplaylist_add,
+				R.string.overview_addplaylist_cancel
+		)
 		{
 			@Override
-			public void addItem(final CharSequence name)
+			public void dialogConfirmed(final Dialog dialog)
 			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.overiew_addplaylist_name)).getText();
 				final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
-				fStore.storePlaylistHeader(new PlaylistHeader(name.toString(), weight));
-				fillList();
+				final PlaylistHeader playlist = new PlaylistHeader(name.toString(), weight);
+				fStore.storePlaylistHeader(playlist);
+				openPlaylist(playlist);
 			}
-		});
+		};
 		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, new ConfirmationDialog.IListener()
 		{
 			@Override
@@ -164,8 +172,13 @@ public class OverviewActivity extends Activity
 
 	private void trigger(final int selection)
 	{
+		openPlaylist(fPlaylists.get(selection));
+	}
+	
+	private void openPlaylist(final PlaylistHeader playlist)
+	{
 		final Intent intent = new Intent(this, PlaylistActivity.class);
-		intent.putExtra("playlist", fPlaylists.get(selection).getID());
+		intent.putExtra("playlist", playlist.getID());
 		startActivity(intent);
 	}
 

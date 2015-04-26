@@ -23,6 +23,12 @@ public class Playlist extends PlaylistHeader
 		return fSongs;
 	}
 	
+	public void addSong(final PlaylistStore store, final Song song)
+	{
+		addSong(song);
+		store.storeSong(this, song);
+	}
+	
 	public void addSong(final Song song)
 	{
 		final int weight;
@@ -35,7 +41,6 @@ public class Playlist extends PlaylistHeader
 			weight = 0;
 		}
 		song.setWeight(weight);
-		// TODO store song
 		onlyAddSong(song);
 	}
 	
@@ -44,8 +49,45 @@ public class Playlist extends PlaylistHeader
 		fSongs.add(song);
 	}
 	
-	public void removeSong(final int position)
+	public void removeSong(final PlaylistStore store, final int position)
 	{
-		fSongs.remove(position);
+		if (position >= 0 && position < fSongs.size())
+		{
+			final Song song = fSongs.remove(position);
+			store.deleteSong(song);
+			for (int i = position + 1; i < fSongs.size(); ++i)
+			{
+				final Song after = fSongs.get(i);
+				after.setWeight(after.getWeight() - 1);
+				store.storeSong(this, after);
+			}
+		}
+	}
+	
+	public void moveUp(final PlaylistStore store, final int position)
+	{
+		move(store, position, -1);
+	}
+	
+	public void moveDown(final PlaylistStore store, final int position)
+	{
+		move(store, position, 1);
+	}
+	
+	private void move(final PlaylistStore store, final int position, final int delta)
+	{
+		final int otherPos = position + delta;
+		if (position >= 0 && position < fSongs.size() && otherPos >= 0 && otherPos < fSongs.size())
+		{
+			final Song song = fSongs.get(position);
+			final Song other = fSongs.get(otherPos);
+			fSongs.remove(position);
+			fSongs.add(otherPos, song);
+			final int tmpWeight = other.getWeight();
+			other.setWeight(song.getWeight());
+			song.setWeight(tmpWeight);
+			store.storeSong(this, other);
+			store.storeSong(this, song);
+		}
 	}
 }
