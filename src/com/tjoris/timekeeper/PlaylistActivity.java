@@ -7,6 +7,7 @@ import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -19,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -34,6 +36,7 @@ public class PlaylistActivity extends Activity
 	private SoundGenerator fSoundGenerator;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
+	private InputDialog fRenameDialog;
 
 	public PlaylistActivity()
 	{
@@ -45,6 +48,30 @@ public class PlaylistActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		fRenameDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlist_action_rename,
+				R.drawable.ic_action_edit,
+				R.layout.playlist_rename,
+				R.string.playlist_rename_save,
+				R.string.playlist_rename_cancel
+		)
+		{
+			@Override
+			public void viewCreated(final View view)
+			{
+				((EditText)view.findViewById(R.id.playlist_rename_name)).setText(fPlaylist.getName());
+			}
+			
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlist_rename_name)).getText();
+				fPlaylist.setName(fStore, name.toString());
+				loadPlaylist(fPlaylist);
+			}
+		};
+
 		setContentView(R.layout.playlist);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -159,9 +186,13 @@ public class PlaylistActivity extends Activity
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item)
 	{
-		// Handle presses on the action bar items
 		switch (item.getItemId())
 		{
+		case R.id.playlist_action_rename:
+		{
+			fRenameDialog.show(getFragmentManager(), "renameplaylist");
+			return true;
+		}
 		case R.id.playlist_action_edit:
 		{
 			doStop();
@@ -197,7 +228,7 @@ public class PlaylistActivity extends Activity
 			getActionBar().setTitle("<no playlist>");
 		}
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.entry_song, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.entry_name, R.id.entry_tempo }));
+		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.playlist_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.entry_name, R.id.entry_tempo }));
 		
 		if (fPlaylist != null && !fPlaylist.getSongs().isEmpty())
 		{

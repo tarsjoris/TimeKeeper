@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-	<item android:id="@+id/playlist_action_edit"
+	<item android:id="@+id/playlist_action_rename"
+          android:icon="@drawable/ic_action_edit"
+          android:title="@string/playlist_action_rename"
+          android:showAsAction="never" />
+    	<item android:id="@+id/playlist_action_edit"
           android:icon="@drawable/ic_action_settings"
           android:title="@string/playlist_action_edit"
+          android:showAsAction="never" />
+    	<item android:id="@+id/playlist_action_copy"
+          android:icon="@drawable/ic_action_copy"
+          android:title="@string/playlist_action_copy"
           android:showAsAction="never" />
 </menu>

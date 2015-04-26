@@ -29,7 +29,7 @@ public class PlaylistEditActivity extends Activity
 	private static final String kKEY_NAME = "name";
 
 	private final List<Map<String, String>> fData;
-	private final InputDialog fAddSongDialog;
+	private InputDialog fAddSongDialog;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
 
@@ -37,8 +37,18 @@ public class PlaylistEditActivity extends Activity
 	{
 		fData = new ArrayList<Map<String, String>>();
 		fStore = new PlaylistStore(this);
-		fAddSongDialog = new InputDialog(R.string.playlistedit_action_addsong,
-				R.layout.dialog_addsong,
+	}
+
+	@SuppressLint("ClickableViewAccessibility")
+    @Override
+	protected void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+
+		fAddSongDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlistedit_action_addsong,
+				R.drawable.ic_action_new,
+				R.layout.playlistedit_addsong,
 				R.string.playlistedit_addsong_add,
 				R.string.playlistedit_addsong_cancel
 		)
@@ -62,18 +72,12 @@ public class PlaylistEditActivity extends Activity
 				loadPlaylist();
 			}
 		};
-	}
 
-	@SuppressLint("ClickableViewAccessibility")
-    @Override
-	protected void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
 		setContentView(R.layout.playlistedit);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.entry_songedit, new String[] { kKEY_NAME }, new int[] { R.id.entry_name, R.id.entry_tempo })
+		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.playlistedit_entry, new String[] { kKEY_NAME }, new int[] { R.id.entry_name, R.id.entry_tempo })
 		{
 			@Override
 			public View getView(final int position, final View convertView, final ViewGroup parent)

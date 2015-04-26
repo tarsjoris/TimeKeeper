@@ -35,7 +35,7 @@ public class AbstractEntry
 		return fName;
 	}
 	
-	public void setName(final String name)
+	protected void setName(final String name)
 	{
 		fName = name;
 	}

@@ -23,7 +23,7 @@ import com.tjoris.timekeeper.data.PlaylistStore;
 
 public class OverviewActivity extends Activity
 {
-	private final InputDialog fAddPlaylistDialog;
+	private InputDialog fAddPlaylistDialog;
 	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
 	private List<PlaylistHeader> fPlaylists;
@@ -32,22 +32,6 @@ public class OverviewActivity extends Activity
 	public OverviewActivity()
 	{
 		fStore = new PlaylistStore(this);
-		fAddPlaylistDialog = new InputDialog(R.string.overview_action_addplaylist,
-				R.layout.dialog_addplaylist,
-				R.string.overview_addplaylist_add,
-				R.string.overview_addplaylist_cancel
-		)
-		{
-			@Override
-			public void dialogConfirmed(final Dialog dialog)
-			{
-				final CharSequence name = ((EditText)dialog.findViewById(R.id.overiew_addplaylist_name)).getText();
-				final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
-				final PlaylistHeader playlist = new PlaylistHeader(name.toString(), weight);
-				fStore.storePlaylistHeader(playlist);
-				openPlaylist(playlist);
-			}
-		};
 		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, new ConfirmationDialog.IListener()
 		{
 			@Override
@@ -62,6 +46,26 @@ public class OverviewActivity extends Activity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
+		fAddPlaylistDialog = new InputDialog(getLayoutInflater(),
+				R.string.overview_action_addplaylist,
+				R.drawable.ic_action_new,
+				R.layout.overview_addplaylist,
+				R.string.overview_addplaylist_add,
+				R.string.overview_addplaylist_cancel
+		)
+		{
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.overiew_addplaylist_name)).getText();
+				final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
+				final PlaylistHeader playlist = new PlaylistHeader(name.toString(), weight);
+				fStore.storePlaylistHeader(playlist);
+				openPlaylist(playlist, true);
+			}
+		};
+
 		setContentView(R.layout.overview);
 
 		final ListView overview = getOverview();
@@ -167,17 +171,17 @@ public class OverviewActivity extends Activity
 		{
 			data[i] = fPlaylists.get(i).getName();
 		}
-		getOverview().setAdapter(new ArrayAdapter<String>(this, R.layout.entry_playlist, data));
+		getOverview().setAdapter(new ArrayAdapter<String>(this, R.layout.overview_entry, data));
 	}
 
 	private void trigger(final int selection)
 	{
-		openPlaylist(fPlaylists.get(selection));
+		openPlaylist(fPlaylists.get(selection), false);
 	}
 	
-	private void openPlaylist(final PlaylistHeader playlist)
+	private void openPlaylist(final PlaylistHeader playlist, final boolean edit)
 	{
-		final Intent intent = new Intent(this, PlaylistActivity.class);
+		final Intent intent = new Intent(this, edit ? PlaylistEditActivity.class : PlaylistActivity.class);
 		intent.putExtra("playlist", playlist.getID());
 		startActivity(intent);
 	}
