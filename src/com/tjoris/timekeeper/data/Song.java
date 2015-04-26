@@ -14,6 +14,11 @@ public class Song extends AbstractEntry
 		super(id, name, weight);
 		fTempo = tempo;
 	}
+	
+	public Song(final Song other)
+	{
+		this(kID_NEW, other.getName(), other.getWeight(), other.getTempo());
+	}
 
 	public int getTempo()
 	{

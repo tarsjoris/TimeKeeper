@@ -8,30 +8,24 @@
     
 	<TextView
         android:id="@+id/entry_name"
-        style="@style/song_name"
+        style="@style/editsong_name"
         />
-    <Button
+    <ImageButton
         android:id="@+id/entry_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/listbutton"
-        android:icon="@drawable/ic_action_discard"
-        android:text="X"
+        style="@style/editsong_button"
+        android:background="@drawable/ic_action_discard"
+        android:contentDescription="@string/playlistedit_entry_remove"
         />
-    <Button
+    <ImageButton
         android:id="@+id/entry_up"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/listbutton"
-        android:icon="@drawable/ic_action_collapse"
-        android:text="U"
+        style="@style/editsong_button"
+        android:background="@drawable/ic_action_collapse"
+        android:contentDescription="@string/playlistedit_entry_up"
         />
-    <Button
+    <ImageButton
         android:id="@+id/entry_down"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/listbutton"
-        android:icon="@drawable/ic_action_expand"
-        android:text="D"
+        style="@style/editsong_button"
+        android:background="@drawable/ic_action_expand"
+        android:contentDescription="@string/playlistedit_entry_down"
         />
 </LinearLayout>

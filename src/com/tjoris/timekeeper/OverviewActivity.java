@@ -62,7 +62,7 @@ public class OverviewActivity extends Activity
 				final int weight = fPlaylists.isEmpty() ? 0 : fPlaylists.get(fPlaylists.size() - 1).getWeight() + 1;
 				final PlaylistHeader playlist = new PlaylistHeader(name.toString(), weight);
 				fStore.storePlaylistHeader(playlist);
-				openPlaylist(playlist, true);
+				openPlaylist(playlist);
 			}
 		};
 
@@ -176,12 +176,12 @@ public class OverviewActivity extends Activity
 
 	private void trigger(final int selection)
 	{
-		openPlaylist(fPlaylists.get(selection), false);
+		openPlaylist(fPlaylists.get(selection));
 	}
 	
-	private void openPlaylist(final PlaylistHeader playlist, final boolean edit)
+	private void openPlaylist(final PlaylistHeader playlist)
 	{
-		final Intent intent = new Intent(this, edit ? PlaylistEditActivity.class : PlaylistActivity.class);
+		final Intent intent = new Intent(this, PlaylistActivity.class);
 		intent.putExtra("playlist", playlist.getID());
 		startActivity(intent);
 	}

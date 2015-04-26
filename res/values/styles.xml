@@ -59,7 +59,21 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="listbutton">
-        <item name="android:padding">1dip</item>/
+    <style name="editsong_name">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:layout_marginLeft">10dp</item>
+		<item name="android:layout_marginRight">10dp</item>
+		<item name="android:duplicateParentState">true</item>
+		<item name="android:textColor">@color/entry_selector</item>
+	</style>
+	
+    <style name="editsong_button">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">0dp</item>
+		<item name="android:minWidth">0dp</item>
     </style>
 </resources>

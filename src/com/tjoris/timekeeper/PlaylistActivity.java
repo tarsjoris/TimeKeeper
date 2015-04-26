@@ -37,6 +37,7 @@ public class PlaylistActivity extends Activity
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
 	private InputDialog fRenameDialog;
+	private InputDialog fCopyDialog;
 
 	public PlaylistActivity()
 	{
@@ -60,7 +61,7 @@ public class PlaylistActivity extends Activity
 			@Override
 			public void viewCreated(final View view)
 			{
-				((EditText)view.findViewById(R.id.playlist_rename_name)).setText(fPlaylist.getName());
+				((EditText)view.findViewById(R.id.playlist_rename_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
 			}
 			
 			@Override
@@ -69,6 +70,30 @@ public class PlaylistActivity extends Activity
 				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlist_rename_name)).getText();
 				fPlaylist.setName(fStore, name.toString());
 				loadPlaylist(fPlaylist);
+			}
+		};
+		fCopyDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlist_action_copy,
+				R.drawable.ic_action_copy,
+				R.layout.playlist_copy,
+				R.string.playlist_copy_copy,
+				R.string.playlist_copy_cancel
+		)
+		{
+			@Override
+			public void viewCreated(final View view)
+			{
+				((EditText)view.findViewById(R.id.playlist_copy_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
+			}
+			
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlist_copy_name)).getText();
+				final Playlist playlist = new Playlist(fPlaylist, name.toString(), fStore.getNextPlaylistWeight());
+				fStore.addPlaylist(playlist);
+				
+				loadPlaylist(playlist);
 			}
 		};
 
@@ -188,17 +213,22 @@ public class PlaylistActivity extends Activity
 	{
 		switch (item.getItemId())
 		{
-		case R.id.playlist_action_rename:
-		{
-			fRenameDialog.show(getFragmentManager(), "renameplaylist");
-			return true;
-		}
 		case R.id.playlist_action_edit:
 		{
 			doStop();
 			final Intent intent = new Intent(this, PlaylistEditActivity.class);
 			intent.putExtra("playlist", fPlaylist.getID());
 			startActivity(intent);
+			return true;
+		}
+		case R.id.playlist_action_rename:
+		{
+			fRenameDialog.show(getFragmentManager(), "renameplaylist");
+			return true;
+		}
+		case R.id.playlist_action_copy:
+		{
+			fCopyDialog.show(getFragmentManager(), "copyplaylist");
 			return true;
 		}
 		default:

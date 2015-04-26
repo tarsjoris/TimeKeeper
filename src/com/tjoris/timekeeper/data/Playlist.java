@@ -18,6 +18,18 @@ public class Playlist extends PlaylistHeader
 		fSongs = new ArrayList<Song>();
 	}
 	
+	public Playlist(final Playlist other, final String name, final int weight)
+	{
+		this(name, weight);
+		if (other != null)
+		{
+			for (final Song song : other.getSongs())
+			{
+				fSongs.add(new Song(song));
+			}
+		}
+	}
+	
 	public List<Song> getSongs()
 	{
 		return fSongs;
