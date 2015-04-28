@@ -2,6 +2,6 @@
 <EditText xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/playlist_copy_name"
-    android:hint="@string/playlist_copy_name"
+    android:id="@+id/playlistedit_copy_name"
+    android:hint="@string/playlistedit_copy_name"
     />

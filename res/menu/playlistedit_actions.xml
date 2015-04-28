@@ -4,4 +4,12 @@
           android:icon="@drawable/ic_action_new"
           android:title="@string/playlistedit_action_addsong"
           android:showAsAction="ifRoom" />
+	<item android:id="@+id/playlistedit_action_rename"
+          android:icon="@drawable/ic_action_edit"
+          android:title="@string/playlistedit_action_rename"
+          android:showAsAction="never" />
+	<item android:id="@+id/playlistedit_action_copy"
+         android:icon="@drawable/ic_action_copy"
+         android:title="@string/playlistedit_action_copy"
+         android:showAsAction="never" />
 </menu>

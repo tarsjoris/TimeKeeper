@@ -31,6 +31,8 @@ public class PlaylistEditActivity extends Activity
 
 	private final List<Map<String, String>> fData;
 	private InputDialog fAddSongDialog;
+	private InputDialog fRenameDialog;
+	private InputDialog fCopyDialog;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
 
@@ -70,6 +72,53 @@ public class PlaylistEditActivity extends Activity
 				}
 				final Song song = new Song(name.toString(), tempo);
 				fPlaylist.addSong(fStore, song);
+				reloadSongs();
+			}
+		};
+		fRenameDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlistedit_action_rename,
+				R.drawable.ic_action_edit,
+				R.layout.playlistedit_rename,
+				R.string.playlistedit_rename_save,
+				R.string.playlistedit_rename_cancel
+		)
+		{
+			@Override
+			public void viewCreated(final View view)
+			{
+				((EditText)view.findViewById(R.id.playlistedit_rename_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
+			}
+			
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_rename_name)).getText();
+				fPlaylist.setName(fStore, name.toString());
+				reloadName();
+			}
+		};
+		fCopyDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlistedit_action_copy,
+				R.drawable.ic_action_copy,
+				R.layout.playlistedit_copy,
+				R.string.playlistedit_copy_copy,
+				R.string.playlistedit_copy_cancel
+		)
+		{
+			@Override
+			public void viewCreated(final View view)
+			{
+				((EditText)view.findViewById(R.id.playlistedit_copy_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
+			}
+			
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_copy_name)).getText();
+				final Playlist playlist = new Playlist(fPlaylist, name.toString(), fStore.getNextPlaylistWeight());
+				fStore.addPlaylist(playlist);
+				
+				fPlaylist = playlist;
 				loadPlaylist();
 			}
 		};
@@ -90,7 +139,7 @@ public class PlaylistEditActivity extends Activity
 					public void onClick(final View v)
 					{
 						fPlaylist.removeSong(fStore, position);
-						loadPlaylist();
+						reloadSongs();
 					}
 				});
 			    view.findViewById(R.id.playlistedit_entry_up).setOnClickListener(new View.OnClickListener()
@@ -99,7 +148,7 @@ public class PlaylistEditActivity extends Activity
 					public void onClick(final View v)
 					{
 						fPlaylist.moveUp(fStore, position);
-						loadPlaylist();
+						reloadSongs();
 					}
 				});
 			    view.findViewById(R.id.playlistedit_entry_down).setOnClickListener(new View.OnClickListener()
@@ -108,7 +157,7 @@ public class PlaylistEditActivity extends Activity
 					public void onClick(final View v)
 					{
 						fPlaylist.moveDown(fStore, position);
-						loadPlaylist();
+						reloadSongs();
 					}
 				});
 				return view;
@@ -170,6 +219,16 @@ public class PlaylistEditActivity extends Activity
 			fAddSongDialog.show(getFragmentManager(), "addsong");
 			return true;
 		}
+		case R.id.playlistedit_action_rename:
+		{
+			fRenameDialog.show(getFragmentManager(), "renameplaylist");
+			return true;
+		}
+		case R.id.playlistedit_action_copy:
+		{
+			fCopyDialog.show(getFragmentManager(), "copyplaylist");
+			return true;
+		}
 		default:
 		{
 			return super.onOptionsItemSelected(item);
@@ -179,10 +238,27 @@ public class PlaylistEditActivity extends Activity
 
 	private void loadPlaylist()
 	{
-		fData.clear();
+		reloadName();
+		reloadSongs();
+	}
+	
+	private void reloadName()
+	{
 		if (fPlaylist != null)
 		{
 			getActionBar().setTitle(fPlaylist.getName());
+		}
+		else
+		{
+			getActionBar().setTitle("<no playlist>");
+		}
+	}
+	
+	private void reloadSongs()
+	{
+		fData.clear();
+		if (fPlaylist != null)
+		{
 			for (final Song song : fPlaylist.getSongs())
 			{
 				final Map<String, String> map = new HashMap<String, String>();
@@ -190,10 +266,6 @@ public class PlaylistEditActivity extends Activity
 				map.put(kKEY_TEMPO, Integer.toString(song.getTempo()));
 				fData.add(map);
 			}
-		}
-		else
-		{
-			getActionBar().setTitle("<no playlist>");
 		}
 		((SimpleAdapter)getPlaylist().getAdapter()).notifyDataSetChanged();
 	}
