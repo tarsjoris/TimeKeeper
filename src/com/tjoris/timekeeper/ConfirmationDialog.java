@@ -14,11 +14,15 @@ public class ConfirmationDialog extends DialogFragment
 	}
 	
 	private final int fMessage;
+	private final int fPositiveMessage;
+	private final int fNegativeMessage;
 	private final IListener fListener;
 	
-	public ConfirmationDialog(final int message, final IListener listener)
+	public ConfirmationDialog(final int message, final int positiveMessage, final int negativeMessage, final IListener listener)
 	{
 		fMessage = message;
+		fPositiveMessage = positiveMessage;
+		fNegativeMessage = negativeMessage;
 		fListener = listener;
 	}
 	
@@ -26,13 +30,13 @@ public class ConfirmationDialog extends DialogFragment
 	public Dialog onCreateDialog(final Bundle savedInstanceState)
 	{
 		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		builder.setMessage(fMessage).setPositiveButton(R.string.overview_delete_yes, new DialogInterface.OnClickListener()
+		builder.setMessage(fMessage).setPositiveButton(fPositiveMessage, new DialogInterface.OnClickListener()
 		{
 			public void onClick(final DialogInterface dialog, final int id)
 			{
 				fListener.confirm();
 			}
-		}).setNegativeButton(R.string.overview_delete_no, null);
+		}).setNegativeButton(fNegativeMessage, null);
 		return builder.create();
 	}
 }

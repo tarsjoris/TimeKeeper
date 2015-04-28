@@ -32,7 +32,7 @@ public class OverviewActivity extends Activity
 	public OverviewActivity()
 	{
 		fStore = new PlaylistStore(this);
-		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, new ConfirmationDialog.IListener()
+		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no, new ConfirmationDialog.IListener()
 		{
 			@Override
 			public void confirm()
@@ -77,7 +77,6 @@ public class OverviewActivity extends Activity
 				trigger(position);
 			}
 		});
-		overview.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
 		overview.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
 		{
 			@Override
