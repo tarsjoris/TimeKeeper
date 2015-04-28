@@ -258,7 +258,7 @@ public class PlaylistActivity extends Activity
 			getActionBar().setTitle("<no playlist>");
 		}
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.playlist_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.entry_name, R.id.entry_tempo }));
+		playlistView.setAdapter(new SimpleAdapter(this, data, R.layout.playlist_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.playlist_entry_name, R.id.playlist_entry_tempo }));
 		
 		if (fPlaylist != null && !fPlaylist.getSongs().isEmpty())
 		{

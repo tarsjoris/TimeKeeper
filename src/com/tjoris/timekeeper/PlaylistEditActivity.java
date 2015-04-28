@@ -27,6 +27,7 @@ import com.tjoris.timekeeper.data.Song;
 public class PlaylistEditActivity extends Activity
 {
 	private static final String kKEY_NAME = "name";
+	private static final String kKEY_TEMPO = "tempo";
 
 	private final List<Map<String, String>> fData;
 	private InputDialog fAddSongDialog;
@@ -77,13 +78,13 @@ public class PlaylistEditActivity extends Activity
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.playlistedit_entry, new String[] { kKEY_NAME }, new int[] { R.id.entry_name, R.id.entry_tempo })
+		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.playlistedit_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.playlistedit_entry_name, R.id.playlistedit_entry_tempo })
 		{
 			@Override
 			public View getView(final int position, final View convertView, final ViewGroup parent)
 			{
 			    final View view = super.getView(position, convertView, parent);
-			    view.findViewById(R.id.entry_delete).setOnClickListener(new View.OnClickListener()
+			    view.findViewById(R.id.playlistedit_entry_delete).setOnClickListener(new View.OnClickListener()
 				{
 					@Override
 					public void onClick(final View v)
@@ -92,7 +93,7 @@ public class PlaylistEditActivity extends Activity
 						loadPlaylist();
 					}
 				});
-			    view.findViewById(R.id.entry_up).setOnClickListener(new View.OnClickListener()
+			    view.findViewById(R.id.playlistedit_entry_up).setOnClickListener(new View.OnClickListener()
 				{
 					@Override
 					public void onClick(final View v)
@@ -101,7 +102,7 @@ public class PlaylistEditActivity extends Activity
 						loadPlaylist();
 					}
 				});
-			    view.findViewById(R.id.entry_down).setOnClickListener(new View.OnClickListener()
+			    view.findViewById(R.id.playlistedit_entry_down).setOnClickListener(new View.OnClickListener()
 				{
 					@Override
 					public void onClick(final View v)
@@ -186,6 +187,7 @@ public class PlaylistEditActivity extends Activity
 			{
 				final Map<String, String> map = new HashMap<String, String>();
 				map.put(kKEY_NAME, song.getName());
+				map.put(kKEY_TEMPO, Integer.toString(song.getTempo()));
 				fData.add(map);
 			}
 		}

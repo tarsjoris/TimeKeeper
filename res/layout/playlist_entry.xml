@@ -7,11 +7,11 @@
     >
     
 	<TextView
-        android:id="@+id/entry_name"
-        style="@style/song_name"
+        android:id="@+id/playlist_entry_name"
+        style="@style/playlist_entry_name"
         />
     <TextView
-        android:id="@+id/entry_tempo"
-        style="@style/song_tempo"
+        android:id="@+id/playlist_entry_tempo"
+        style="@style/playlist_entry_tempo"
         />
 </LinearLayout>

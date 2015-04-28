@@ -40,7 +40,8 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="song_name">
+    <style name="playlist_entry_name">
+        <item name="android:gravity">center_vertical</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">fill_parent</item>
 		<item name="android:layout_weight">1</item>
@@ -49,8 +50,8 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="song_tempo">
-        <item name="android:gravity">right</item>
+    <style name="playlist_entry_tempo">
+        <item name="android:gravity">center_vertical|right</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">fill_parent</item>
 		<item name="android:layout_weight">1</item>
@@ -59,7 +60,7 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="editsong_name">
+    <style name="playlistedit_entry_name">
         <item name="android:gravity">center_vertical</item>
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">fill_parent</item>
@@ -70,7 +71,17 @@
 		<item name="android:textColor">@color/entry_selector</item>
 	</style>
 	
-    <style name="editsong_button">
+    <style name="playlistedit_entry_tempo">
+        <item name="android:gravity">center_vertical|right</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">fill_parent</item>
+		<item name="android:layout_weight">1</item>
+		<item name="android:layout_marginRight">10dp</item>
+		<item name="android:duplicateParentState">true</item>
+		<item name="android:textColor">@color/entry_selector</item>
+	</style>
+	
+    <style name="playlistedit_entry_button">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:minHeight">0dp</item>
