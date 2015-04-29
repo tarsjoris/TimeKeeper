@@ -33,12 +33,14 @@ public class PlaylistEditActivity extends Activity
 
 	private final List<Map<String, String>> fData;
 	private InputDialog fAddSongDialog;
-	private InputDialog fRenameDialog;
+	private InputDialog fRenamePlaylistDialog;
 	private InputDialog fCopyDialog;
+	private InputDialog fEditSongDialog;
 	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
 	private ActionMode fActionMode = null;
+	private int fPosition;
 
 	public PlaylistEditActivity()
 	{
@@ -64,7 +66,7 @@ public class PlaylistEditActivity extends Activity
 		fAddSongDialog = new InputDialog(getLayoutInflater(),
 				R.string.playlistedit_action_addsong,
 				R.drawable.ic_action_new,
-				R.layout.playlistedit_addsong,
+				R.layout.playlistedit_song,
 				R.string.playlistedit_addsong_add,
 				R.string.playlistedit_addsong_cancel
 		)
@@ -72,40 +74,32 @@ public class PlaylistEditActivity extends Activity
 			@Override
 			public void dialogConfirmed(final Dialog dialog)
 			{
-				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_addsong_name)).getText();
-				final CharSequence tempoS = ((EditText)dialog.findViewById(R.id.playlistedit_addsong_tempo)).getText();
-				int tempo = 120;
-				try
-				{
-					tempo = Math.min(300, Math.max(30, Integer.parseInt(tempoS.toString())));
-				}
-				catch (final NumberFormatException e)
-				{
-					Log.e("TimeKeeper", "Invalid tempo: " + e.getMessage(), e);
-				}
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_song_name)).getText();
+				final CharSequence tempoS = ((EditText)dialog.findViewById(R.id.playlistedit_song_tempo)).getText();
+				final int tempo = parseTempo(tempoS);
 				final Song song = new Song(name.toString(), tempo);
 				fPlaylist.addSong(fStore, song);
 				reloadSongs();
 			}
 		};
-		fRenameDialog = new InputDialog(getLayoutInflater(),
-				R.string.playlistedit_action_rename,
+		fRenamePlaylistDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlistedit_action_renameplaylist,
 				R.drawable.ic_action_edit,
-				R.layout.playlistedit_rename,
-				R.string.playlistedit_rename_save,
-				R.string.playlistedit_rename_cancel
+				R.layout.playlistedit_renameplaylist,
+				R.string.playlistedit_renameplaylist_save,
+				R.string.playlistedit_renameplaylist_cancel
 		)
 		{
 			@Override
 			public void viewCreated(final View view)
 			{
-				((EditText)view.findViewById(R.id.playlistedit_rename_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
+				((EditText)view.findViewById(R.id.playlistedit_renameplaylist_name)).setText(fPlaylist != null ? fPlaylist.getName() : "");
 			}
 			
 			@Override
 			public void dialogConfirmed(final Dialog dialog)
 			{
-				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_rename_name)).getText();
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_renameplaylist_name)).getText();
 				fPlaylist.setName(fStore, name.toString());
 				reloadName();
 			}
@@ -135,6 +129,33 @@ public class PlaylistEditActivity extends Activity
 				loadPlaylist();
 			}
 		};
+		fEditSongDialog = new InputDialog(getLayoutInflater(),
+				R.string.playlistedit_action_editsong,
+				R.drawable.ic_action_edit,
+				R.layout.playlistedit_song,
+				R.string.playlistedit_editsong_save,
+				R.string.playlistedit_editsong_cancel
+		)
+		{
+			@Override
+			public void viewCreated(final View view)
+			{
+				final Song song = fPlaylist.getSongs().get(fPosition);
+				((EditText)view.findViewById(R.id.playlistedit_song_name)).setText(song.getName());
+				((EditText)view.findViewById(R.id.playlistedit_song_tempo)).setText(Integer.toString(song.getTempo()));
+			}
+			
+			@Override
+			public void dialogConfirmed(final Dialog dialog)
+			{
+				final Song song = fPlaylist.getSongs().get(fPosition);
+				final CharSequence name = ((EditText)dialog.findViewById(R.id.playlistedit_song_name)).getText();
+				final CharSequence tempoS = ((EditText)dialog.findViewById(R.id.playlistedit_song_tempo)).getText();
+				final int tempo = parseTempo(tempoS);
+				song.update(fStore, fPlaylist, name.toString(), tempo);
+				reloadSongs();
+			}
+		};
 
 		setContentView(R.layout.playlistedit);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
@@ -146,7 +167,11 @@ public class PlaylistEditActivity extends Activity
 			@Override
 			public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id)
 			{
-				//trigger(position);
+				if (fPlaylist != null && position >= 0 && position < fPlaylist.getSongs().size())
+				{
+					fPosition = position;
+					fEditSongDialog.show(getFragmentManager(), "edit_song");
+				}
 			}
 		});
 		playlistView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
@@ -251,9 +276,9 @@ public class PlaylistEditActivity extends Activity
 			fAddSongDialog.show(getFragmentManager(), "addsong");
 			return true;
 		}
-		case R.id.playlistedit_action_rename:
+		case R.id.playlistedit_action_renameplaylist:
 		{
-			fRenameDialog.show(getFragmentManager(), "renameplaylist");
+			fRenamePlaylistDialog.show(getFragmentManager(), "renameplaylist");
 			return true;
 		}
 		case R.id.playlistedit_action_copy:
@@ -356,5 +381,18 @@ public class PlaylistEditActivity extends Activity
 	private ListView getPlaylist()
 	{
 		return (ListView) findViewById(R.id.playlistedit);
+	}
+	
+	private static int parseTempo(final CharSequence tempo)
+	{
+		try
+		{
+			return Math.min(300, Math.max(30, Integer.parseInt(tempo.toString())));
+		}
+		catch (final NumberFormatException e)
+		{
+			Log.e("TimeKeeper", "Invalid tempo: " + e.getMessage(), e);
+		}
+		return 120;
 	}
 }

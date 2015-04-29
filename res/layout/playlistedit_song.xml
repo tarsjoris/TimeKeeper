@@ -6,14 +6,14 @@
 	<EditText
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
-	    android:id="@+id/playlistedit_addsong_name"
-	    android:hint="@string/playlistedit_addsong_name"
+	    android:id="@+id/playlistedit_song_name"
+	    android:hint="@string/playlistedit_song_name"
 	    />
 	<EditText
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:inputType="number"
-	    android:id="@+id/playlistedit_addsong_tempo"
-	    android:hint="@string/playlistedit_addsong_tempo"
+	    android:id="@+id/playlistedit_song_tempo"
+	    android:hint="@string/playlistedit_song_tempo"
 	    />
 </LinearLayout>

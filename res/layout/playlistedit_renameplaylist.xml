@@ -2,6 +2,6 @@
 <EditText xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/playlistedit_rename_name"
-    android:hint="@string/playlistedit_rename_name"
+    android:id="@+id/playlistedit_renameplaylist_name"
+    android:hint="@string/playlistedit_renameplaylist_name"
     />
