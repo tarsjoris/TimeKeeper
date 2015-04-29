@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">TimeKeeper</string>
     <string name="overview_action_addplaylist">Add playlist</string>
+    <string name="overview_action_up">Up</string>
+    <string name="overview_action_down">Down</string>
     <string name="overview_action_delete">Delete</string>
     <string name="overview_addplaylist_add">Add</string>
     <string name="overview_addplaylist_cancel">Cancel</string>
@@ -34,5 +35,4 @@
     <string name="pref_summary_frequency">The frequency of the beep in Hz</string>
     <string name="pref_title_duration">Duration</string>
     <string name="pref_summary_duration">The duration of the beep in ms</string>
-
 </resources>

@@ -1,6 +1,9 @@
 package com.tjoris.timekeeper;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -14,15 +17,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
 import com.tjoris.timekeeper.data.PlaylistHeader;
 import com.tjoris.timekeeper.data.PlaylistStore;
 
 public class OverviewActivity extends Activity
 {
+	private static final String kKEY_NAME = "name";
+
+	private final List<Map<String, String>> fData;
 	private InputDialog fAddPlaylistDialog;
 	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
@@ -31,6 +37,7 @@ public class OverviewActivity extends Activity
 
 	public OverviewActivity()
 	{
+		fData = new ArrayList<Map<String, String>>();
 		fStore = new PlaylistStore(this);
 		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no, new ConfirmationDialog.IListener()
 		{
@@ -69,6 +76,7 @@ public class OverviewActivity extends Activity
 		setContentView(R.layout.overview);
 
 		final ListView overview = getOverview();
+		overview.setAdapter(new SimpleAdapter(this, fData, R.layout.overview_entry, new String[] { kKEY_NAME }, new int[] { R.id.overview_entry_name }));
 		overview.setOnItemClickListener(new AdapterView.OnItemClickListener()
 		{
 			@Override
@@ -104,6 +112,16 @@ public class OverviewActivity extends Activity
 			{
 				switch (item.getItemId())
 				{
+				case R.id.overview_action_up:
+				{
+					move(true);
+					return true;
+				}
+				case R.id.overview_action_down:
+				{
+					move(false);
+					return true;
+				}
 				case R.id.overview_action_delete:
 				{
 					fDeleteDialog.show(getFragmentManager(), "delete_playlists");
@@ -129,7 +147,7 @@ public class OverviewActivity extends Activity
 	protected void onResume()
 	{
 		super.onResume();
-		fillList();
+		reloadList();
 	}
 
 	@Override
@@ -162,15 +180,17 @@ public class OverviewActivity extends Activity
 		}
 	}
 
-	private void fillList()
+	private void reloadList()
 	{
+		fData.clear();
 		fPlaylists = fStore.readAllPlaylists();
-		final String[] data = new String[fPlaylists.size()];
 		for (int i = 0; i < fPlaylists.size(); ++i)
 		{
-			data[i] = fPlaylists.get(i).getName();
+			final Map<String, String> map = new HashMap<String, String>();
+			map.put(kKEY_NAME, fPlaylists.get(i).getName());
+			fData.add(map);
 		}
-		getOverview().setAdapter(new ArrayAdapter<String>(this, R.layout.overview_entry, data));
+		((SimpleAdapter)getOverview().getAdapter()).notifyDataSetChanged();
 	}
 
 	private void trigger(final int selection)
@@ -200,7 +220,53 @@ public class OverviewActivity extends Activity
 		{
 			fActionMode.finish();
 		}
-		fillList();
+		reloadList();
+	}
+
+	private void move(final boolean up)
+	{
+		final ListView overview = getOverview();
+		final SparseBooleanArray selection = overview.getCheckedItemPositions();
+		boolean ignore = false;
+		for (int i = up ? 0 : overview.getChildCount() - 1; up ? i < overview.getChildCount() : i >= 0; i += up ? 1 : -1)
+		{
+			if (selection.get(i))
+			{
+				if (up ? i <= 0 : i >= overview.getChildCount() - 1)
+				{
+					// leave the first selection group alone
+					ignore = true;
+				}
+				else if (!ignore)
+				{
+					final int otherIndex = up ? i - 1 : i + 1;
+					if (!selection.get(otherIndex))
+					{
+						overview.setItemChecked(i, false);
+						overview.setItemChecked(otherIndex, true);
+					}
+					switchPlaylists(otherIndex, i);
+				}
+			}
+			else
+			{
+				ignore = false;
+			}
+		}
+		reloadList();
+	}
+	
+	private void switchPlaylists(final int index1, final int index2)
+	{
+		final PlaylistHeader playlist1 = fPlaylists.get(index1);
+		final PlaylistHeader playlist2 = fPlaylists.get(index2);
+		final int tempWeight = playlist1.getWeight();
+		playlist1.setWeight(playlist2.getWeight());
+		playlist2.setWeight(tempWeight);
+		fPlaylists.set(index1, playlist2);
+		fPlaylists.set(index2, playlist1);
+		fStore.storePlaylistHeader(playlist1);
+		fStore.storePlaylistHeader(playlist2);
 	}
 
 	private ListView getOverview()
