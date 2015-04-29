@@ -33,6 +33,7 @@
         <activity
             android:name=".PlaylistEditActivity"
             android:label="@string/playlistedit"
+            android:icon="@drawable/ic_action_edit"
             android:parentActivityName="com.tjoris.timekeeper.PlaylistActivity" >
         </activity>
 

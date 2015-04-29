@@ -76,25 +76,15 @@ public class Playlist extends PlaylistHeader
 		}
 	}
 	
-	public void moveUp(final PlaylistStore store, final int position)
+	public void move(final PlaylistStore store, final int position, final boolean up)
 	{
-		move(store, position, -1);
-	}
-	
-	public void moveDown(final PlaylistStore store, final int position)
-	{
-		move(store, position, 1);
-	}
-	
-	private void move(final PlaylistStore store, final int position, final int delta)
-	{
-		final int otherPos = position + delta;
+		final int otherPos = position + (up ? -1 : 1);
 		if (position >= 0 && position < fSongs.size() && otherPos >= 0 && otherPos < fSongs.size())
 		{
 			final Song song = fSongs.get(position);
 			final Song other = fSongs.get(otherPos);
-			fSongs.remove(position);
-			fSongs.add(otherPos, song);
+			fSongs.set(position, other);
+			fSongs.set(otherPos, song);
 			final int tmpWeight = other.getWeight();
 			other.setWeight(song.getWeight());
 			song.setWeight(tmpWeight);

@@ -10,10 +10,12 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.EditText;
@@ -33,17 +35,28 @@ public class PlaylistEditActivity extends Activity
 	private InputDialog fAddSongDialog;
 	private InputDialog fRenameDialog;
 	private InputDialog fCopyDialog;
+	private final ConfirmationDialog fDeleteDialog;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
+	private ActionMode fActionMode = null;
 
 	public PlaylistEditActivity()
 	{
 		fData = new ArrayList<Map<String, String>>();
 		fStore = new PlaylistStore(this);
+
+		fDeleteDialog = new ConfirmationDialog(R.string.playlistedit_delete_message, R.string.playlistedit_delete_yes, R.string.playlistedit_delete_no, new ConfirmationDialog.IListener()
+		{
+			@Override
+			public void confirm()
+			{
+				deleteSelectedItems();
+			}
+		});
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
-    @Override
+	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -127,48 +140,67 @@ public class PlaylistEditActivity extends Activity
 		getActionBar().setDisplayHomeAsUpEnabled(true);
 
 		final ListView playlistView = getPlaylist();
-		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.playlistedit_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.playlistedit_entry_name, R.id.playlistedit_entry_tempo })
-		{
-			@Override
-			public View getView(final int position, final View convertView, final ViewGroup parent)
-			{
-			    final View view = super.getView(position, convertView, parent);
-			    view.findViewById(R.id.playlistedit_entry_delete).setOnClickListener(new View.OnClickListener()
-				{
-					@Override
-					public void onClick(final View v)
-					{
-						fPlaylist.removeSong(fStore, position);
-						reloadSongs();
-					}
-				});
-			    view.findViewById(R.id.playlistedit_entry_up).setOnClickListener(new View.OnClickListener()
-				{
-					@Override
-					public void onClick(final View v)
-					{
-						fPlaylist.moveUp(fStore, position);
-						reloadSongs();
-					}
-				});
-			    view.findViewById(R.id.playlistedit_entry_down).setOnClickListener(new View.OnClickListener()
-				{
-					@Override
-					public void onClick(final View v)
-					{
-						fPlaylist.moveDown(fStore, position);
-						reloadSongs();
-					}
-				});
-				return view;
-			}
-		});
+		playlistView.setAdapter(new SimpleAdapter(this, fData, R.layout.playlist_entry, new String[] { kKEY_NAME, kKEY_TEMPO }, new int[] { R.id.playlist_entry_name, R.id.playlist_entry_tempo }));
 		playlistView.setOnItemClickListener(new OnItemClickListener()
 		{
 			@Override
 			public void onItemClick(final AdapterView<?> parent, final View view, final int position, final long id)
 			{
 				//trigger(position);
+			}
+		});
+		playlistView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener()
+		{
+			@Override
+			public boolean onPrepareActionMode(final ActionMode mode, final Menu menu)
+			{
+				return false;
+			}
+
+			@Override
+			public void onDestroyActionMode(final ActionMode mode)
+			{
+				fActionMode = null;
+			}
+
+			@Override
+			public boolean onCreateActionMode(final ActionMode mode, final Menu menu)
+			{
+				fActionMode = mode;
+				mode.getMenuInflater().inflate(R.menu.playlistedit_contextactions, menu);
+				return true;
+			}
+
+			@Override
+			public boolean onActionItemClicked(final ActionMode mode, final MenuItem item)
+			{
+				switch (item.getItemId())
+				{
+				case R.id.playlistedit_action_up:
+				{
+					move(true);
+					return true;
+				}
+				case R.id.playlistedit_action_down:
+				{
+					move(false);
+					return true;
+				}
+				case R.id.playlistedit_action_delete:
+				{
+					fDeleteDialog.show(getFragmentManager(), "delete_songs");
+					return true;
+				}
+				default:
+				{
+					return false;
+				}
+				}
+			}
+
+			@Override
+			public void onItemCheckedStateChanged(final ActionMode mode, final int position, final long id, final boolean checked)
+			{
 			}
 		});
 		
@@ -268,6 +300,57 @@ public class PlaylistEditActivity extends Activity
 			}
 		}
 		((SimpleAdapter)getPlaylist().getAdapter()).notifyDataSetChanged();
+	}
+
+	private void deleteSelectedItems()
+	{
+		final ListView playlist = getPlaylist();
+		final SparseBooleanArray selection = playlist.getCheckedItemPositions();
+		for (int i = playlist.getChildCount() - 1; i >= 0; --i)
+		{
+			if (selection.get(i))
+			{
+				fPlaylist.removeSong(fStore, i);
+			}
+		}
+		if (fActionMode != null)
+		{
+			fActionMode.finish();
+		}
+		reloadSongs();
+	}
+
+	private void move(final boolean up)
+	{
+		final ListView playlist = getPlaylist();
+		final SparseBooleanArray selection = playlist.getCheckedItemPositions();
+		boolean ignore = false;
+		for (int i = up ? 0 : playlist.getChildCount() - 1; up ? i < playlist.getChildCount() : i >= 0; i += up ? 1 : -1)
+		{
+			if (selection.get(i))
+			{
+				if (up ? i <= 0 : i >= playlist.getChildCount() - 1)
+				{
+					// leave the first selection group alone
+					ignore = true;
+				}
+				else if (!ignore)
+				{
+					final int otherIndex = up ? i - 1 : i + 1;
+					if (!selection.get(otherIndex))
+					{
+						playlist.setItemChecked(i, false);
+						playlist.setItemChecked(otherIndex, true);
+					}
+					fPlaylist.move(fStore, i, up);
+				}
+			}
+			else
+			{
+				ignore = false;
+			}
+		}
+		reloadSongs();
 	}
 	
 	private ListView getPlaylist()
