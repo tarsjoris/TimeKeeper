@@ -39,14 +39,15 @@ public class OverviewActivity extends Activity
 	{
 		fData = new ArrayList<Map<String, String>>();
 		fStore = new PlaylistStore(this);
-		fDeleteDialog = new ConfirmationDialog(R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no, new ConfirmationDialog.IListener()
+		fDeleteDialog = new ConfirmationDialog()
 		{
 			@Override
 			public void confirm()
 			{
 				deleteSelectedItems();
 			}
-		});
+		};
+		fDeleteDialog.setOptions(R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no);
 	}
 
 	@Override
@@ -209,7 +210,7 @@ public class OverviewActivity extends Activity
 	{
 		final ListView overview = getOverview();
 		final SparseBooleanArray selection = overview.getCheckedItemPositions();
-		for (int i = 0; i < overview.getChildCount(); ++i)
+		for (int i = 0; i < fPlaylists.size(); ++i)
 		{
 			if (selection.get(i))
 			{
@@ -228,11 +229,11 @@ public class OverviewActivity extends Activity
 		final ListView overview = getOverview();
 		final SparseBooleanArray selection = overview.getCheckedItemPositions();
 		boolean ignore = false;
-		for (int i = up ? 0 : overview.getChildCount() - 1; up ? i < overview.getChildCount() : i >= 0; i += up ? 1 : -1)
+		for (int i = up ? 0 : fPlaylists.size() - 1; up ? i < fPlaylists.size() : i >= 0; i += up ? 1 : -1)
 		{
 			if (selection.get(i))
 			{
-				if (up ? i <= 0 : i >= overview.getChildCount() - 1)
+				if (up ? i <= 0 : i >= fPlaylists.size() - 1)
 				{
 					// leave the first selection group alone
 					ignore = true;

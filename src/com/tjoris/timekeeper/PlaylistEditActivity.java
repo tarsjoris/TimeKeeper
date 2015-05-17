@@ -47,14 +47,15 @@ public class PlaylistEditActivity extends Activity
 		fData = new ArrayList<Map<String, String>>();
 		fStore = new PlaylistStore(this);
 
-		fDeleteDialog = new ConfirmationDialog(R.string.playlistedit_delete_message, R.string.playlistedit_delete_yes, R.string.playlistedit_delete_no, new ConfirmationDialog.IListener()
+		fDeleteDialog = new ConfirmationDialog()
 		{
 			@Override
 			public void confirm()
 			{
 				deleteSelectedItems();
 			}
-		});
+		};
+		fDeleteDialog.setOptions(R.string.playlistedit_delete_message, R.string.playlistedit_delete_yes, R.string.playlistedit_delete_no);
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -331,7 +332,7 @@ public class PlaylistEditActivity extends Activity
 	{
 		final ListView playlist = getPlaylist();
 		final SparseBooleanArray selection = playlist.getCheckedItemPositions();
-		for (int i = playlist.getChildCount() - 1; i >= 0; --i)
+		for (int i = fData.size() - 1; i >= 0; --i)
 		{
 			if (selection.get(i))
 			{
@@ -350,11 +351,11 @@ public class PlaylistEditActivity extends Activity
 		final ListView playlist = getPlaylist();
 		final SparseBooleanArray selection = playlist.getCheckedItemPositions();
 		boolean ignore = false;
-		for (int i = up ? 0 : playlist.getChildCount() - 1; up ? i < playlist.getChildCount() : i >= 0; i += up ? 1 : -1)
+		for (int i = up ? 0 : fData.size() - 1; up ? i < fData.size() : i >= 0; i += up ? 1 : -1)
 		{
 			if (selection.get(i))
 			{
-				if (up ? i <= 0 : i >= playlist.getChildCount() - 1)
+				if (up ? i <= 0 : i >= fData.size() - 1)
 				{
 					// leave the first selection group alone
 					ignore = true;
