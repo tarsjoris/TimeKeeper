@@ -67,7 +67,7 @@ public class Playlist extends PlaylistHeader
 		{
 			final Song song = fSongs.remove(position);
 			store.deleteSong(song);
-			for (int i = position + 1; i < fSongs.size(); ++i)
+			for (int i = position; i < fSongs.size(); ++i)
 			{
 				final Song after = fSongs.get(i);
 				after.setWeight(after.getWeight() - 1);
