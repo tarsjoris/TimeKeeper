@@ -8,6 +8,7 @@ import java.util.Map;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -126,8 +127,9 @@ public class PlaylistEditActivity extends Activity
 				final Playlist playlist = new Playlist(fPlaylist, name.toString(), fStore.getNextPlaylistWeight());
 				fStore.addPlaylist(playlist);
 				
-				fPlaylist = playlist;
-				loadPlaylist();
+				final Intent intent = new Intent(PlaylistEditActivity.this, PlaylistActivity.class);
+				intent.putExtra("playlist", playlist.getID());
+				startActivity(intent);
 			}
 		};
 		fEditSongDialog = new InputDialog(getLayoutInflater(),
