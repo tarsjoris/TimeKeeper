@@ -14,4 +14,12 @@
 		android:inputType="number"
 		android:defaultValue="20"
 		/>
+    <ListPreference
+        android:key="screenorientation"
+        android:title="@string/pref_title_screenorientation"
+        android:summary="@string/pref_summary_screenorientation"
+        android:entries="@array/pref_entries_screenorientation"
+        android:entryValues="@array/pref_entrievalues_screenorientation"
+        android:defaultValue="10"
+        />
 </PreferenceScreen>

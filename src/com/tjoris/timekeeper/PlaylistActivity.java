@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -94,24 +93,11 @@ public class PlaylistActivity extends Activity
 			}
 		});
 		
-		final int frequency = getIntPreference(SettingsActivity.kFREQUENCY, 880);
-		final int duration = getIntPreference(SettingsActivity.kDURATION, 20);
+		final int frequency = SettingsActivity.getIntPreference(this, SettingsActivity.kFREQUENCY, 880);
+		final int duration = SettingsActivity.getIntPreference(this, SettingsActivity.kDURATION, 20);
 		fSoundGenerator = new SoundGenerator(this, frequency, duration);
 		
 		loadIntent();
-	}
-	
-	private int getIntPreference(final String key, final int defaultValue)
-	{
-		final String result = PreferenceManager.getDefaultSharedPreferences(this).getString(key, Integer.toString(defaultValue));
-		try
-		{
-			return Integer.parseInt(result);
-		}
-		catch (final NumberFormatException e)
-		{
-			return defaultValue;
-		}
 	}
 	
 	private void loadIntent()

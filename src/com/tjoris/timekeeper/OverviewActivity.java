@@ -8,6 +8,7 @@ import java.util.Map;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.SparseBooleanArray;
@@ -148,6 +149,8 @@ public class OverviewActivity extends Activity
 	protected void onResume()
 	{
 		super.onResume();
+		final int orientation = SettingsActivity.getIntPreference(this, SettingsActivity.kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+		setRequestedOrientation(orientation);
 		reloadList();
 	}
 

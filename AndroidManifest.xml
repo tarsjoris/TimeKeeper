@@ -29,7 +29,7 @@
             android:label="@string/playlist"
             android:launchMode="singleTop"
             android:parentActivityName="com.tjoris.timekeeper.OverviewActivity"
-            android:screenOrientation="fullSensor" >
+            android:screenOrientation="locked" >
         </activity>
 
         <activity
@@ -37,7 +37,7 @@
             android:label="@string/playlistedit"
             android:icon="@drawable/ic_action_edit"
             android:parentActivityName="com.tjoris.timekeeper.PlaylistActivity"
-            android:screenOrientation="fullSensor" >
+            android:screenOrientation="locked" >
         </activity>
 
         <activity
@@ -45,7 +45,7 @@
             android:label="@string/settings"
             android:icon="@drawable/ic_action_settings"
             android:parentActivityName="com.tjoris.timekeeper.OverviewActivity"
-            android:screenOrientation="fullSensor" >
+            android:screenOrientation="locked" >
         </activity>
     </application>
 </manifest>
