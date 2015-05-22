@@ -46,7 +46,7 @@ public class PlaylistStore extends SQLiteOpenHelper
 		playlist.addSong(new Song("Message In a Bottle", 152));
 		playlist.addSong(new Song("You Oughta Know", 105));
 		playlist.addSong(new Song("Hard To Handle", 104));
-		playlist.addSong(new Song("Personal Jesus", 117));
+		playlist.addSong(new Song("Personal Jesus", 119));
 		playlist.addSong(new Song("Run to you", 126));
 		playlist.addSong(new Song("Don't Stop Me Now (1/2)", 101));
 		playlist.addSong(new Song("Don't Stop Me Now (2/2)", 158));
