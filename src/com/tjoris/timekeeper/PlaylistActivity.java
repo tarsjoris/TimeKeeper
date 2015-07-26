@@ -8,6 +8,7 @@ import java.util.Map;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +25,7 @@ import android.widget.SimpleAdapter;
 import com.tjoris.timekeeper.data.Playlist;
 import com.tjoris.timekeeper.data.PlaylistStore;
 import com.tjoris.timekeeper.data.Song;
+import com.tjoris.timekeeper.util.MediaButtonReceiver;
 
 public class PlaylistActivity extends Activity
 {
@@ -33,6 +35,7 @@ public class PlaylistActivity extends Activity
 	private SoundGenerator fSoundGenerator;
 	private final PlaylistStore fStore;
 	private Playlist fPlaylist = null;
+	private MediaButtonReceiver fMediaButtonReceiver = null;
 
 	public PlaylistActivity()
 	{
@@ -98,6 +101,18 @@ public class PlaylistActivity extends Activity
 		fSoundGenerator = new SoundGenerator(this, frequency, duration);
 		
 		loadIntent();
+		
+		fMediaButtonReceiver = new MediaButtonReceiver()
+		{
+			@Override
+			public void run()
+			{
+			    doStart();
+			}
+		};
+		final IntentFilter filter = new IntentFilter(Intent.ACTION_MEDIA_BUTTON);
+		filter.setPriority(1000);
+		registerReceiver(fMediaButtonReceiver, filter); 
 	}
 	
 	private void loadIntent()
@@ -130,6 +145,7 @@ public class PlaylistActivity extends Activity
 	@Override
 	protected void onDestroy()
 	{
+		unregisterReceiver(fMediaButtonReceiver);
 		fSoundGenerator.close();
 		fStore.close();
 		super.onDestroy();
