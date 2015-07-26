@@ -35,7 +35,7 @@ public class Playlist extends PlaylistHeader
 		return fSongs;
 	}
 	
-	public void addSong(final PlaylistStore store, final Song song)
+	public void addSong(final IPlaylistStore store, final Song song)
 	{
 		addSong(song);
 		store.storeSong(this, song);
@@ -61,7 +61,7 @@ public class Playlist extends PlaylistHeader
 		fSongs.add(song);
 	}
 	
-	public void removeSong(final PlaylistStore store, final int position)
+	public void removeSong(final IPlaylistStore store, final int position)
 	{
 		if (position >= 0 && position < fSongs.size())
 		{
@@ -76,7 +76,7 @@ public class Playlist extends PlaylistHeader
 		}
 	}
 	
-	public void move(final PlaylistStore store, final int position, final boolean up)
+	public void move(final IPlaylistStore store, final int position, final boolean up)
 	{
 		final int otherPos = position + (up ? -1 : 1);
 		if (position >= 0 && position < fSongs.size() && otherPos >= 0 && otherPos < fSongs.size())

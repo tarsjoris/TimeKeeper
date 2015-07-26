@@ -21,8 +21,9 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import com.tjoris.timekeeper.data.IPlaylistStore;
 import com.tjoris.timekeeper.data.Playlist;
-import com.tjoris.timekeeper.data.PlaylistStore;
+import com.tjoris.timekeeper.data.PlaylistStoreFactory;
 import com.tjoris.timekeeper.data.Song;
 
 public class PlaylistActivity extends Activity
@@ -31,12 +32,12 @@ public class PlaylistActivity extends Activity
 	private static final String kKEY_TEMPO = "tempo";
 
 	private SoundGenerator fSoundGenerator;
-	private final PlaylistStore fStore;
+	private final IPlaylistStore fStore;
 	private Playlist fPlaylist = null;
 
 	public PlaylistActivity()
 	{
-		fStore = new PlaylistStore(this);
+		fStore = PlaylistStoreFactory.createStore(this);
 	}
 
 	@SuppressLint("ClickableViewAccessibility")

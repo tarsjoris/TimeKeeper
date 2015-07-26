@@ -23,8 +23,9 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import com.tjoris.timekeeper.data.IPlaylistStore;
 import com.tjoris.timekeeper.data.Playlist;
-import com.tjoris.timekeeper.data.PlaylistStore;
+import com.tjoris.timekeeper.data.PlaylistStoreFactory;
 import com.tjoris.timekeeper.data.Song;
 
 public class PlaylistEditActivity extends Activity
@@ -38,7 +39,7 @@ public class PlaylistEditActivity extends Activity
 	private InputDialog fCopyDialog;
 	private InputDialog fEditSongDialog;
 	private final ConfirmationDialog fDeleteDialog;
-	private final PlaylistStore fStore;
+	private final IPlaylistStore fStore;
 	private Playlist fPlaylist = null;
 	private ActionMode fActionMode = null;
 	private int fPosition;
@@ -46,7 +47,7 @@ public class PlaylistEditActivity extends Activity
 	public PlaylistEditActivity()
 	{
 		fData = new ArrayList<Map<String, String>>();
-		fStore = new PlaylistStore(this);
+		fStore = PlaylistStoreFactory.createStore(this);
 
 		fDeleteDialog = new ConfirmationDialog()
 		{

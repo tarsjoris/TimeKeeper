@@ -13,7 +13,7 @@ public class PlaylistHeader extends AbstractEntry
 		super(id, name, weight);
 	}
 	
-	public void setName(final PlaylistStore store, final String name)
+	public void setName(final IPlaylistStore store, final String name)
 	{
 		super.setName(name);
 		store.storePlaylistHeader(this);

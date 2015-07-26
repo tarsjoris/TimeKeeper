@@ -22,8 +22,9 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import com.tjoris.timekeeper.data.IPlaylistStore;
 import com.tjoris.timekeeper.data.PlaylistHeader;
-import com.tjoris.timekeeper.data.PlaylistStore;
+import com.tjoris.timekeeper.data.PlaylistStoreFactory;
 
 public class OverviewActivity extends Activity
 {
@@ -32,14 +33,14 @@ public class OverviewActivity extends Activity
 	private final List<Map<String, String>> fData;
 	private InputDialog fAddPlaylistDialog;
 	private final ConfirmationDialog fDeleteDialog;
-	private final PlaylistStore fStore;
+	private final IPlaylistStore fStore;
 	private List<PlaylistHeader> fPlaylists;
 	private ActionMode fActionMode = null;
 
 	public OverviewActivity()
 	{
 		fData = new ArrayList<Map<String, String>>();
-		fStore = new PlaylistStore(this);
+		fStore = PlaylistStoreFactory.createStore(this);
 		fDeleteDialog = new ConfirmationDialog()
 		{
 			@Override

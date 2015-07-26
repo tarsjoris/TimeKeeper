@@ -9,7 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-public class PlaylistStore extends SQLiteOpenHelper
+public class SQLPlaylistStore extends SQLiteOpenHelper implements IPlaylistStore
 {
 	private static final String kDATABASE_NAME = "timekeeper";
 	private static final int kDATABASE_VERSION = 1;
@@ -28,7 +28,7 @@ public class PlaylistStore extends SQLiteOpenHelper
 	private static final String kSONG_WEIGHT = "weight";
 	private static final String kSONG_TABLE_CREATE = "CREATE TABLE " + kSONG_TABLE_NAME + " (" + kSONG_ID + " INTEGER PRIMARY KEY, " + kSONG_PLAYLIST + " INTEGER, " + kSONG_NAME + " TEXT, " + kSONG_TEMPO + " INTEGER, " + kSONG_WEIGHT + " INTEGER, " + "FOREIGN KEY (" + kSONG_PLAYLIST + ") REFERENCES " + kPLAYLIST_TABLE_NAME + " (" + kPLAYLIST_ID + "));";
 
-	public PlaylistStore(final Context context)
+	SQLPlaylistStore(final Context context)
 	{
 		super(context, kDATABASE_NAME, null, kDATABASE_VERSION);
 	}
@@ -77,7 +77,8 @@ public class PlaylistStore extends SQLiteOpenHelper
 	{
 	}
 
-	public List<PlaylistHeader> readAllPlaylists()
+	@Override
+    public List<PlaylistHeader> readAllPlaylists()
 	{
 		final List<PlaylistHeader> playlists = new ArrayList<PlaylistHeader>();
 		final Cursor playlistResult = getReadableDatabase().query(kPLAYLIST_TABLE_NAME, new String[] { kPLAYLIST_ID, kPLAYLIST_NAME, kPLAYLIST_WEIGHT }, null, null, null, null, kPLAYLIST_WEIGHT);
@@ -88,7 +89,8 @@ public class PlaylistStore extends SQLiteOpenHelper
 		return playlists;
 	}
 
-	public Playlist readPlaylist(final long id)
+	@Override
+    public Playlist readPlaylist(final long id)
 	{
 		final Cursor playlistResult = getReadableDatabase().query(kPLAYLIST_TABLE_NAME, new String[] { kPLAYLIST_NAME, kPLAYLIST_WEIGHT }, kPLAYLIST_ID + " = ?", new String[] { Long.toString(id) }, null, null, kPLAYLIST_WEIGHT);
 		if (playlistResult.moveToNext())
@@ -104,12 +106,14 @@ public class PlaylistStore extends SQLiteOpenHelper
 		return null;
 	}
 
-	public void storePlaylistHeader(final PlaylistHeader playlist)
+	@Override
+    public void storePlaylistHeader(final PlaylistHeader playlist)
 	{
 		storePlaylistHeader(getWritableDatabase(), playlist);
 	}
 
-	public int getNextPlaylistWeight()
+	@Override
+    public int getNextPlaylistWeight()
 	{
 		final Cursor result = getReadableDatabase().query(kPLAYLIST_TABLE_NAME, new String[] { "MAX(" + kPLAYLIST_WEIGHT + ")" }, null, null, null, null, null);
 		if (result.moveToNext())
@@ -119,12 +123,14 @@ public class PlaylistStore extends SQLiteOpenHelper
 		return 0;
 	}
 
-	public void addPlaylist(final Playlist playlist)
+	@Override
+    public void addPlaylist(final Playlist playlist)
 	{
 		addPlaylist(getWritableDatabase(), playlist);
 	}
 
-	public void deletePlaylist(final PlaylistHeader playlist)
+	@Override
+    public void deletePlaylist(final PlaylistHeader playlist)
 	{
 		final String idObject = Long.toString(playlist.getID());
 		getWritableDatabase().delete(kSONG_TABLE_NAME, kSONG_PLAYLIST + " = ?", new String[] { idObject });
@@ -156,7 +162,8 @@ public class PlaylistStore extends SQLiteOpenHelper
 		}
 	}
 
-	public void storeSong(final PlaylistHeader playlist, final Song song)
+	@Override
+    public void storeSong(final PlaylistHeader playlist, final Song song)
 	{
 		storeSong(getWritableDatabase(), playlist, song);
 	}
@@ -179,7 +186,8 @@ public class PlaylistStore extends SQLiteOpenHelper
 		}
 	}
 
-	public void deleteSong(final Song song)
+	@Override
+    public void deleteSong(final Song song)
 	{
 		getWritableDatabase().delete(kSONG_TABLE_NAME, kSONG_ID + " = ?", new String[] { Long.toString(song.getID()) });
 	}
