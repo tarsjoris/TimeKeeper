@@ -45,27 +45,9 @@ public class FilePlaylistStore implements IPlaylistStore
 	private static final EntryComparator kCOMPARATOR = new EntryComparator();
 	private static final Pattern kFILENAME_PATTERN = Pattern.compile("([0-9]+)\\.xml");
 	
-	/*private final SQLPlaylistStore fSQLStore;
-	
-	
-	FilePlaylistStore(final SQLPlaylistStore sqlStore)
-    {
-		fSQLStore = sqlStore;
-    */
-	
 	@Override
 	public List<PlaylistHeader> readAllPlaylists()
 	{
-		/*if (kBASE_PATH.listFiles().length == 1)
-		{
-			for (final PlaylistHeader playlistHeader : fSQLStore.readAllPlaylists())
-			{
-				final Playlist playlist = fSQLStore.readPlaylist(playlistHeader.getID());
-				playlist.setID(AbstractEntry.kID_NEW);
-				addPlaylist(playlist);
-			}
-		}*/
-
 		final List<PlaylistHeader> playlists = new ArrayList<PlaylistHeader>();
 		for (final File file : kBASE_PATH.listFiles())
 		{

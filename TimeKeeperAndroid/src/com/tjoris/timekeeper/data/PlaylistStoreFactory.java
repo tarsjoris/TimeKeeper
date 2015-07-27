@@ -6,10 +6,6 @@ public class PlaylistStoreFactory
 {
 	public static IPlaylistStore createStore(final Context context)
 	{
-		//final SQLPlaylistStore sqlStore = new SQLPlaylistStore(context);
-		//final FilePlaylistStore fileStore = new FilePlaylistStore(sqlStore);
-		final FilePlaylistStore fileStore = new FilePlaylistStore();
-		return fileStore;
-		//return sqlStore;
+		return new FilePlaylistStore();
 	}
 }
