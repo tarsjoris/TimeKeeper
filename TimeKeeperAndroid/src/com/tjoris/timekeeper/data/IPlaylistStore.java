@@ -10,7 +10,7 @@ public interface IPlaylistStore
 	public void addPlaylist(Playlist playlist);
 	public void deletePlaylist(PlaylistHeader playlist);
 	public int getNextPlaylistWeight();
-	public void storeSong(PlaylistHeader playlist, Song song);
-	public void deleteSong(Song song);
+	public void storeSong(Playlist playlist, Song song);
+	public void deleteSong(Playlist playlist, Song song);
 	public void close();
 }

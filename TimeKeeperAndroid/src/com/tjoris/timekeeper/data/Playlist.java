@@ -66,7 +66,7 @@ public class Playlist extends PlaylistHeader
 		if (position >= 0 && position < fSongs.size())
 		{
 			final Song song = fSongs.remove(position);
-			store.deleteSong(song);
+			store.deleteSong(this, song);
 			for (int i = position; i < fSongs.size(); ++i)
 			{
 				final Song after = fSongs.get(i);

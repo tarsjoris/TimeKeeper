@@ -163,7 +163,7 @@ public class SQLPlaylistStore extends SQLiteOpenHelper implements IPlaylistStore
 	}
 
 	@Override
-    public void storeSong(final PlaylistHeader playlist, final Song song)
+    public void storeSong(final Playlist playlist, final Song song)
 	{
 		storeSong(getWritableDatabase(), playlist, song);
 	}
@@ -187,7 +187,7 @@ public class SQLPlaylistStore extends SQLiteOpenHelper implements IPlaylistStore
 	}
 
 	@Override
-    public void deleteSong(final Song song)
+    public void deleteSong(final Playlist playlist, final Song song)
 	{
 		getWritableDatabase().delete(kSONG_TABLE_NAME, kSONG_ID + " = ?", new String[] { Long.toString(song.getID()) });
 	}

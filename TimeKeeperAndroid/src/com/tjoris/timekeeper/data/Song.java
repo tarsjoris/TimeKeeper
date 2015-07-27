@@ -25,7 +25,7 @@ public class Song extends AbstractEntry
 		return fTempo;
 	}
 	
-	public void update(final IPlaylistStore store, final PlaylistHeader playlist, final String name, final int tempo)
+	public void update(final IPlaylistStore store, final Playlist playlist, final String name, final int tempo)
 	{
 		setName(name);
 		fTempo = tempo;
