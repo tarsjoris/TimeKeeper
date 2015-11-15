@@ -1,5 +1,6 @@
 package com.tjoris.timekeeper.desktop;
 
+import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
@@ -40,6 +41,8 @@ public class TimeKeeperFrame extends JFrame implements Receiver, IActionListener
 	private Transmitter fTransmitter = null;
 	private final Map<Integer, EAction> fActionsByNote = new HashMap<Integer, EAction>();
 	
+	private final PlaylistsPane fPlaylistsPane;
+	
 	
 	public TimeKeeperFrame(final File propertyFile) throws IOException, MidiUnavailableException
 	{
@@ -68,6 +71,12 @@ public class TimeKeeperFrame extends JFrame implements Receiver, IActionListener
 				System.exit(0);
 			}
 		});
+		
+		fPlaylistsPane = new PlaylistsPane(fStore);
+		setLayout(new BorderLayout());
+		add(fPlaylistsPane, BorderLayout.CENTER);
+		
+		fPlaylistsPane.refreshList();
 	}
 	
 	public void close()
