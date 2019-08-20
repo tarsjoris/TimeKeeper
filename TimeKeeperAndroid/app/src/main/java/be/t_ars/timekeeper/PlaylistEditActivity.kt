@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
@@ -36,7 +35,7 @@ private fun parseTempo(tempo: CharSequence): Int {
 }
 
 
-class PlaylistEditActivity : AppCompatActivity() {
+class PlaylistEditActivity : AbstractActivity() {
 
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddSongDialog: InputDialog = InputDialog()

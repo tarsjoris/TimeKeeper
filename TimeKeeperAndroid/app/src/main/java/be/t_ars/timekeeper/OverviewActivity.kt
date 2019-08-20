@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.support.v7.app.AppCompatActivity
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
@@ -28,7 +27,7 @@ import kotlin.collections.ArrayList
 
 private const val kKEY_NAME = "name"
 
-class OverviewActivity : AppCompatActivity() {
+class OverviewActivity : AbstractActivity() {
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddPlaylistDialog = InputDialog()
     private val fDeleteDialog = ConfirmationDialog()

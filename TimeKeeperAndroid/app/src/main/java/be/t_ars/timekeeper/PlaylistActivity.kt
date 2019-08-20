@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -18,7 +17,7 @@ import kotlinx.android.synthetic.main.playlist.*
 import java.io.Serializable
 import java.util.*
 
-class PlaylistActivity : AppCompatActivity() {
+class PlaylistActivity : AbstractActivity() {
     private val fStore: IPlaylistStore = PlaylistStoreFactory.createStore(this)
     private var fPlaylist: Playlist? = null
 
@@ -114,6 +113,7 @@ class PlaylistActivity : AppCompatActivity() {
         fPlaylist?.let { p ->
             if (p.songs.isNotEmpty()) {
                 playlist.setItemChecked(position, true)
+                scrollToPosition(position)
             }
         }
     }
@@ -126,15 +126,19 @@ class PlaylistActivity : AppCompatActivity() {
             if (pos < p.songs.size - 1) {
                 val newPos = pos + 1
                 trigger(newPos)
-                val first = playlist.firstVisiblePosition
-                val last = playlist.lastVisiblePosition
-                val middle = (last - first) / 2 + first
-                if (newPos <= first) {
-                    playlist.smoothScrollToPosition(newPos)
-                } else if (newPos > middle) {
-                    playlist.smoothScrollToPosition(last + newPos - middle)
-                }
+                scrollToPosition(newPos)
             }
+        }
+    }
+
+    private fun scrollToPosition(position: Int) {
+        val first = playlist.firstVisiblePosition
+        val last = playlist.lastVisiblePosition
+        val middle = (last - first) / 2 + first
+        if (position <= first) {
+            playlist.smoothScrollToPosition(position)
+        } else if (position > middle) {
+            playlist.smoothScrollToPosition(last + position - middle)
         }
     }
 

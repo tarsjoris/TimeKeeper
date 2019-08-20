@@ -5,14 +5,13 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.FragmentActivity
-import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import kotlinx.android.synthetic.main.tap_part.*
 import kotlinx.android.synthetic.main.tap_song.*
 
-class TapSongActivity : AppCompatActivity() {
+class TapSongActivity : AbstractActivity() {
     private val delayedUpdate = DelayedUpdate()
     private val fTimestamps = LongArray(17) { 0 }
     private var fSize = 0

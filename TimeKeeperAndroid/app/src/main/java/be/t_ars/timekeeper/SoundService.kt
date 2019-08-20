@@ -66,8 +66,8 @@ class SoundService : Service() {
                         }
                     }
                 }
-                ?.let { PendingIntent.getActivity(this, ++kCOUNTER, it, PendingIntent.FLAG_UPDATE_CURRENT) }
-        val stopIntent = PendingIntent.getService(this, ++kCOUNTER, createStopIntent(this), PendingIntent.FLAG_UPDATE_CURRENT)
+                ?.let { PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_UPDATE_CURRENT) }
+        val stopIntent = PendingIntent.getService(this, 0, createStopIntent(this), PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = Notification.Builder(this, fChannelID)
                 .setContentTitle(text)
                 .also { notificationBuilder ->
@@ -101,8 +101,6 @@ class SoundService : Service() {
     }
 
     companion object {
-        private var kCOUNTER = 5
-
         private const val kINTENT_DATA_ACTION = "action"
         private const val kINTENT_DATA_BPM = "bpm"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
