@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+	<item android:id="@+id/playlistedit_action_renameplaylist"
+          android:icon="@drawable/ic_pencil"
+          android:title="@string/playlistedit_action_renameplaylist"
+          app:showAsAction="never" />
+	<item android:id="@+id/playlistedit_action_copy"
+          android:icon="@drawable/ic_content_copy"
+          android:title="@string/playlistedit_action_copy"
+          app:showAsAction="never" />
+</menu>

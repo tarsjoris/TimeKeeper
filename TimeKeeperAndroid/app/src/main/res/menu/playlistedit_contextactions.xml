@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+	<item android:id="@+id/playlistedit_action_up"
+          android:icon="@drawable/ic_arrow_up"
+          android:title="@string/playlistedit_action_up"
+          app:showAsAction="always" />
+	<item android:id="@+id/playlistedit_action_down"
+          android:icon="@drawable/ic_arrow_down"
+          android:title="@string/playlistedit_action_down"
+          app:showAsAction="always" />
+    <item android:id="@+id/playlistedit_action_delete"
+          android:icon="@drawable/ic_delete"
+          android:title="@string/playlistedit_action_delete"
+		app:showAsAction="ifRoom" />
+</menu>

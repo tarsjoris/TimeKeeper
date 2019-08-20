@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="be.t_ars.timekeeper">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <service
+            android:name=".SoundService"
+            android:description="@string/service_description"
+            android:exported="false"
+            android:icon="@drawable/notification"
+            android:label="@string/app_name" />
+
+        <activity
+            android:name=".OverviewActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".TapActivity"
+            android:icon="@drawable/ic_gesture_tap"
+            android:label="@string/tap"
+            android:launchMode="singleTop"
+            android:parentActivityName=".OverviewActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <activity
+            android:name=".PlaylistActivity"
+            android:icon="@drawable/metronome"
+            android:label="@string/playlist"
+            android:launchMode="singleTop"
+            android:parentActivityName=".OverviewActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <activity
+            android:name=".PlaylistEditActivity"
+            android:icon="@drawable/ic_pencil"
+            android:label="@string/playlistedit"
+            android:parentActivityName=".PlaylistActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <activity
+            android:name=".TapSongActivity"
+            android:icon="@drawable/ic_gesture_tap"
+            android:label="@string/tap"
+            android:launchMode="singleTop"
+            android:parentActivityName=".OverviewActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:icon="@drawable/ic_settings"
+            android:label="@string/settings"
+            android:parentActivityName=".OverviewActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme"></activity>
+
+    </application>
+
+</manifest>

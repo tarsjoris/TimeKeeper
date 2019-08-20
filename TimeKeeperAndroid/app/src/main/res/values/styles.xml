@@ -1,0 +1,68 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:actionModeBackground">@color/actionModeBackground</item>
+        <item name="actionModeBackground">@color/actionModeBackground</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="text_tempo">
+        <item name="android:textAlignment">center</item>
+        <item name="android:background">@color/tempoBackground</item>
+    </style>
+
+    <style name="button">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">2dp</item>
+        <item name="android:adjustViewBounds">false</item>
+        <item name="android:cropToPadding">true</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:background">@drawable/button_selector</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="playlist_name">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:background">@drawable/entry_selector</item>
+        <item name="android:textColor">@color/entry_selector</item>
+    </style>
+
+    <style name="playlist_entry_name">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">10dp</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:textColor">@color/entry_selector</item>
+    </style>
+
+    <style name="playlist_entry_tempo">
+        <item name="android:gravity">center_vertical|right</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">10dp</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:textColor">@color/entry_selector</item>
+    </style>
+
+</resources>

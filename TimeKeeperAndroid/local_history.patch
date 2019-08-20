@@ -1,0 +1,151 @@
+Index: app/src/main/java/be/t_ars/timekeeper/TapActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/be/t_ars/timekeeper/TapActivity.kt	(date 1566323398991)
++++ app/src/main/java/be/t_ars/timekeeper/TapActivity.kt	(date 1566323398991)
+@@ -64,6 +64,7 @@
+         }
+         button_stop.setOnClickListener {
+             fPlaying = false
++            startForegroundService()
+             stopSound()
+         }
+     }
+Index: app/src/main/java/be/t_ars/timekeeper/SoundService.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/be/t_ars/timekeeper/SoundService.kt	(date 1566324379700)
++++ app/src/main/java/be/t_ars/timekeeper/SoundService.kt	(date 1566324379700)
+@@ -65,7 +65,7 @@
+                     }
+                 }
+                 ?.let { PendingIntent.getActivity(this, ++kCOUNTER, it, PendingIntent.FLAG_UPDATE_CURRENT) }
+-        val stopIntent = PendingIntent.getService(this, ++kCOUNTER, getStopIntent(), PendingIntent.FLAG_UPDATE_CURRENT)
++        val stopIntent = PendingIntent.getService(this, ++kCOUNTER, createStopIntent(this), PendingIntent.FLAG_UPDATE_CURRENT)
+         val notification = Notification.Builder(this, fChannelID)
+                 .setContentTitle(text)
+                 .also { notificationBuilder ->
+@@ -106,7 +106,7 @@
+         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
+         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
+ 
+-        fun createStopIntent(context: Context, tempo: Int, returnActivityClass: Class<out Any>? = null, returnActivityExtras: HashMap<String, Serializable>? = null) =
++        fun createStartIntent(context: Context, tempo: Int, returnActivityClass: Class<out Any>? = null, returnActivityExtras: HashMap<String, Serializable>? = null) =
+                 Intent(context, SoundService::class.java).also { intent ->
+                     intent.putExtra(kINTENT_DATA_ACTION, "start")
+                     intent.putExtra(kINTENT_DATA_BPM, tempo)
+Index: app/src/main/java/be/t_ars/timekeeper/TapSongActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/be/t_ars/timekeeper/TapSongActivity.kt	(date 1566324362261)
++++ app/src/main/java/be/t_ars/timekeeper/TapSongActivity.kt	(date 1566324362261)
+@@ -1,5 +1,6 @@
+ package be.t_ars.timekeeper
+ 
++import android.content.Context
+ import android.content.Intent
+ import android.os.Bundle
+ import android.os.Handler
+@@ -33,7 +34,7 @@
+ 
+         override fun run() {
+             synchronized(this) {
+-                startSound(tempo)
++                startForegroundService(SoundService.createStartIntent(this@TapSongActivity, tempo))
+                 hasRun = true
+             }
+         }
+@@ -59,11 +60,11 @@
+         }
+         button_start.setOnClickListener {
+             fPlaying = true
+-            startSound(tempo_spinner.value)
++            startForegroundService(SoundService.createStartIntent(this, tempo_spinner.value))
+         }
+         button_stop.setOnClickListener {
+             fPlaying = false
+-            stopSound()
++            startForegroundService(SoundService.createStopIntent(this))
+         }
+ 
+         loadIntent()
+@@ -140,13 +141,19 @@
+         if (tempo >= tempo_spinner.minValue && tempo <= tempo_spinner.maxValue) {
+             tempo_spinner.value = tempo
+             if (fPlaying) {
+-                startSound(tempo)
++                startForegroundService(SoundService.createStartIntent(this, tempo))
+             }
+         }
+     }
+ 
+     companion object {
+-        const val kINTENT_DATA_TEMPO = "tempo"
+-        const val kINTENT_DATA_NAME = "name"
++        private const val kINTENT_DATA_TEMPO = "tempo"
++        private const val kINTENT_DATA_NAME = "name"
++
++        fun createIntent(context: Context, tempo: Int, name: String) =
++                Intent(context, TapSongActivity::class.java).also { intent ->
++                    intent.putExtra(kINTENT_DATA_TEMPO, tempo)
++                    intent.putExtra(kINTENT_DATA_NAME, name)
++                }
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/java/be/t_ars/timekeeper/PlaylistEditActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/be/t_ars/timekeeper/PlaylistEditActivity.kt	(date 1566324255189)
++++ app/src/main/java/be/t_ars/timekeeper/PlaylistEditActivity.kt	(date 1566324255189)
+@@ -189,10 +189,10 @@
+         fPlaylist?.let { playlist ->
+             val song = playlist.songs[fPosition]
+             Intent(this, TapSongActivity::class.java).also {
+-                it.putExtra(TapSongActivity.kINTENT_DATA_TEMPO, song.tempo)
+-                it.putExtra(TapSongActivity.kINTENT_DATA_NAME, song.name)
+-                startActivityForResult(it, kREQUEST_TEMPO)
+-            }
++            it.putExtra(TapSongActivity.kINTENT_DATA_TEMPO, song.tempo)
++            it.putExtra(TapSongActivity.kINTENT_DATA_NAME, song.name)
++            startActivityForResult(it, kREQUEST_TEMPO)
++        }
+         }
+     }
+ 
+Index: app/src/main/java/be/t_ars/timekeeper/SoundServiceMethods.kt
+===================================================================
+--- app/src/main/java/be/t_ars/timekeeper/SoundServiceMethods.kt	(date 0)
++++ app/src/main/java/be/t_ars/timekeeper/SoundServiceMethods.kt	(date 0)
+@@ -1,22 +0,0 @@
+-package be.t_ars.timekeeper
+-
+-import android.content.Context
+-import android.content.Intent
+-import java.io.Serializable
+-
+-fun Context.startSound(tempo: Int, returnActivityClass: Class<out Any>? = null, returnActivityExtras: HashMap<String, Serializable>? = null) =
+-        Intent(this, SoundService::class.java).also { intent ->
+-            intent.putExtra(SoundService.kINTENT_DATA_ACTION, "start")
+-            intent.putExtra(SoundService.kINTENT_DATA_BPM, tempo)
+-            returnActivityClass?.let { intent.putExtra(SoundService.kINTENT_DATA_RETURN_ACTIVITY_CLASS, it) }
+-            returnActivityExtras?.let { intent.putExtra(SoundService.kINTENT_DATA_RETURN_ACTIVITY_EXTRAS, it) }
+-            startForegroundService(intent)
+-        }
+-
+-fun Context.getStopIntent() =
+-        Intent(this, SoundService::class.java).also {
+-            it.putExtra(SoundService.kINTENT_DATA_ACTION, "stop")
+-        }
+-
+-fun Context.stopSound() =
+-        startService(getStopIntent())
+\ No newline at end of file
