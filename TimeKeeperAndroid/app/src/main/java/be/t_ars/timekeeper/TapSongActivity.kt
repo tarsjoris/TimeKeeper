@@ -34,7 +34,7 @@ class TapSongActivity : AbstractActivity() {
 
         override fun run() {
             synchronized(this) {
-                SoundService.startSound(this@TapSongActivity, tempo)
+                SoundService.startSound(this@TapSongActivity, null, tempo)
                 hasRun = true
             }
         }
@@ -60,7 +60,7 @@ class TapSongActivity : AbstractActivity() {
         }
         button_start.setOnClickListener {
             fPlaying = true
-            SoundService.startSound(this, tempo_spinner.value)
+            SoundService.startSound(this, null, tempo_spinner.value)
         }
         button_stop.setOnClickListener {
             fPlaying = false
@@ -145,7 +145,7 @@ class TapSongActivity : AbstractActivity() {
         if (tempo >= tempo_spinner.minValue && tempo <= tempo_spinner.maxValue) {
             tempo_spinner.value = tempo
             if (fPlaying) {
-                SoundService.startSound(this, tempo)
+                SoundService.startSound(this, null, tempo)
             }
         }
     }

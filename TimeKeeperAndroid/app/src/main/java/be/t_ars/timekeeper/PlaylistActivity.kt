@@ -27,10 +27,11 @@ class PlaylistActivity : AbstractActivity() {
         setSupportActionBar(toolbar)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        playlist.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
+        val playlistView = playlist
+        playlistView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
         button_start.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                trigger(playlist.checkedItemPosition)
+                trigger(playlistView.checkedItemPosition)
             }
             false
         }
@@ -104,7 +105,8 @@ class PlaylistActivity : AbstractActivity() {
             p.songs.forEach { song -> data.add(mapOf(kKEY_NAME to song.name, kKEY_TEMPO to "${song.tempo}")) }
         }
 
-        playlist.adapter = SimpleAdapter(this,
+        val playlistView = playlist
+        playlistView.adapter = SimpleAdapter(this,
                 data,
                 R.layout.playlist_entry,
                 arrayOf(kKEY_NAME, kKEY_TEMPO),
@@ -112,16 +114,16 @@ class PlaylistActivity : AbstractActivity() {
 
         fPlaylist?.let { p ->
             if (p.songs.isNotEmpty()) {
-                playlist.setItemChecked(position, true)
-                scrollToPosition(position)
+                playlistView.setItemChecked(position, true)
+                playlistView.post { scrollToPosition(position) }
             }
         }
     }
 
 
     private fun doNext() {
-        val playlist = playlist
-        val pos = playlist.checkedItemPosition
+        val playlistView = playlist
+        val pos = playlistView.checkedItemPosition
         fPlaylist?.let { p ->
             if (pos < p.songs.size - 1) {
                 val newPos = pos + 1
@@ -132,13 +134,14 @@ class PlaylistActivity : AbstractActivity() {
     }
 
     private fun scrollToPosition(position: Int) {
-        val first = playlist.firstVisiblePosition
-        val last = playlist.lastVisiblePosition
+        val playlistView = playlist
+        val first = playlistView.firstVisiblePosition
+        val last = playlistView.lastVisiblePosition
         val middle = (last - first) / 2 + first
         if (position <= first) {
-            playlist.smoothScrollToPosition(position)
+            playlistView.smoothScrollToPosition(position)
         } else if (position > middle) {
-            playlist.smoothScrollToPosition(last + position - middle)
+            playlistView.smoothScrollToPosition(last + position - middle)
         }
     }
 
@@ -146,12 +149,12 @@ class PlaylistActivity : AbstractActivity() {
         fPlaylist?.let { p ->
             val pos = if (selection in 0 until p.songs.size) selection else 0
             if (p.songs.isNotEmpty()) {
-                val tempo = p.songs[pos].tempo
+                val song = p.songs[pos]
                 val extras = HashMap<String, Serializable>().also {
                     it[kINTENT_DATA_PLAYLIST_ID] = fPlaylist?.id ?: 0
                     it[kINTENT_DATA_POSITION] = pos
                 }
-                SoundService.startSound(this, tempo, PlaylistActivity::class.java, extras)
+                SoundService.startSound(this, song.name, song.tempo, PlaylistActivity::class.java, extras)
                 playlist.setItemChecked(pos, true)
             }
         }

@@ -142,7 +142,7 @@ class TapActivity : AbstractActivity() {
         val extras = HashMap<String, Serializable>().also {
             it[kINTENT_DATA_TEMPO] = tempo
         }
-        SoundService.startSound(this, tempo, TapActivity::class.java, extras)
+        SoundService.startSound(this, null, tempo, TapActivity::class.java, extras)
     }
 
     companion object {
