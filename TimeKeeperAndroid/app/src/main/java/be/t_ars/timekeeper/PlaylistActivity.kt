@@ -83,15 +83,19 @@ class PlaylistActivity : AbstractActivity() {
     }
 
     private fun loadIntent() {
+        val playlistView = playlist
         val extras = intent.extras
+        val oldPlaylist = fPlaylist
         if (extras != null) {
             val playlistID = extras.getLong(kINTENT_DATA_PLAYLIST_ID)
-            val p = fPlaylist
-            if (p == null || p.id != playlistID) {
-                val playlist = fStore.readPlaylist(playlistID)
-                val position = extras.getInt(kINTENT_DATA_POSITION, 0)
-                loadPlaylist(playlist, position)
-            }
+            val newPlaylist = fStore.readPlaylist(playlistID)
+            val defaultPosition = if (oldPlaylist?.id == playlistID) playlistView.checkedItemPosition else 0
+            val newPosition = extras.getInt(kINTENT_DATA_POSITION, defaultPosition)
+            loadPlaylist(newPlaylist, newPosition)
+        } else if (oldPlaylist != null) {
+            val newPlaylist = fStore.readPlaylist(oldPlaylist.id)
+            val newPosition = playlistView.checkedItemPosition
+            loadPlaylist(newPlaylist, newPosition)
         } else {
             loadPlaylist(null, 0)
         }
