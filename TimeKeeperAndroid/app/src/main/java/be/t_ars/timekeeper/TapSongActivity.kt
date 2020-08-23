@@ -4,10 +4,11 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
-import android.support.v4.app.FragmentActivity
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import androidx.fragment.app.FragmentActivity
 import kotlinx.android.synthetic.main.tap_part.*
 import kotlinx.android.synthetic.main.tap_song.*
 
@@ -27,7 +28,7 @@ class TapSongActivity : AbstractActivity() {
                 tempo = newTempo
                 if (hasRun) {
                     hasRun = false
-                    Handler().postDelayed(this, 500)
+                    Handler(Looper.getMainLooper()).postDelayed(this, 500)
                 }
             }
         }

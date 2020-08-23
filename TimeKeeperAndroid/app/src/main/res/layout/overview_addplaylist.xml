@@ -2,6 +2,6 @@
 <EditText xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/overiew_addplaylist_name"
+    android:id="@+id/overview_addplaylist_name"
     android:hint="@string/overview_addplaylist_name"
     />

@@ -5,10 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
+import androidx.preference.PreferenceManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
@@ -16,6 +17,7 @@ import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SimpleAdapter
+import androidx.annotation.RequiresApi
 import be.t_ars.timekeeper.data.IPlaylistStore
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
@@ -39,6 +41,7 @@ class OverviewActivity : AbstractActivity() {
         fDeleteDialog.setOptions(this::deleteSelectedItems, R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no)
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.overview)
@@ -50,7 +53,7 @@ class OverviewActivity : AbstractActivity() {
 
         fAddPlaylistDialog.setOptions(null,
                 { view ->
-                    val name = view.findViewById<EditText>(R.id.overiew_addplaylist_name).text
+                    val name = view.findViewById<EditText>(R.id.overview_addplaylist_name).text
                     val weight = if (fPlaylists.isEmpty()) 0 else fPlaylists[fPlaylists.size - 1].weight + 1
                     val playlist = Playlist(name.toString(), weight)
                     fStore.addPlaylist(playlist)

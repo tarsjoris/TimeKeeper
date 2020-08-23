@@ -187,7 +187,7 @@ class PlaylistEditActivity : AbstractActivity() {
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != -1 && newTempo != song.tempo
                             if (replaceName || replaceTempo) {
-                                if (replaceName)
+                                if (replaceName && newName != null)
                                     song.name = newName
                                 if (replaceTempo)
                                     song.tempo = newTempo
@@ -198,6 +198,7 @@ class PlaylistEditActivity : AbstractActivity() {
                     }
                 }
             }
+            else -> super.onActivityResult(requestCode, resultCode, data)
         }
     }
 

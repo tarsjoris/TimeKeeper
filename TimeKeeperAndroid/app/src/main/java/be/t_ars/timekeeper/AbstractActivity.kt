@@ -1,7 +1,7 @@
 package be.t_ars.timekeeper
 
 import android.content.Intent
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 
 open class AbstractActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {

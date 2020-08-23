@@ -3,9 +3,9 @@ package be.t_ars.timekeeper
 import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
 import android.view.LayoutInflater
 import android.view.View
+import androidx.fragment.app.DialogFragment
 
 class InputDialog : DialogFragment() {
     private var fViewCreatedAction: ((View) -> Unit)? = null
