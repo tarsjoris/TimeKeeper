@@ -53,8 +53,9 @@ class FilePlaylistStore : IPlaylistStore {
                                 playlist = Playlist(id, name, weight)
                             } else if (kTAG_SONG == parser.name) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val tempo = Integer.parseInt(parser.getAttributeValue(null, kATTR_TEMPO))
-                                playlist?.addSong(Song(name, tempo))
+                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)
+                                        ?.let(Integer::parseInt)
+                                playlist?.addSong(Song(name = name, tempo = tempo))
                             }
                         }
                         XmlPullParser.END_DOCUMENT -> {
@@ -148,7 +149,8 @@ class FilePlaylistStore : IPlaylistStore {
                 for (song in playlist.songs) {
                     serializer.startTag(null, kTAG_SONG)
                     serializer.attribute(null, kATTR_NAME, song.name)
-                    serializer.attribute(null, kATTR_TEMPO, song.tempo.toString())
+                    if (song.tempo != null)
+                        serializer.attribute(null, kATTR_TEMPO, song.tempo.toString())
                     serializer.endTag(null, kTAG_SONG)
                 }
                 serializer.endTag(null, kTAG_PLAYLIST)

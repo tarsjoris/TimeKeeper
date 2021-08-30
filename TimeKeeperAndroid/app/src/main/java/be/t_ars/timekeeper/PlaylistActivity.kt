@@ -106,7 +106,10 @@ class PlaylistActivity : AbstractActivity() {
         supportActionBar?.title = fPlaylist?.name ?: "<no playlist>"
         val data = ArrayList<Map<String, String>>()
         fPlaylist?.let { p ->
-            p.songs.forEach { song -> data.add(mapOf(kKEY_NAME to song.name, kKEY_TEMPO to "${song.tempo}")) }
+            p.songs.forEach { song ->
+                val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                data.add(mapOf(kKEY_NAME to song.name, kKEY_TEMPO to tempo))
+            }
         }
 
         val playlistView = playlist
@@ -151,16 +154,26 @@ class PlaylistActivity : AbstractActivity() {
 
     private fun trigger(selection: Int) {
         fPlaylist?.let { p ->
-            val pos = if (selection in 0 until p.songs.size) selection else 0
             if (p.songs.isNotEmpty()) {
-                val song = p.songs[pos]
-                val extras = HashMap<String, Serializable>().also {
-                    it[kINTENT_DATA_PLAYLIST_ID] = fPlaylist?.id ?: 0
-                    it[kINTENT_DATA_POSITION] = pos
-                }
-                SoundService.startSound(this, song.name, song.tempo, PlaylistActivity::class.java, extras)
+                val pos = if (selection in 0 until p.songs.size) selection else 0
+
+                startMetronome(p, pos)
                 playlist.setItemChecked(pos, true)
             }
+        }
+    }
+
+    private fun startMetronome(p: Playlist, pos: Int) {
+        val song = p.songs[pos]
+        val tempo = song.tempo
+        if (tempo != null) {
+            val extras = HashMap<String, Serializable>().also {
+                it[kINTENT_DATA_PLAYLIST_ID] = p.id
+                it[kINTENT_DATA_POSITION] = pos
+            }
+            SoundService.startSound(this, song.name, tempo, PlaylistActivity::class.java, extras)
+        } else {
+            SoundService.stopSound(this)
         }
     }
 

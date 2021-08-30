@@ -21,13 +21,31 @@
             android:layout_weight="1"
             android:text="@string/tap" />
 
-        <android.widget.NumberPicker
-            android:id="@+id/tempo_spinner"
+        <android.widget.LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="5dp"
-            android:layout_weight="3"
-            />
+            android:orientation="vertical"
+            android:layout_weight="3">
+
+            <android.widget.NumberPicker
+                android:id="@+id/tempo_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="1"
+                />
+
+            <android.widget.CheckBox
+                android:id="@+id/checkbox_with_tempo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                android:layout_weight="2"
+                android:text="@string/tap_with_tempo"
+                android:visibility="invisible"
+                />
+
+        </android.widget.LinearLayout>
 
     </android.widget.LinearLayout>
 

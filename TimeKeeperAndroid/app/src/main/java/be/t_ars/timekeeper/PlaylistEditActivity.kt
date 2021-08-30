@@ -25,13 +25,16 @@ import kotlin.math.min
 private const val kKEY_NAME = "name"
 private const val kKEY_TEMPO = "tempo"
 
-private fun parseTempo(tempo: CharSequence): Int {
+private fun parseTempo(tempo: CharSequence): Int? {
+    if (tempo.isBlank()) {
+        return null
+    }
     try {
         return min(300, max(30, Integer.parseInt(tempo.toString())))
     } catch (e: NumberFormatException) {
         Log.e("TimeKeeper", "Invalid tempo: " + e.message, e)
     }
-    return 120
+    return null
 }
 
 
@@ -55,7 +58,7 @@ class PlaylistEditActivity : AbstractActivity() {
                     val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
                     val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
                     val tempo = parseTempo(tempoS)
-                    val song = Song(name.toString(), tempo)
+                    val song = Song(name = name.toString(), tempo = tempo)
                     fPlaylist?.addSong(fStore, song)
                     reloadSongs()
                 },
@@ -183,9 +186,11 @@ class PlaylistEditActivity : AbstractActivity() {
                         if (fPosition in 0 until playlist.songs.size) {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
                             val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
+                                    .let { if (it == -1) null else it }
+
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
-                            val replaceTempo = newTempo != -1 && newTempo != song.tempo
+                            val replaceTempo = newTempo != song.tempo
                             if (replaceName || replaceTempo) {
                                 if (replaceName && newName != null)
                                     song.name = newName
@@ -263,7 +268,10 @@ class PlaylistEditActivity : AbstractActivity() {
         fData.clear()
         fPlaylist?.let { playlist ->
             fData.addAll(
-                    playlist.songs.map { song -> mapOf(kKEY_NAME to song.name, kKEY_TEMPO to "${song.tempo}") }
+                    playlist.songs.map { song ->
+                        val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                        mapOf(kKEY_NAME to song.name, kKEY_TEMPO to tempo)
+                    }
             )
         }
         (playlistedit.adapter as SimpleAdapter).notifyDataSetChanged()

@@ -8,6 +8,7 @@ import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.View
 import androidx.fragment.app.FragmentActivity
 import kotlinx.android.synthetic.main.tap_part.*
 import kotlinx.android.synthetic.main.tap_song.*
@@ -67,6 +68,8 @@ class TapSongActivity : AbstractActivity() {
             fPlaying = false
             SoundService.stopSound(this)
         }
+
+        checkbox_with_tempo.visibility = View.VISIBLE
     }
 
     override fun onResume() {
@@ -88,9 +91,12 @@ class TapSongActivity : AbstractActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.tap_action_accept -> {
+                tempo_spinner.clearFocus()
+
+                val tempo = if (checkbox_with_tempo.isChecked) tempo_spinner.value else -1
                 Intent().also {
                     it.putExtra(kINTENT_DATA_NAME, name.text.toString())
-                    it.putExtra(kINTENT_DATA_TEMPO, tempo_spinner.value)
+                    it.putExtra(kINTENT_DATA_TEMPO, tempo)
                     setResult(RESULT_OK, it)
                 }
                 finish()
@@ -103,13 +109,12 @@ class TapSongActivity : AbstractActivity() {
     }
 
     private fun loadIntent() {
-        intent.getStringExtra(kINTENT_DATA_NAME).let {
-            name.setText(it)
-        }
+        name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
+
         val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, -1)
-        if (newTempo != -1) {
-            setTempo(newTempo)
-        }
+        val withTempo = newTempo != -1
+        checkbox_with_tempo.isChecked = withTempo
+        setTempo(if (withTempo) newTempo else 120)
     }
 
     private fun doTap(motionEvent: MotionEvent): Boolean {
