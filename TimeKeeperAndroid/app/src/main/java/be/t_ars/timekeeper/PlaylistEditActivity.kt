@@ -187,15 +187,20 @@ class PlaylistEditActivity : AbstractActivity() {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
                             val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
                                     .let { if (it == -1) null else it }
+                            val newScoreLink = d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
+                                    ?.let { if (it.isBlank()) null else it }
 
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != song.tempo
-                            if (replaceName || replaceTempo) {
+                            val replaceScoreLink = newScoreLink != song.scoreLink
+                            if (replaceName || replaceTempo || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
                                 if (replaceTempo)
                                     song.tempo = newTempo
+                                if (replaceScoreLink)
+                                    song.scoreLink = newScoreLink
                                 fStore.storeSong(playlist, song)
                                 reloadSongs()
                             }
@@ -256,7 +261,7 @@ class PlaylistEditActivity : AbstractActivity() {
     private fun editEntry() {
         fPlaylist?.let { playlist ->
             val song = playlist.songs[fPosition]
-            TapSongActivity.startActivityForResult(this, song.tempo, song.name, kREQUEST_TEMPO)
+            TapSongActivity.startActivityForResult(this, song.tempo, song.name, song.scoreLink, kREQUEST_TEMPO)
         }
     }
 

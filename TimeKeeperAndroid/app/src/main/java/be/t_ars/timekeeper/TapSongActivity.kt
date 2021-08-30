@@ -96,6 +96,7 @@ class TapSongActivity : AbstractActivity() {
                 val tempo = if (checkbox_with_tempo.isChecked) tempo_spinner.value else -1
                 Intent().also {
                     it.putExtra(kINTENT_DATA_NAME, name.text.toString())
+                    it.putExtra(kINTENT_DATA_SCORE_LINK, score_link.text.toString())
                     it.putExtra(kINTENT_DATA_TEMPO, tempo)
                     setResult(RESULT_OK, it)
                 }
@@ -115,6 +116,8 @@ class TapSongActivity : AbstractActivity() {
         val withTempo = newTempo != -1
         checkbox_with_tempo.isChecked = withTempo
         setTempo(if (withTempo) newTempo else 120)
+
+        score_link.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
 
     private fun doTap(motionEvent: MotionEvent): Boolean {
@@ -164,12 +167,15 @@ class TapSongActivity : AbstractActivity() {
     companion object {
         const val kINTENT_DATA_TEMPO = "tempo"
         const val kINTENT_DATA_NAME = "name"
+        const val kINTENT_DATA_SCORE_LINK = "score_link"
 
-        fun startActivityForResult(context: FragmentActivity, tempo: Int, name: String, requestCode: Int) =
+        fun startActivityForResult(context: FragmentActivity, tempo: Int?, name: String, scoreLink: String?, requestCode: Int) =
                 Intent(context, TapSongActivity::class.java)
                         .also { intent ->
                             intent.putExtra(kINTENT_DATA_TEMPO, tempo)
                             intent.putExtra(kINTENT_DATA_NAME, name)
+                            if (scoreLink != null)
+                                intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)
                         }
                         .let { context.startActivityForResult(it, requestCode) }
     }

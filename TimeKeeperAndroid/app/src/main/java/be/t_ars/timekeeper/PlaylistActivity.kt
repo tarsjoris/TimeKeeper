@@ -3,6 +3,7 @@ package be.t_ars.timekeeper
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -159,6 +160,7 @@ class PlaylistActivity : AbstractActivity() {
 
                 startMetronome(p, pos)
                 playlist.setItemChecked(pos, true)
+                p.songs[pos].scoreLink?.also(this::openLink)
             }
         }
     }
@@ -175,6 +177,12 @@ class PlaylistActivity : AbstractActivity() {
         } else {
             SoundService.stopSound(this)
         }
+    }
+
+    private fun openLink(link: String) {
+        val openURL = Intent(Intent.ACTION_VIEW)
+        openURL.data = Uri.parse(link)
+        startActivity(openURL)
     }
 
     companion object {

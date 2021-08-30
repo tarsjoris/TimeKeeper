@@ -55,7 +55,8 @@ class FilePlaylistStore : IPlaylistStore {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
                                 val tempo = parser.getAttributeValue(null, kATTR_TEMPO)
                                         ?.let(Integer::parseInt)
-                                playlist?.addSong(Song(name = name, tempo = tempo))
+                                val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
+                                playlist?.addSong(Song(name = name, tempo = tempo, scoreLink = scoreLink))
                             }
                         }
                         XmlPullParser.END_DOCUMENT -> {
@@ -151,6 +152,8 @@ class FilePlaylistStore : IPlaylistStore {
                     serializer.attribute(null, kATTR_NAME, song.name)
                     if (song.tempo != null)
                         serializer.attribute(null, kATTR_TEMPO, song.tempo.toString())
+                    if (song.scoreLink != null)
+                        serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
                     serializer.endTag(null, kTAG_SONG)
                 }
                 serializer.endTag(null, kTAG_PLAYLIST)
@@ -172,6 +175,7 @@ class FilePlaylistStore : IPlaylistStore {
         private const val kATTR_NAME = "name"
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
+        private const val kATTR_SCORE_LINK = "score_link"
 
         private val kBASE_PATH = File(Environment.getExternalStorageDirectory(), "TimeKeeper")
         private val kCOMPARATOR = EntryComparator()
