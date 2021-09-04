@@ -11,14 +11,26 @@ import android.preference.PreferenceManager
 const val kFREQUENCY = "frequency"
 const val kDURATION = "duration"
 const val kSCREEN_ORIENTATION = "screenorientation"
+const val kFOLDER= "folder"
 
 fun getIntPreference(context: Context, key: String, defaultValue: Int): Int {
-    val result = PreferenceManager.getDefaultSharedPreferences(context).getString(key, defaultValue.toString())
+    val result = getStringPreference(context, key, defaultValue.toString())
     return try {
         result?.toInt() ?: defaultValue
     } catch (e: NumberFormatException) {
         defaultValue
     }
+}
+
+fun getStringPreference(context: Context, key: String, defaultValue: String? = null): String? {
+    return PreferenceManager.getDefaultSharedPreferences(context).getString(key, defaultValue)
+}
+
+fun setStringPreference(context: Context, key: String, value: String) {
+    PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putString(key, value)
+            .apply()
 }
 
 class SettingsActivity : Activity() {

@@ -11,19 +11,21 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
-import be.t_ars.timekeeper.data.IPlaylistStore
 import be.t_ars.timekeeper.data.Playlist
-import be.t_ars.timekeeper.data.PlaylistStoreFactory
+import be.t_ars.timekeeper.data.PlaylistStore
 import kotlinx.android.synthetic.main.playlist.*
 import java.io.Serializable
 import java.util.*
 
 class PlaylistActivity : AbstractActivity() {
-    private val fStore: IPlaylistStore = PlaylistStoreFactory.createStore(this)
+    private lateinit var fStore: PlaylistStore
     private var fPlaylist: Playlist? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        fStore = PlaylistStore(this)
+
         setContentView(R.layout.playlist)
         setSupportActionBar(toolbar)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -56,11 +58,6 @@ class PlaylistActivity : AbstractActivity() {
         loadIntent()
     }
 
-    override fun onDestroy() {
-        fStore.close()
-        super.onDestroy()
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.playlist_actions, menu)
         return super.onCreateOptionsMenu(menu)
@@ -87,18 +84,22 @@ class PlaylistActivity : AbstractActivity() {
         val playlistView = playlist
         val extras = intent.extras
         val oldPlaylist = fPlaylist
-        if (extras != null) {
-            val playlistID = extras.getLong(kINTENT_DATA_PLAYLIST_ID)
-            val newPlaylist = fStore.readPlaylist(playlistID)
-            val defaultPosition = if (oldPlaylist?.id == playlistID) playlistView.checkedItemPosition else 0
-            val newPosition = extras.getInt(kINTENT_DATA_POSITION, defaultPosition)
-            loadPlaylist(newPlaylist, newPosition)
-        } else if (oldPlaylist != null) {
-            val newPlaylist = fStore.readPlaylist(oldPlaylist.id)
-            val newPosition = playlistView.checkedItemPosition
-            loadPlaylist(newPlaylist, newPosition)
-        } else {
-            loadPlaylist(null, 0)
+        when {
+            extras != null -> {
+                val playlistID = extras.getLong(kINTENT_DATA_PLAYLIST_ID)
+                val newPlaylist = fStore.readPlaylist(playlistID)
+                val defaultPosition = if (oldPlaylist?.id == playlistID) playlistView.checkedItemPosition else 0
+                val newPosition = extras.getInt(kINTENT_DATA_POSITION, defaultPosition)
+                loadPlaylist(newPlaylist, newPosition)
+            }
+            oldPlaylist != null -> {
+                val newPlaylist = fStore.readPlaylist(oldPlaylist.id)
+                val newPosition = playlistView.checkedItemPosition
+                loadPlaylist(newPlaylist, newPosition)
+            }
+            else -> {
+                loadPlaylist(null, 0)
+            }
         }
     }
 
@@ -108,8 +109,9 @@ class PlaylistActivity : AbstractActivity() {
         val data = ArrayList<Map<String, String>>()
         fPlaylist?.let { p ->
             p.songs.forEach { song ->
+                val name = if (song.scoreLink != null) "${song.name}*" else song.name
                 val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                data.add(mapOf(kKEY_NAME to song.name, kKEY_TEMPO to tempo))
+                data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
             }
         }
 

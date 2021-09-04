@@ -9,4 +9,8 @@
         android:icon="@drawable/ic_settings"
         android:title="@string/overview_action_settings"
         app:showAsAction="never" />
+    <item android:id="@+id/overview_action_folder"
+        android:icon="@drawable/ic_pencil"
+        android:title="@string/overview_action_folder"
+        app:showAsAction="never" />
 </menu>

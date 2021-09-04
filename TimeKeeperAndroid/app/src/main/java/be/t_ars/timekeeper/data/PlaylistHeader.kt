@@ -1,4 +1,4 @@
 package be.t_ars.timekeeper.data
 
 
-open class PlaylistHeader(id: Long, name: String, weight: Int) : AbstractEntry(id, name, weight)
+open class PlaylistHeader(var id: Long, name: String, weight: Int) : AbstractEntry(name, weight)

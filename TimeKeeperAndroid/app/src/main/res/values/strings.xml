@@ -2,6 +2,7 @@
     <string name="app_name">TimeKeeper</string>
     <string name="overview_action_tap">Tap</string>
     <string name="overview_action_settings">Settings</string>
+    <string name="overview_action_folder">Select folder …</string>
     <string name="overview_action_addplaylist">Add playlist</string>
     <string name="overview_action_up">Move up</string>
     <string name="overview_action_down">Move down</string>

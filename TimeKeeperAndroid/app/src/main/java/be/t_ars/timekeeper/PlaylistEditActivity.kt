@@ -12,9 +12,8 @@ import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SimpleAdapter
-import be.t_ars.timekeeper.data.IPlaylistStore
 import be.t_ars.timekeeper.data.Playlist
-import be.t_ars.timekeeper.data.PlaylistStoreFactory
+import be.t_ars.timekeeper.data.PlaylistStore
 import be.t_ars.timekeeper.data.Song
 import kotlinx.android.synthetic.main.playlistedit.*
 import java.util.*
@@ -39,19 +38,21 @@ private fun parseTempo(tempo: CharSequence): Int? {
 
 
 class PlaylistEditActivity : AbstractActivity() {
-
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddSongDialog: InputDialog = InputDialog()
     private val fRenamePlaylistDialog: InputDialog = InputDialog()
     private val fCopyDialog: InputDialog = InputDialog()
     private val fDeleteDialog: ConfirmationDialog = ConfirmationDialog()
-    private val fStore: IPlaylistStore = PlaylistStoreFactory.createStore(this)
+    private lateinit var fStore: PlaylistStore
     private var fPlaylist: Playlist? = null
     private var fActionMode: ActionMode? = null
     private var fPosition: Int = 0
+    private var fNewPlaylistId: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        fStore = PlaylistStore(this)
 
         fAddSongDialog.setOptions(null,
                 { view ->
@@ -94,15 +95,7 @@ class PlaylistEditActivity : AbstractActivity() {
                     view.findViewById<EditText>(R.id.playlistedit_copy_name).setText(fPlaylist?.name
                             ?: "")
                 },
-                { view ->
-                    fPlaylist?.let { p ->
-                        val name = view.findViewById<EditText>(R.id.playlistedit_copy_name).text
-                        val newPlaylist = Playlist(p, name.toString(), fStore.nextPlaylistWeight)
-                        fStore.addPlaylist(newPlaylist)
-
-                        PlaylistActivity.startActivity(this, newPlaylist.id)
-                    }
-                },
+                { view -> copyPlaylist(view.findViewById<EditText>(R.id.playlistedit_copy_name).text.toString()) },
                 layoutInflater,
                 R.string.playlistedit_action_copy,
                 R.drawable.ic_content_copy,
@@ -169,6 +162,17 @@ class PlaylistEditActivity : AbstractActivity() {
         })
     }
 
+    private fun copyPlaylist(name: String) {
+        fPlaylist?.let { p ->
+            fNewPlaylistId?.let { id ->
+                val newPlaylist = Playlist(p, id, name, fStore.nextPlaylistWeight)
+                fStore.addPlaylist(newPlaylist)
+
+                PlaylistActivity.startActivity(this, newPlaylist.id)
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
@@ -201,20 +205,21 @@ class PlaylistEditActivity : AbstractActivity() {
                                     song.tempo = newTempo
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
-                                fStore.storeSong(playlist, song)
+                                fStore.savePlaylist(playlist)
                                 reloadSongs()
                             }
                         }
                     }
                 }
             }
+            kREQUEST_DOCUMENT_CODE -> fStore.acceptRequestedDocument(data) { id ->
+                fNewPlaylistId = id
+                val ft = supportFragmentManager.beginTransaction()
+                ft.add(fCopyDialog, null)
+                ft.commitAllowingStateLoss()
+            }
             else -> super.onActivityResult(requestCode, resultCode, data)
         }
-    }
-
-    override fun onDestroy() {
-        fStore.close()
-        super.onDestroy()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -229,7 +234,7 @@ class PlaylistEditActivity : AbstractActivity() {
                 fRenamePlaylistDialog.show(supportFragmentManager, "renameplaylist")
             }
             R.id.playlistedit_action_copy -> {
-                fCopyDialog.show(supportFragmentManager, "copyplaylist")
+                startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
             }
             else -> {
                 return super.onOptionsItemSelected(item)
@@ -322,6 +327,7 @@ class PlaylistEditActivity : AbstractActivity() {
         private const val kINTENT_DATA_PLAYLIST_ID = "playlist-id"
 
         private const val kREQUEST_TEMPO = 1
+        private const val kREQUEST_DOCUMENT_CODE = 2
 
         fun startActivity(context: Context, playlistID: Long) =
                 Intent(context, PlaylistEditActivity::class.java)
