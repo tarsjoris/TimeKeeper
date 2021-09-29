@@ -11,7 +11,8 @@ import android.preference.PreferenceManager
 const val kFREQUENCY = "frequency"
 const val kDURATION = "duration"
 const val kSCREEN_ORIENTATION = "screenorientation"
-const val kFOLDER= "folder"
+const val kFOLDER = "folder"
+const val kAUTOPLAY = "autoplay"
 
 fun getIntPreference(context: Context, key: String, defaultValue: Int): Int {
     val result = getStringPreference(context, key, defaultValue.toString())
@@ -20,6 +21,10 @@ fun getIntPreference(context: Context, key: String, defaultValue: Int): Int {
     } catch (e: NumberFormatException) {
         defaultValue
     }
+}
+
+fun getBoolPreference(context: Context, key: String, defaultValue: Boolean): Boolean {
+    return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(key, defaultValue)
 }
 
 fun getStringPreference(context: Context, key: String, defaultValue: String? = null): String? {

@@ -47,23 +47,23 @@
                 android:layout_weight="3"
                 >
 
-                <android.widget.Button
+                <android.widget.ImageButton
                     android:id="@+id/button_start"
-                    android:text="@string/start"
                     style="@style/button"
-                    />
+                    android:src="@drawable/start"
+                    android:contentDescription="@string/start" />
 
-                <android.widget.Button
+                <android.widget.ImageButton
                     android:id="@+id/button_stop"
-                    android:text="@string/stop"
                     style="@style/button"
-                    />
+                    android:src="@drawable/stop"
+                    android:contentDescription="@string/stop" />
 
-                <android.widget.Button
-                     android:id="@+id/button_next"
-                    android:text="&gt;&gt;"
+                <android.widget.ImageButton
+                    android:id="@+id/button_next"
                     style="@style/button"
-                    />
+                    android:src="@drawable/skip_next"
+                    android:contentDescription="@string/next"/>
 
             </android.widget.LinearLayout>
 

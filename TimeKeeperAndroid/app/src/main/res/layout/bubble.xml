@@ -2,16 +2,44 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:background="@drawable/entry_selector"
-    >
-    
-	<TextView
-        android:id="@+id/playlist_entry_name"
-        style="@style/playlist_entry_name"
-        />
-    <TextView
-        android:id="@+id/playlist_entry_tempo"
-        style="@style/playlist_entry_tempo"
-        />
+    android:layout_weight="2"
+    android:orientation="vertical">
+
+    <include
+        layout="@layout/playlist_entry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:orientation="horizontal">
+
+        <android.widget.ImageButton
+            android:id="@+id/bubble_start"
+            style="@style/button"
+            android:src="@drawable/start"
+            android:contentDescription="@string/start" />
+
+        <android.widget.ImageButton
+            android:id="@+id/bubble_stop"
+            style="@style/button"
+            android:src="@drawable/stop"
+            android:contentDescription="@string/stop" />
+
+        <android.widget.ImageButton
+            android:id="@+id/bubble_next"
+            style="@style/button"
+            android:src="@drawable/skip_next"
+            android:contentDescription="@string/next"/>
+
+        <android.widget.ImageButton
+            android:id="@+id/bubble_playlist"
+            style="@style/button"
+            android:src="@drawable/playlist"
+            android:contentDescription="@string/playlist" />
+
+    </LinearLayout>
+
 </LinearLayout>

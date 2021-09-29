@@ -22,4 +22,10 @@
         android:entryValues="@array/pref_entrievalues_screenorientation"
         android:defaultValue="10"
         />
+	<CheckBoxPreference
+		android:key="autoplay"
+		android:title="@string/pref_title_autoplay"
+		android:summary="@string/pref_summary_autoplay"
+		android:defaultValue="true"
+		/>
 </PreferenceScreen>

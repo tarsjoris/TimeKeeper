@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -11,6 +12,7 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
+import androidx.annotation.RequiresApi
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistStore
 import kotlinx.android.synthetic.main.playlist.*
@@ -18,12 +20,16 @@ import java.io.Serializable
 import java.util.*
 
 class PlaylistActivity : AbstractActivity() {
+    private lateinit var fBubbleManager: BubbleManager
     private lateinit var fStore: PlaylistStore
+    private var fAutoPlay = true
     private var fPlaylist: Playlist? = null
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        fBubbleManager = BubbleManager(this)
         fStore = PlaylistStore(this)
 
         setContentView(R.layout.playlist)
@@ -34,7 +40,7 @@ class PlaylistActivity : AbstractActivity() {
         playlistView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
         button_start.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                trigger(playlistView.checkedItemPosition)
+                startSelection(playlistView.checkedItemPosition)
             }
             false
         }
@@ -55,6 +61,7 @@ class PlaylistActivity : AbstractActivity() {
     override fun onResume() {
         super.onResume()
         requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        fAutoPlay = getBoolPreference(this, kAUTOPLAY, true)
         loadIntent()
     }
 
@@ -63,8 +70,12 @@ class PlaylistActivity : AbstractActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.playlist_open_score -> {
+                openScore()
+            }
             R.id.playlist_action_edit -> {
                 fPlaylist?.let { p ->
                     PlaylistEditActivity.startActivity(this, p.id)
@@ -78,6 +89,24 @@ class PlaylistActivity : AbstractActivity() {
             }
         }
         return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun openScore() {
+        fPlaylist?.let { p ->
+            if (p.songs.isNotEmpty()) {
+                val selection = playlist.checkedItemPosition
+                val pos = if (selection in 0 until p.songs.size) selection else 0
+                fBubbleManager.showBubble(p.id, pos)
+                p.songs[pos].scoreLink?.also(this::openLink)
+            }
+        }
+    }
+
+    private fun openLink(link: String) {
+        val openURL = Intent(Intent.ACTION_VIEW)
+        openURL.data = Uri.parse(link)
+        startActivity(openURL)
     }
 
     private fun loadIntent() {
@@ -137,7 +166,14 @@ class PlaylistActivity : AbstractActivity() {
         fPlaylist?.let { p ->
             if (pos < p.songs.size - 1) {
                 val newPos = pos + 1
-                trigger(newPos)
+
+                if (fAutoPlay) {
+                    startMetronome(p, newPos)
+                } else {
+                    SoundService.stopSound(this)
+                }
+
+                playlist.setItemChecked(newPos, true)
                 scrollToPosition(newPos)
             }
         }
@@ -156,13 +192,19 @@ class PlaylistActivity : AbstractActivity() {
     }
 
     private fun trigger(selection: Int) {
+        if (fAutoPlay) {
+            startSelection(selection)
+        } else {
+            SoundService.stopSound(this)
+        }
+    }
+
+    private fun startSelection(selection: Int) {
         fPlaylist?.let { p ->
             if (p.songs.isNotEmpty()) {
                 val pos = if (selection in 0 until p.songs.size) selection else 0
 
                 startMetronome(p, pos)
-                playlist.setItemChecked(pos, true)
-                p.songs[pos].scoreLink?.also(this::openLink)
             }
         }
     }
@@ -181,15 +223,9 @@ class PlaylistActivity : AbstractActivity() {
         }
     }
 
-    private fun openLink(link: String) {
-        val openURL = Intent(Intent.ACTION_VIEW)
-        openURL.data = Uri.parse(link)
-        startActivity(openURL)
-    }
-
     companion object {
-        private const val kINTENT_DATA_PLAYLIST_ID = "playlist-id"
-        private const val kINTENT_DATA_POSITION = "position"
+        const val kINTENT_DATA_PLAYLIST_ID = "playlist-id"
+        const val kINTENT_DATA_POSITION = "position"
 
         private const val kKEY_NAME = "name"
         private const val kKEY_TEMPO = "tempo"

@@ -46,6 +46,7 @@
     <string name="service_description">TimeKeeper metronome</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="next">Next</string>
     <string name="pref_title_frequency">Frequency</string>
     <string name="pref_summary_frequency">The frequency of the beep in Hz</string>
     <string name="pref_title_duration">Duration</string>
@@ -66,4 +67,6 @@
         <item>Reverse portrait</item>
         <item>Reverse landscape</item>
     </string-array>
+    <string name="pref_title_autoplay">Autoplay</string>
+    <string name="pref_summary_autoplay">Start metronome when selecting song or pressing next.</string>
 </resources>
