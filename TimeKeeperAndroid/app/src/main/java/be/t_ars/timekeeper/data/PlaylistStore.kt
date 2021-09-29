@@ -8,6 +8,7 @@ import android.util.Log
 import android.util.Xml
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
+import be.t_ars.timekeeper.PlaylistState
 import be.t_ars.timekeeper.getStringPreference
 import be.t_ars.timekeeper.kFOLDER
 import org.xmlpull.v1.XmlPullParser
@@ -216,6 +217,11 @@ class PlaylistStore(private val fContext: Context) {
                     }
                     serializer.endTag(null, kTAG_PLAYLIST)
                     serializer.endDocument()
+                }
+            }
+            PlaylistState.withCurrentPlaylist { currentPlaylist, _ ->
+                if (currentPlaylist.id == playlist.id) {
+                    PlaylistState.currentPlaylist = playlist
                 }
             }
         } catch (e: IOException) {

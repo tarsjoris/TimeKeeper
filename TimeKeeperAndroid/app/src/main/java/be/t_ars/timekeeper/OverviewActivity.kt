@@ -215,8 +215,10 @@ class OverviewActivity : AbstractActivity() {
         openPlaylist(fPlaylists[selection])
     }
 
-    private fun openPlaylist(playlist: PlaylistHeader) =
-            PlaylistActivity.startActivity(this, playlist.id)
+    private fun openPlaylist(playlist: PlaylistHeader) {
+        PlaylistState.currentPlaylist = fStore?.readPlaylist(playlist.id)
+        PlaylistActivity.startActivity(this)
+    }
 
     private fun deleteSelectedItems() {
         val selection = overview_list.checkedItemPositions

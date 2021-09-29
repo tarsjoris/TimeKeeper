@@ -167,8 +167,9 @@ class PlaylistEditActivity : AbstractActivity() {
             fNewPlaylistId?.let { id ->
                 val newPlaylist = Playlist(p, id, name, fStore.nextPlaylistWeight)
                 fStore.addPlaylist(newPlaylist)
+                PlaylistState.currentPlaylist = newPlaylist
 
-                PlaylistActivity.startActivity(this, newPlaylist.id)
+                PlaylistActivity.startActivity(this)
             }
         }
     }
@@ -279,8 +280,9 @@ class PlaylistEditActivity : AbstractActivity() {
         fPlaylist?.let { playlist ->
             fData.addAll(
                     playlist.songs.map { song ->
+                        val name = if (song.scoreLink != null) "${song.name}*" else song.name
                         val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                        mapOf(kKEY_NAME to song.name, kKEY_TEMPO to tempo)
+                        mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
                     }
             )
         }
