@@ -49,19 +49,11 @@ class BubbleManager(private val context: Context) {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    fun showBubble(id: Long, pos: Int) {
+    fun showBubble() {
         val contentIntent = Intent(context, PlaylistActivity::class.java)
-                .also {
-                    it.putExtra(PlaylistActivity.kINTENT_DATA_PLAYLIST_ID, id)
-                    it.putExtra(PlaylistActivity.kINTENT_DATA_POSITION, pos)
-                }
         val contentPendingIntent = PendingIntent.getActivity(context, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val bubbleIntent = Intent(context, BubbleActivity::class.java)
-                .also {
-                    it.putExtra(BubbleActivity.kINTENT_DATA_PLAYLIST_ID, id)
-                    it.putExtra(BubbleActivity.kINTENT_DATA_POSITION, pos)
-                }
         val bubblePendingIntent = PendingIntent.getActivity(context, 0, bubbleIntent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         val bubbleData = Notification.BubbleMetadata

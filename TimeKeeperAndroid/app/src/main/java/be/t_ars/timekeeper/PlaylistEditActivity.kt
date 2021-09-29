@@ -167,8 +167,9 @@ class PlaylistEditActivity : AbstractActivity() {
             fNewPlaylistId?.let { id ->
                 val newPlaylist = Playlist(p, id, name, fStore.nextPlaylistWeight)
                 fStore.addPlaylist(newPlaylist)
+                PlaylistState.currentPlaylist = newPlaylist
 
-                PlaylistActivity.startActivity(this, newPlaylist.id)
+                PlaylistActivity.startActivity(this)
             }
         }
     }

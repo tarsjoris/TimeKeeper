@@ -3,27 +3,19 @@ package be.t_ars.timekeeper
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import be.t_ars.timekeeper.data.Playlist
-import be.t_ars.timekeeper.data.PlaylistStore
 import kotlinx.android.synthetic.main.bubble.*
-import java.io.Serializable
-import java.util.*
+import kotlinx.android.synthetic.main.playlist_entry.*
 
 class BubbleActivity : AbstractActivity() {
-    private lateinit var fStore: PlaylistStore
     private var fAutoPlay = true
-    private var fPlaylist: Playlist? = null
-    private var fPos = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        fStore = PlaylistStore(this)
-
         setContentView(R.layout.bubble)
 
         bubble_start.setOnClickListener {
-            fPlaylist?.let { startMetronome(it, fPos) }
+            startMetronome()
         }
         bubble_stop.setOnClickListener {
             SoundService.stopSound(this)
@@ -32,9 +24,7 @@ class BubbleActivity : AbstractActivity() {
             doNext()
         }
         bubble_playlist.setOnClickListener {
-            fPlaylist?.let { p ->
-                showPlaylist(p)
-            }
+            showPlaylist()
         }
     }
 
@@ -45,53 +35,40 @@ class BubbleActivity : AbstractActivity() {
     }
 
     private fun loadIntent() {
-        val extras = intent.extras
-        val oldPlaylist = fPlaylist
-        when {
-            extras != null -> {
-                val playlistID = extras.getLong(kINTENT_DATA_PLAYLIST_ID)
-                fPlaylist = fStore.readPlaylist(playlistID)
-                fPos = extras.getInt(kINTENT_DATA_POSITION, fPos)
-            }
-            oldPlaylist != null -> {
-                fPlaylist = fStore.readPlaylist(oldPlaylist.id)
-            }
-            else -> {
-                fPlaylist = null
-            }
+        PlaylistState.withCurrentSong { _, song, _ ->
+            playlist_entry_name.text = song.name
+            playlist_entry_tempo.text = song.tempo?.toString()
         }
     }
 
     private fun doNext() {
-        fPlaylist?.let { p ->
-            if (fPos < p.songs.size - 1) {
-                ++fPos
+        PlaylistState.withCurrentSong { playlist, _, pos ->
+            if (pos < playlist.songs.size - 1) {
+                val newPos = pos + 1
+                PlaylistState.currentPos = newPos
                 if (fAutoPlay) {
-                    startMetronome(p, fPos)
+                    startMetronome()
                 } else {
                     SoundService.stopSound(this)
                 }
-                val scoreLink = p.songs[fPos].scoreLink
+                val scoreLink = playlist.songs[newPos].scoreLink
                 if (scoreLink != null) {
                     openLink(scoreLink)
                 } else {
-                    showPlaylist(p)
+                    showPlaylist()
                 }
             }
         }
     }
 
-    private fun startMetronome(p: Playlist, pos: Int) {
-        val song = p.songs[pos]
-        val tempo = song.tempo
-        if (tempo != null) {
-            val extras = HashMap<String, Serializable>().also {
-                it[PlaylistActivity.kINTENT_DATA_PLAYLIST_ID] = p.id
-                it[PlaylistActivity.kINTENT_DATA_POSITION] = pos
+    private fun startMetronome() {
+        PlaylistState.withCurrentSong { _, song, _ ->
+            val tempo = song.tempo
+            if (tempo != null) {
+                SoundService.startSound(this, song.name, tempo, PlaylistActivity::class.java)
+            } else {
+                SoundService.stopSound(this)
             }
-            SoundService.startSound(this, song.name, tempo, PlaylistActivity::class.java, extras)
-        } else {
-            SoundService.stopSound(this)
         }
     }
 
@@ -101,18 +78,11 @@ class BubbleActivity : AbstractActivity() {
         startActivity(openURL)
     }
 
-    private fun showPlaylist(playlist: Playlist) {
+    private fun showPlaylist() {
         val playlistIntent = Intent(this, PlaylistActivity::class.java)
                 .also {
-                    it.putExtra(PlaylistActivity.kINTENT_DATA_PLAYLIST_ID, playlist.id)
-                    it.putExtra(PlaylistActivity.kINTENT_DATA_POSITION, fPos)
                     it.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
         startActivity(playlistIntent)
-    }
-
-    companion object {
-        const val kINTENT_DATA_PLAYLIST_ID = "playlist-id"
-        const val kINTENT_DATA_POSITION = "position"
     }
 }

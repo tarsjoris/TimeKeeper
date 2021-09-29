@@ -8,29 +8,22 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
 import androidx.annotation.RequiresApi
-import be.t_ars.timekeeper.data.Playlist
-import be.t_ars.timekeeper.data.PlaylistStore
 import kotlinx.android.synthetic.main.playlist.*
-import java.io.Serializable
 import java.util.*
 
 class PlaylistActivity : AbstractActivity() {
     private lateinit var fBubbleManager: BubbleManager
-    private lateinit var fStore: PlaylistStore
     private var fAutoPlay = true
-    private var fPlaylist: Playlist? = null
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         fBubbleManager = BubbleManager(this)
-        fStore = PlaylistStore(this)
 
         setContentView(R.layout.playlist)
         setSupportActionBar(toolbar)
@@ -38,23 +31,14 @@ class PlaylistActivity : AbstractActivity() {
 
         val playlistView = playlist
         playlistView.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
-        button_start.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                startSelection(playlistView.checkedItemPosition)
-            }
-            false
+        button_start.setOnClickListener {
+            startMetronome()
         }
-        button_stop.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                SoundService.stopSound(this)
-            }
-            false
+        button_stop.setOnClickListener {
+            SoundService.stopSound(this)
         }
-        button_next.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                doNext()
-            }
-            false
+        button_next.setOnClickListener {
+            doNext()
         }
     }
 
@@ -62,7 +46,7 @@ class PlaylistActivity : AbstractActivity() {
         super.onResume()
         requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
         fAutoPlay = getBoolPreference(this, kAUTOPLAY, true)
-        loadIntent()
+        loadPlaylist()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -77,8 +61,8 @@ class PlaylistActivity : AbstractActivity() {
                 openScore()
             }
             R.id.playlist_action_edit -> {
-                fPlaylist?.let { p ->
-                    PlaylistEditActivity.startActivity(this, p.id)
+                PlaylistState.withCurrentPlaylist { playlist, _ ->
+                    PlaylistEditActivity.startActivity(this, playlist.id)
                 }
             }
             android.R.id.home -> {
@@ -93,13 +77,9 @@ class PlaylistActivity : AbstractActivity() {
 
     @RequiresApi(Build.VERSION_CODES.P)
     private fun openScore() {
-        fPlaylist?.let { p ->
-            if (p.songs.isNotEmpty()) {
-                val selection = playlist.checkedItemPosition
-                val pos = if (selection in 0 until p.songs.size) selection else 0
-                fBubbleManager.showBubble(p.id, pos)
-                p.songs[pos].scoreLink?.also(this::openLink)
-            }
+        PlaylistState.withCurrentSong { _, song, _ ->
+            fBubbleManager.showBubble()
+            song.scoreLink?.also(this::openLink)
         }
     }
 
@@ -109,52 +89,26 @@ class PlaylistActivity : AbstractActivity() {
         startActivity(openURL)
     }
 
-    private fun loadIntent() {
+    private fun loadPlaylist() {
         val playlistView = playlist
-        val extras = intent.extras
-        val oldPlaylist = fPlaylist
-        when {
-            extras != null -> {
-                val playlistID = extras.getLong(kINTENT_DATA_PLAYLIST_ID)
-                val newPlaylist = fStore.readPlaylist(playlistID)
-                val defaultPosition = if (oldPlaylist?.id == playlistID) playlistView.checkedItemPosition else 0
-                val newPosition = extras.getInt(kINTENT_DATA_POSITION, defaultPosition)
-                loadPlaylist(newPlaylist, newPosition)
-            }
-            oldPlaylist != null -> {
-                val newPlaylist = fStore.readPlaylist(oldPlaylist.id)
-                val newPosition = playlistView.checkedItemPosition
-                loadPlaylist(newPlaylist, newPosition)
-            }
-            else -> {
-                loadPlaylist(null, 0)
-            }
-        }
-    }
-
-    private fun loadPlaylist(pl: Playlist?, position: Int) {
-        fPlaylist = pl
-        supportActionBar?.title = fPlaylist?.name ?: "<no playlist>"
-        val data = ArrayList<Map<String, String>>()
-        fPlaylist?.let { p ->
-            p.songs.forEach { song ->
+        PlaylistState.withCurrentPlaylist { playlist, pos ->
+            supportActionBar?.title = playlist.name
+            val data = ArrayList<Map<String, String>>()
+            playlist.songs.forEach { song ->
                 val name = if (song.scoreLink != null) "${song.name}*" else song.name
                 val tempo = if (song.tempo != null) "${song.tempo}" else "-"
                 data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
             }
-        }
 
-        val playlistView = playlist
-        playlistView.adapter = SimpleAdapter(this,
-                data,
-                R.layout.playlist_entry,
-                arrayOf(kKEY_NAME, kKEY_TEMPO),
-                intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo))
+            playlistView.adapter = SimpleAdapter(this,
+                    data,
+                    R.layout.playlist_entry,
+                    arrayOf(kKEY_NAME, kKEY_TEMPO),
+                    intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo))
 
-        fPlaylist?.let { p ->
-            if (p.songs.isNotEmpty()) {
-                playlistView.setItemChecked(position, true)
-                playlistView.post { scrollToPosition(position) }
+            if (pos != null && pos in playlist.songs.indices) {
+                playlistView.setItemChecked(pos, true)
+                playlistView.post { scrollToPosition(pos) }
             }
         }
     }
@@ -162,18 +116,18 @@ class PlaylistActivity : AbstractActivity() {
 
     private fun doNext() {
         val playlistView = playlist
-        val pos = playlistView.checkedItemPosition
-        fPlaylist?.let { p ->
-            if (pos < p.songs.size - 1) {
+        PlaylistState.withCurrentSong { playlist, _, pos ->
+            if (pos < playlist.songs.size - 1) {
                 val newPos = pos + 1
+                PlaylistState.currentPos = newPos
 
                 if (fAutoPlay) {
-                    startMetronome(p, newPos)
+                    startMetronome()
                 } else {
                     SoundService.stopSound(this)
                 }
 
-                playlist.setItemChecked(newPos, true)
+                playlistView.setItemChecked(newPos, true)
                 scrollToPosition(newPos)
             }
         }
@@ -192,49 +146,31 @@ class PlaylistActivity : AbstractActivity() {
     }
 
     private fun trigger(selection: Int) {
+        PlaylistState.currentPos = selection
         if (fAutoPlay) {
-            startSelection(selection)
+            startMetronome()
         } else {
             SoundService.stopSound(this)
         }
     }
 
-    private fun startSelection(selection: Int) {
-        fPlaylist?.let { p ->
-            if (p.songs.isNotEmpty()) {
-                val pos = if (selection in 0 until p.songs.size) selection else 0
-
-                startMetronome(p, pos)
+    private fun startMetronome() {
+        PlaylistState.withCurrentSong { _, song, _ ->
+            val tempo = song.tempo
+            if (tempo != null) {
+                SoundService.startSound(this, song.name, tempo, PlaylistActivity::class.java)
+            } else {
+                SoundService.stopSound(this)
             }
-        }
-    }
-
-    private fun startMetronome(p: Playlist, pos: Int) {
-        val song = p.songs[pos]
-        val tempo = song.tempo
-        if (tempo != null) {
-            val extras = HashMap<String, Serializable>().also {
-                it[kINTENT_DATA_PLAYLIST_ID] = p.id
-                it[kINTENT_DATA_POSITION] = pos
-            }
-            SoundService.startSound(this, song.name, tempo, PlaylistActivity::class.java, extras)
-        } else {
-            SoundService.stopSound(this)
         }
     }
 
     companion object {
-        const val kINTENT_DATA_PLAYLIST_ID = "playlist-id"
-        const val kINTENT_DATA_POSITION = "position"
-
         private const val kKEY_NAME = "name"
         private const val kKEY_TEMPO = "tempo"
 
-        fun startActivity(context: Context, playlistID: Long) =
+        fun startActivity(context: Context) =
                 Intent(context, PlaylistActivity::class.java)
-                        .also { intent ->
-                            intent.putExtra(kINTENT_DATA_PLAYLIST_ID, playlistID)
-                        }
                         .let(context::startActivity)
     }
 }
