@@ -101,9 +101,11 @@ class SoundService : Service() {
     private fun createNotificationChannel() {
         val serviceChannel = NotificationChannel(
                 fChannelID,
-                "Metronome",
+                "Sound",
                 NotificationManager.IMPORTANCE_LOW
         )
+        serviceChannel.setSound(null, null)
+        serviceChannel.setShowBadge(false)
 
         getSystemService(NotificationManager::class.java).createNotificationChannel(serviceChannel)
     }

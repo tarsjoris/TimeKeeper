@@ -84,10 +84,6 @@ class BubbleActivity : AbstractActivity() {
     }
 
     private fun showPlaylist() {
-        val playlistIntent = Intent(this, PlaylistActivity::class.java)
-                .also {
-                    it.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-        startActivity(playlistIntent)
+        PlaylistActivity.startActivity(this)
     }
 }
