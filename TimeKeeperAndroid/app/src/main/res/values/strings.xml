@@ -20,6 +20,9 @@
     <string name="playlistedit_action_done">Done</string>
     <string name="playlistedit_action_renameplaylist">Rename playlist</string>
     <string name="playlistedit_action_copy">Copy playlist</string>
+    <string name="playlistedit_action_normalmode">Normal mode</string>
+    <string name="playlistedit_action_sendtop">Send to top</string>
+    <string name="playlistedit_action_sendbottom">Send to bottom</string>
     <string name="playlistedit_action_editsong">Edit song</string>
     <string name="playlistedit_action_up">Move up</string>
     <string name="playlistedit_action_down">Move down</string>

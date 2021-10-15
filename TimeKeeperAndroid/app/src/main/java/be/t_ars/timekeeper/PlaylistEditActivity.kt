@@ -36,6 +36,9 @@ private fun parseTempo(tempo: CharSequence): Int? {
     return null
 }
 
+private enum class EditMode {
+    NORMAL, SEND_TOP, SEND_BOTTOM
+}
 
 class PlaylistEditActivity : AbstractActivity() {
     private val fData: MutableList<Map<String, String>> = ArrayList()
@@ -48,66 +51,70 @@ class PlaylistEditActivity : AbstractActivity() {
     private var fActionMode: ActionMode? = null
     private var fPosition: Int = 0
     private var fNewPlaylistId: Long? = null
+    private var fEditMode = EditMode.NORMAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         fStore = PlaylistStore(this)
 
-        fAddSongDialog.setOptions(null,
-                { view ->
-                    val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
-                    val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
-                    val tempo = parseTempo(tempoS)
-                    val song = Song(name = name.toString(), tempo = tempo)
-                    fPlaylist?.addSong(fStore, song)
-                    reloadSongs()
-                },
-                layoutInflater,
-                R.string.playlistedit_action_addsong,
-                R.drawable.ic_plus_dark,
-                R.layout.playlistedit_song,
-                R.string.playlistedit_addsong_add,
-                R.string.playlistedit_addsong_cancel
+        fAddSongDialog.setOptions(
+            null,
+            { view ->
+                val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
+                val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
+                val tempo = parseTempo(tempoS)
+                val song = Song(name = name.toString(), tempo = tempo)
+                fPlaylist?.addSong(fStore, song)
+                reloadSongs()
+            },
+            layoutInflater,
+            R.string.playlistedit_action_addsong,
+            R.drawable.ic_plus_dark,
+            R.layout.playlistedit_song,
+            R.string.playlistedit_addsong_add,
+            R.string.playlistedit_addsong_cancel
         )
         fRenamePlaylistDialog.setOptions(
-                { view ->
-                    view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name)
-                            .setText(fPlaylist?.name ?: "")
-                },
-                { view ->
-                    val name = view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name).text
-                    fPlaylist?.let {
-                        it.name = name.toString()
-                        fStore.storePlaylistHeader(it)
-                        reloadName()
-                    }
-                },
-                layoutInflater,
-                R.string.playlistedit_action_renameplaylist,
-                R.drawable.ic_pencil,
-                R.layout.playlistedit_renameplaylist,
-                R.string.playlistedit_renameplaylist_save,
-                R.string.playlistedit_renameplaylist_cancel
+            { view ->
+                view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name)
+                    .setText(fPlaylist?.name ?: "")
+            },
+            { view ->
+                val name = view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name).text
+                fPlaylist?.let {
+                    it.name = name.toString()
+                    fStore.storePlaylistHeader(it)
+                    reloadName()
+                }
+            },
+            layoutInflater,
+            R.string.playlistedit_action_renameplaylist,
+            R.drawable.ic_pencil,
+            R.layout.playlistedit_renameplaylist,
+            R.string.playlistedit_renameplaylist_save,
+            R.string.playlistedit_renameplaylist_cancel
         )
         fCopyDialog.setOptions(
-                { view ->
-                    view.findViewById<EditText>(R.id.playlistedit_copy_name).setText(fPlaylist?.name
-                            ?: "")
-                },
-                { view -> copyPlaylist(view.findViewById<EditText>(R.id.playlistedit_copy_name).text.toString()) },
-                layoutInflater,
-                R.string.playlistedit_action_copy,
-                R.drawable.ic_content_copy,
-                R.layout.playlistedit_copy,
-                R.string.playlistedit_copy_copy,
-                R.string.playlistedit_copy_cancel
+            { view ->
+                view.findViewById<EditText>(R.id.playlistedit_copy_name).setText(
+                    fPlaylist?.name
+                        ?: ""
+                )
+            },
+            { view -> copyPlaylist(view.findViewById<EditText>(R.id.playlistedit_copy_name).text.toString()) },
+            layoutInflater,
+            R.string.playlistedit_action_copy,
+            R.drawable.ic_content_copy,
+            R.layout.playlistedit_copy,
+            R.string.playlistedit_copy_copy,
+            R.string.playlistedit_copy_cancel
         )
         fDeleteDialog.setOptions(
-                this::deleteSelectedItems,
-                R.string.playlistedit_delete_message,
-                R.string.playlistedit_delete_yes,
-                R.string.playlistedit_delete_no
+            this::deleteSelectedItems,
+            R.string.playlistedit_delete_message,
+            R.string.playlistedit_delete_yes,
+            R.string.playlistedit_delete_no
         )
 
         setContentView(R.layout.playlistedit)
@@ -117,11 +124,29 @@ class PlaylistEditActivity : AbstractActivity() {
             fAddSongDialog.show(supportFragmentManager, "addsong")
         }
 
-        playlistedit.adapter = SimpleAdapter(this, fData, R.layout.playlist_entry, arrayOf(kKEY_NAME, kKEY_TEMPO), intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo))
+        playlistedit.adapter = SimpleAdapter(
+            this,
+            fData,
+            R.layout.playlist_entry,
+            arrayOf(kKEY_NAME, kKEY_TEMPO),
+            intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
+        )
         playlistedit.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             if (fPlaylist != null && position >= 0 && position < fPlaylist?.songs?.size ?: 0) {
-                fPosition = position
-                editEntry()
+                when (fEditMode) {
+                    EditMode.NORMAL -> {
+                        fPosition = position
+                        editEntry()
+                    }
+                    EditMode.SEND_TOP -> {
+                        fPlaylist?.sendToTop(fStore, position)
+                        reloadSongs()
+                    }
+                    EditMode.SEND_BOTTOM -> {
+                        fPlaylist?.sendToBottom(fStore, position)
+                        reloadSongs()
+                    }
+                }
             }
         }
 
@@ -158,7 +183,13 @@ class PlaylistEditActivity : AbstractActivity() {
                 return true
             }
 
-            override fun onItemCheckedStateChanged(mode: ActionMode, position: Int, id: Long, checked: Boolean) {}
+            override fun onItemCheckedStateChanged(
+                mode: ActionMode,
+                position: Int,
+                id: Long,
+                checked: Boolean
+            ) {
+            }
         })
     }
 
@@ -176,7 +207,8 @@ class PlaylistEditActivity : AbstractActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation =
+            getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
         loadIntent()
     }
 
@@ -191,8 +223,9 @@ class PlaylistEditActivity : AbstractActivity() {
                         if (fPosition in 0 until playlist.songs.size) {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
                             val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
-                                    .let { if (it == -1) null else it }
-                            val newScoreLink = d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
+                                .let { if (it == -1) null else it }
+                            val newScoreLink =
+                                d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { if (it.isBlank()) null else it }
 
                             val song = playlist.songs[fPosition]
@@ -237,6 +270,18 @@ class PlaylistEditActivity : AbstractActivity() {
             R.id.playlistedit_action_copy -> {
                 startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
             }
+            R.id.playlistedit_action_normalmode -> {
+                fEditMode = EditMode.NORMAL
+                reloadSongs()
+            }
+            R.id.playlistedit_action_sendtop -> {
+                fEditMode = EditMode.SEND_TOP
+                reloadSongs()
+            }
+            R.id.playlistedit_action_sendbottom -> {
+                fEditMode = EditMode.SEND_BOTTOM
+                reloadSongs()
+            }
             else -> {
                 return super.onOptionsItemSelected(item)
             }
@@ -260,6 +305,7 @@ class PlaylistEditActivity : AbstractActivity() {
     }
 
     private fun loadPlaylist() {
+        fEditMode = EditMode.NORMAL
         reloadName()
         reloadSongs()
     }
@@ -267,7 +313,13 @@ class PlaylistEditActivity : AbstractActivity() {
     private fun editEntry() {
         fPlaylist?.let { playlist ->
             val song = playlist.songs[fPosition]
-            TapSongActivity.startActivityForResult(this, song.tempo, song.name, song.scoreLink, kREQUEST_TEMPO)
+            TapSongActivity.startActivityForResult(
+                this,
+                song.tempo,
+                song.name,
+                song.scoreLink,
+                kREQUEST_TEMPO
+            )
         }
     }
 
@@ -279,11 +331,18 @@ class PlaylistEditActivity : AbstractActivity() {
         fData.clear()
         fPlaylist?.let { playlist ->
             fData.addAll(
-                    playlist.songs.map { song ->
-                        val name = if (song.scoreLink != null) "${song.name}*" else song.name
-                        val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                        mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
+                playlist.songs.map { song ->
+                    var name = song.name
+                    if (song.scoreLink != null) {
+                        name += "*"
                     }
+                    when (fEditMode) {
+                        EditMode.SEND_TOP -> name = "\u2912 $name"
+                        EditMode.SEND_BOTTOM -> name = "\u2913 $name"
+                    }
+                    val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                    mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
+                }
             )
         }
         (playlistedit.adapter as SimpleAdapter).notifyDataSetChanged()
@@ -315,7 +374,7 @@ class PlaylistEditActivity : AbstractActivity() {
                         playlistedit.setItemChecked(i, false)
                         playlistedit.setItemChecked(otherIndex, true)
                     }
-                    fPlaylist!!.move(fStore, i, up)
+                    fPlaylist?.move(fStore, i, up)
                 }
             } else {
                 ignore = false
@@ -332,10 +391,10 @@ class PlaylistEditActivity : AbstractActivity() {
         private const val kREQUEST_DOCUMENT_CODE = 2
 
         fun startActivity(context: Context, playlistID: Long) =
-                Intent(context, PlaylistEditActivity::class.java)
-                        .also { intent ->
-                            intent.putExtra(kINTENT_DATA_PLAYLIST_ID, playlistID)
-                        }
-                        .let(context::startActivity)
+            Intent(context, PlaylistEditActivity::class.java)
+                .also { intent ->
+                    intent.putExtra(kINTENT_DATA_PLAYLIST_ID, playlistID)
+                }
+                .let(context::startActivity)
     }
 }

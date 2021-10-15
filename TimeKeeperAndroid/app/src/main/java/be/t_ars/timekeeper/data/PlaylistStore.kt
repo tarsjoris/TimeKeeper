@@ -28,8 +28,8 @@ class PlaylistStore(private val fContext: Context) {
         fFolder = Uri.parse(folder)
     }
 
-    private class EntryComparator : Comparator<AbstractEntry> {
-        override fun compare(lhs: AbstractEntry, rhs: AbstractEntry): Int {
+    private class PlaylistComparator : Comparator<PlaylistHeader> {
+        override fun compare(lhs: PlaylistHeader, rhs: PlaylistHeader): Int {
             return lhs.weight - rhs.weight
         }
     }
@@ -46,7 +46,7 @@ class PlaylistStore(private val fContext: Context) {
                                 ?.also { playlists.add(it) }
                     }
                 }
-        Collections.sort(playlists, kCOMPARATOR)
+        Collections.sort(playlists, kPLAYLIST_COMPARATOR)
         return playlists
     }
 
@@ -243,7 +243,7 @@ class PlaylistStore(private val fContext: Context) {
         private const val kATTR_TEMPO = "tempo"
         private const val kATTR_SCORE_LINK = "score_link"
 
-        private val kCOMPARATOR = EntryComparator()
+        private val kPLAYLIST_COMPARATOR = PlaylistComparator()
         private val kFILENAME_PATTERN = Pattern.compile("([0-9]+)\\.xml")
     }
 }

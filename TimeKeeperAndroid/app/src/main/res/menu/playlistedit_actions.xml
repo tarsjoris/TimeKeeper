@@ -9,4 +9,16 @@
           android:icon="@drawable/ic_content_copy"
           android:title="@string/playlistedit_action_copy"
           app:showAsAction="never" />
+	<item android:id="@+id/playlistedit_action_normalmode"
+		android:icon="@drawable/ic_pencil"
+		android:title="@string/playlistedit_action_normalmode"
+		app:showAsAction="never" />
+	<item android:id="@+id/playlistedit_action_sendtop"
+		android:icon="@drawable/ic_arrow_up"
+		android:title="@string/playlistedit_action_sendtop"
+		app:showAsAction="never" />
+	<item android:id="@+id/playlistedit_action_sendbottom"
+		android:icon="@drawable/ic_arrow_down"
+		android:title="@string/playlistedit_action_sendbottom"
+		app:showAsAction="never" />
 </menu>
