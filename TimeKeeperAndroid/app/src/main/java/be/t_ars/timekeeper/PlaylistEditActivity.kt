@@ -36,6 +36,9 @@ private fun parseTempo(tempo: CharSequence): Int? {
     return null
 }
 
+private enum class EditMode {
+    NORMAL, SEND_TOP, SEND_BOTTOM
+}
 
 class PlaylistEditActivity : AbstractActivity() {
     private val fData: MutableList<Map<String, String>> = ArrayList()
@@ -48,6 +51,7 @@ class PlaylistEditActivity : AbstractActivity() {
     private var fActionMode: ActionMode? = null
     private var fPosition: Int = 0
     private var fNewPlaylistId: Long? = null
+    private var fEditMode = EditMode.NORMAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,8 +133,20 @@ class PlaylistEditActivity : AbstractActivity() {
         )
         playlistedit.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             if (fPlaylist != null && position >= 0 && position < fPlaylist?.songs?.size ?: 0) {
-                fPosition = position
-                editEntry()
+                when (fEditMode) {
+                    EditMode.NORMAL -> {
+                        fPosition = position
+                        editEntry()
+                    }
+                    EditMode.SEND_TOP -> {
+                        fPlaylist?.sendToTop(fStore, position)
+                        reloadSongs()
+                    }
+                    EditMode.SEND_BOTTOM -> {
+                        fPlaylist?.sendToBottom(fStore, position)
+                        reloadSongs()
+                    }
+                }
             }
         }
 
@@ -254,6 +270,18 @@ class PlaylistEditActivity : AbstractActivity() {
             R.id.playlistedit_action_copy -> {
                 startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
             }
+            R.id.playlistedit_action_normalmode -> {
+                fEditMode = EditMode.NORMAL
+                reloadSongs()
+            }
+            R.id.playlistedit_action_sendtop -> {
+                fEditMode = EditMode.SEND_TOP
+                reloadSongs()
+            }
+            R.id.playlistedit_action_sendbottom -> {
+                fEditMode = EditMode.SEND_BOTTOM
+                reloadSongs()
+            }
             else -> {
                 return super.onOptionsItemSelected(item)
             }
@@ -277,6 +305,7 @@ class PlaylistEditActivity : AbstractActivity() {
     }
 
     private fun loadPlaylist() {
+        fEditMode = EditMode.NORMAL
         reloadName()
         reloadSongs()
     }
@@ -302,10 +331,18 @@ class PlaylistEditActivity : AbstractActivity() {
         fData.clear()
         fPlaylist?.let { playlist ->
             fData.addAll(
-                    playlist.songs.map { song ->
-                        val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                        mapOf(kKEY_NAME to song.name, kKEY_TEMPO to tempo)
+                playlist.songs.map { song ->
+                    var name = song.name
+                    if (song.scoreLink != null) {
+                        name += "*"
                     }
+                    when (fEditMode) {
+                        EditMode.SEND_TOP -> name = "\u2912 $name"
+                        EditMode.SEND_BOTTOM -> name = "\u2913 $name"
+                    }
+                    val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                    mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
+                }
             )
         }
         (playlistedit.adapter as SimpleAdapter).notifyDataSetChanged()

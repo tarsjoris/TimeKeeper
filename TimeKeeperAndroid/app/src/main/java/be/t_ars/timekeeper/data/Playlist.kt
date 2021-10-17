@@ -35,4 +35,20 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
         }
         store.savePlaylist(this)
     }
+
+    fun sendToTop(store: PlaylistStore, position: Int) {
+        if (position in 1 until songs.size) {
+            val song = songs.removeAt(position)
+            songs.add(0, song)
+        }
+        store.savePlaylist(this)
+    }
+
+    fun sendToBottom(store: PlaylistStore, position: Int) {
+        if (position in 0 until songs.size - 1) {
+            val song = songs.removeAt(position)
+            songs.add(song);
+        }
+        store.savePlaylist(this)
+    }
 }
