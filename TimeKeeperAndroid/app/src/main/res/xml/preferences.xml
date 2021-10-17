@@ -28,4 +28,10 @@
 		android:summary="@string/pref_summary_autoplay"
 		android:defaultValue="true"
 		/>
+	<CheckBoxPreference
+		android:key="playlist-in-bubble"
+		android:title="@string/pref_title_playlist_in_bubble"
+		android:summary="@string/pref_summary_playlist_in_bubble"
+		android:defaultValue="false"
+		/>
 </PreferenceScreen>

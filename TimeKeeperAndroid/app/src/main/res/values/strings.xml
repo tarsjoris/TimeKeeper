@@ -72,4 +72,6 @@
     </string-array>
     <string name="pref_title_autoplay">Autoplay</string>
     <string name="pref_summary_autoplay">Start metronome when selecting song or pressing next.</string>
+    <string name="pref_title_playlist_in_bubble">Playlist in bubble</string>
+    <string name="pref_summary_playlist_in_bubble">Show entire playlist in bubble.</string>
 </resources>

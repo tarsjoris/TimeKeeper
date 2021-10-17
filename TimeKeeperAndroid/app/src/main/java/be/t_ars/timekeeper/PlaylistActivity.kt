@@ -16,7 +16,7 @@ import kotlinx.android.synthetic.main.playlist.*
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.P)
-class PlaylistActivity : AbstractPlaylistActivity() {
+class PlaylistActivity : AbstractPlaylistActivity(false) {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.playlist_actions, menu)
         return super.onCreateOptionsMenu(menu)

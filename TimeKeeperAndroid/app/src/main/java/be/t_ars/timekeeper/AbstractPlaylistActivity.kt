@@ -14,7 +14,8 @@ import kotlinx.android.synthetic.main.playlist.*
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.P)
-open class AbstractPlaylistActivity : AbstractActivity() {
+open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractActivity() {
+    private val fBubbleManager: BubbleManager by lazy { BubbleManager(this) }
     private var fAutoPlay = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +70,9 @@ open class AbstractPlaylistActivity : AbstractActivity() {
 
     private fun openScore() {
         PlaylistState.withCurrentSong { _, song, _ ->
+            if (!fInBubble) {
+                fBubbleManager.showBubble()
+            }
             song.scoreLink?.also(this::openLink)
         }
     }
@@ -120,6 +124,10 @@ open class AbstractPlaylistActivity : AbstractActivity() {
                     startMetronome()
                 } else {
                     SoundService.stopSound(this)
+                }
+
+                if (fInBubble) {
+                    openScore()
                 }
 
                 playlistView.setItemChecked(newPos, true)
