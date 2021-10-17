@@ -15,21 +15,12 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
     }
 
     fun addSong(song: Song) {
-        song.weight = if (songs.isNotEmpty()) {
-            songs[songs.size - 1].weight + 1
-        } else {
-            0
-        }
         songs.add(song)
     }
 
     fun removeSong(store: PlaylistStore, position: Int) {
         if (position in 0 until songs.size) {
             songs.removeAt(position)
-            for (i in position until songs.size) {
-                val after = songs[i]
-                after.weight = after.weight - 1
-            }
         }
         store.savePlaylist(this)
     }
@@ -41,9 +32,6 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
             val other = songs[otherPos]
             songs[position] = other
             songs[otherPos] = song
-            val tmpWeight = other.weight
-            other.weight = song.weight
-            song.weight = tmpWeight
         }
         store.savePlaylist(this)
     }

@@ -7,8 +7,10 @@ class PlaylistState {
     companion object {
         var currentPlaylist: Playlist? = null
             set(value) {
+                if (value == null || field?.id != value.id || currentPos !in value.songs.indices) {
+                    currentPos = 0
+                }
                 field = value
-                currentPos = 0
             }
 
         var currentPos = 0
