@@ -3,19 +3,15 @@ package be.t_ars.timekeeper
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
-import androidx.annotation.RequiresApi
 import kotlinx.android.synthetic.main.playlist.*
 import java.util.*
 
-@RequiresApi(Build.VERSION_CODES.P)
-open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractActivity() {
-    private val fBubbleManager: BubbleManager by lazy { BubbleManager(this) }
+abstract class AbstractPlaylistActivity : AbstractActivity() {
     private var fAutoPlay = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +33,8 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
         button_next.setOnClickListener {
             doNext()
         }
+
+        updateView()
     }
 
     override fun onResume() {
@@ -44,6 +42,8 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
         requestedOrientation =
             getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
         fAutoPlay = getBoolPreference(this, kAUTOPLAY, true)
+
+        updateView()
 
         loadPlaylist()
     }
@@ -68,20 +68,28 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
         return true
     }
 
-    private fun openScore() {
+    protected open fun updateView() {
+    }
+
+    protected fun openScore() {
         PlaylistState.withCurrentSong { _, song, _ ->
-            if (!fInBubble) {
-                fBubbleManager.showBubble()
-            }
+            willOpenScore()
             song.scoreLink?.also(this::openLink)
         }
     }
 
+    protected open fun willOpenScore() {
+    }
+
     private fun openLink(link: String) {
         val openURL = Intent(Intent.ACTION_VIEW)
-            .also {
-                it.data = Uri.parse(link)
-                it.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            .apply {
+                data = Uri.parse(link)
+                flags = if (isInMultiWindowMode) {
+                    Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_NEW_TASK
+                } else {
+                    Intent.FLAG_ACTIVITY_TASK_ON_HOME or Intent.FLAG_ACTIVITY_NEW_TASK
+                }
             }
         startActivity(openURL)
     }
@@ -91,19 +99,34 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
         PlaylistState.withCurrentPlaylist { playlist, pos ->
             supportActionBar?.title = playlist.name
             val data = ArrayList<Map<String, String>>()
-            playlist.songs.forEach { song ->
-                val name = if (song.scoreLink != null) "${song.name}*" else song.name
-                val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
-            }
+            if (isInPictureInPictureMode) {
+                playlist.songs.forEach { song ->
+                    val name = if (song.scoreLink != null) "${song.name}*" else song.name
+                    data.add(mapOf(kKEY_NAME to name))
+                }
 
-            playlistView.adapter = SimpleAdapter(
-                this,
-                data,
-                R.layout.playlist_entry,
-                arrayOf(kKEY_NAME, kKEY_TEMPO),
-                intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
-            )
+                playlistView.adapter = SimpleAdapter(
+                    this,
+                    data,
+                    R.layout.playlist_entry_name,
+                    arrayOf(kKEY_NAME),
+                    intArrayOf(R.id.playlist_entry_name_name)
+                )
+            } else {
+                playlist.songs.forEach { song ->
+                    val name = if (song.scoreLink != null) "${song.name}*" else song.name
+                    val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                    data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
+                }
+
+                playlistView.adapter = SimpleAdapter(
+                    this,
+                    data,
+                    R.layout.playlist_entry,
+                    arrayOf(kKEY_NAME, kKEY_TEMPO),
+                    intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
+                )
+            }
 
             if (pos != null && pos in playlist.songs.indices) {
                 playlistView.setItemChecked(pos, true)
@@ -113,7 +136,7 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
     }
 
 
-    private fun doNext() {
+    protected fun doNext() {
         val playlistView = playlist
         PlaylistState.withCurrentSong { playlist, _, pos ->
             if (pos < playlist.songs.size - 1) {
@@ -126,15 +149,15 @@ open class AbstractPlaylistActivity(private val fInBubble: Boolean) : AbstractAc
                     SoundService.stopSound(this)
                 }
 
-                if (fInBubble) {
-                    openScore()
-                }
+                didNext()
 
                 playlistView.setItemChecked(newPos, true)
                 scrollToPosition(newPos)
             }
         }
     }
+
+    protected abstract fun didNext()
 
     private fun scrollToPosition(position: Int) {
         val playlistView = playlist
