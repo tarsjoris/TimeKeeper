@@ -1,18 +1,31 @@
 package be.t_ars.timekeeper
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ActivityInfo
-import android.net.Uri
+import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.android.synthetic.main.playlist.*
 import java.util.*
 
 abstract class AbstractPlaylistActivity : AbstractActivity() {
-    private var fAutoPlay = true
+    private inner class TimeKeeperBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(content: Context?, intent: Intent?) {
+            if (intent?.action == TimeKeeperApplication.kBROADCAST_EVENT_SONG_CHANGED) {
+                songChanged()
+            }
+        }
+    }
+
+    private val fBroadcastReceiver = TimeKeeperBroadcastReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,24 +37,45 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
         val playlistView = playlist
         playlistView.onItemClickListener =
             AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
+        playlistView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            PlaylistState.withCurrentSong { _, _, pos ->
+                scrollToPosition(pos)
+            }
+        }
         button_start.setOnClickListener {
-            startMetronome()
+            sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_START_METRONOME))
         }
         button_stop.setOnClickListener {
-            SoundService.stopSound(this)
+            sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_STOP_METRONOME))
         }
         button_next.setOnClickListener {
-            doNext()
+            sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG).also {
+                it.putExtra(
+                    TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG_EXTRA_OPEN_SCORE,
+                    shouldOpenScoreOnNext()
+                )
+            })
         }
 
         updateView()
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            fBroadcastReceiver,
+            IntentFilter(TimeKeeperApplication.kBROADCAST_EVENT_SONG_CHANGED)
+        )
+    }
+
+    protected abstract fun shouldOpenScoreOnNext(): Boolean
+
+    override fun onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(fBroadcastReceiver)
+        super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
         requestedOrientation =
             getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
-        fAutoPlay = getBoolPreference(this, kAUTOPLAY, true)
 
         updateView()
 
@@ -71,27 +105,16 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
     protected open fun updateView() {
     }
 
-    protected fun openScore() {
+    private fun openScore() {
         PlaylistState.withCurrentSong { _, song, _ ->
-            willOpenScore()
-            song.scoreLink?.also(this::openLink)
+            if (song.scoreLink != null) {
+                willOpenScore()
+                sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_OPEN_SCORE))
+            }
         }
     }
 
     protected open fun willOpenScore() {
-    }
-
-    private fun openLink(link: String) {
-        val openURL = Intent(Intent.ACTION_VIEW)
-            .apply {
-                data = Uri.parse(link)
-                flags = if (isInMultiWindowMode) {
-                    Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_NEW_TASK
-                } else {
-                    Intent.FLAG_ACTIVITY_TASK_ON_HOME or Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-            }
-        startActivity(openURL)
     }
 
     private fun loadPlaylist() {
@@ -135,29 +158,12 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
         }
     }
 
-
-    protected fun doNext() {
-        val playlistView = playlist
-        PlaylistState.withCurrentSong { playlist, _, pos ->
-            if (pos < playlist.songs.size - 1) {
-                val newPos = pos + 1
-                PlaylistState.currentPos = newPos
-
-                if (fAutoPlay) {
-                    startMetronome()
-                } else {
-                    SoundService.stopSound(this)
-                }
-
-                didNext()
-
-                playlistView.setItemChecked(newPos, true)
-                scrollToPosition(newPos)
-            }
+    protected fun songChanged() {
+        PlaylistState.withCurrentSong { _, _, pos ->
+            playlist.setItemChecked(pos, true)
+            scrollToPosition(pos)
         }
     }
-
-    protected abstract fun didNext()
 
     private fun scrollToPosition(position: Int) {
         val playlistView = playlist
@@ -172,28 +178,13 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
     }
 
     private fun trigger(selection: Int) {
-        PlaylistState.currentPos = selection
-        if (fAutoPlay) {
-            startMetronome()
-        } else {
-            SoundService.stopSound(this)
-        }
-    }
-
-    private fun startMetronome() {
-        PlaylistState.withCurrentSong { _, song, _ ->
-            val tempo = song.tempo
-            if (tempo != null) {
-                SoundService.startSound(
-                    this,
-                    song.name,
-                    tempo,
-                    AbstractPlaylistActivity::class.java
+        sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG)
+            .also {
+                it.putExtra(
+                    TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG_EXTRA_SELECTION,
+                    selection
                 )
-            } else {
-                SoundService.stopSound(this)
-            }
-        }
+            })
     }
 
     companion object {

@@ -31,10 +31,9 @@ class SoundGenerator(context: Context, private val fBeepFrequency: Int, private 
     fun close() {
         stop()
         fSoundPool.release()
-        Log.i("TimeKeeper", "Stopped.")
     }
 
-    fun configure(bpm: Int) {
+    private fun configure(bpm: Int) {
         try {
             BufferedOutputStream(FileOutputStream(fFile)).use { out ->
                 WaveUtil.generateSine(out, fBeepFrequency, fBeepDuration, bpm)

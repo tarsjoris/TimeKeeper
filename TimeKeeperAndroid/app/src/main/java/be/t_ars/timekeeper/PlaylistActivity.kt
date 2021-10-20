@@ -3,15 +3,12 @@ package be.t_ars.timekeeper
 import android.app.PendingIntent
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.os.Build
-import android.os.Bundle
 import android.view.Menu
 import android.view.View
 import androidx.annotation.RequiresApi
@@ -19,31 +16,12 @@ import kotlinx.android.synthetic.main.playlist.*
 
 @RequiresApi(Build.VERSION_CODES.P)
 class PlaylistActivity : AbstractPlaylistActivity() {
-    private inner class PIPBroadcastReceiver : BroadcastReceiver() {
-        override fun onReceive(content: Context?, intent: Intent?) {
-            if (intent?.action == kBROADCAST_ACTION_NEXT && isInPictureInPictureMode) {
-                doNext()
-            }
-        }
-    }
-
     private val fBubbleManager: BubbleManager by lazy { BubbleManager(this) }
-    private val fBroadcastReceiver = PIPBroadcastReceiver()
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.playlist_actions, menu)
         return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        registerReceiver(fBroadcastReceiver, IntentFilter(kBROADCAST_ACTION_NEXT))
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(fBroadcastReceiver)
     }
 
     override fun onPictureInPictureModeChanged(
@@ -73,19 +51,34 @@ class PlaylistActivity : AbstractPlaylistActivity() {
         }
     }
 
-    override fun didNext() {
-        if (isInMultiWindowMode || isInPictureInPictureMode) {
-            openScore()
-        }
-    }
+    override fun shouldOpenScoreOnNext() =
+        isInMultiWindowMode || isInPictureInPictureMode
 
     private fun switchToPictureInPictureMode() {
-        val nextIntent = Intent(kBROADCAST_ACTION_NEXT)
-        val nextPendingIntent =
+        val startMetronomeIntent = Intent(TimeKeeperApplication.kBROADCAST_ACTION_START_METRONOME)
+        val startMetronomePendingIntent =
             PendingIntent.getBroadcast(
                 this,
                 0,
-                nextIntent,
+                startMetronomeIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        val stopMetronomeIntent = Intent(TimeKeeperApplication.kBROADCAST_ACTION_STOP_METRONOME)
+        val stopMetronomePendingIntent =
+            PendingIntent.getBroadcast(
+                this,
+                0,
+                stopMetronomeIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        val nextSongIntent = Intent(TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG).also {
+            it.putExtra(TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG_EXTRA_OPEN_SCORE, true)
+        }
+        val nextSongPendingIntent =
+            PendingIntent.getBroadcast(
+                this,
+                0,
+                nextSongIntent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         enterPictureInPictureMode(
@@ -93,10 +86,22 @@ class PlaylistActivity : AbstractPlaylistActivity() {
                 .setActions(
                     listOf(
                         RemoteAction(
+                            Icon.createWithResource(this, R.drawable.start),
+                            "Start",
+                            "Start metronome",
+                            startMetronomePendingIntent
+                        ),
+                        RemoteAction(
+                            Icon.createWithResource(this, R.drawable.stop),
+                            "Stop",
+                            "Stop metronome",
+                            stopMetronomePendingIntent
+                        ),
+                        RemoteAction(
                             Icon.createWithResource(this, R.drawable.skip_next),
                             "Next",
                             "Skip to next song",
-                            nextPendingIntent
+                            nextSongPendingIntent
                         )
                     )
                 )
@@ -105,8 +110,6 @@ class PlaylistActivity : AbstractPlaylistActivity() {
     }
 
     companion object {
-        private const val kBROADCAST_ACTION_NEXT = "next"
-
         fun startActivity(context: Context) =
             Intent(context, PlaylistActivity::class.java)
                 .also {

@@ -9,7 +9,6 @@ class PlaylistBubbleActivity : AbstractPlaylistActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun didNext() {
-        openScore()
-    }
+    override fun shouldOpenScoreOnNext() =
+        true
 }
