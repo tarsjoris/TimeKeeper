@@ -13,7 +13,6 @@ const val kDURATION = "duration"
 const val kSCREEN_ORIENTATION = "screenorientation"
 const val kFOLDER = "folder"
 const val kAUTOPLAY = "autoplay"
-const val kPLAYLIST_IN_BUBBLE = "playlist-in-bubble"
 
 fun getIntPreference(context: Context, key: String, defaultValue: Int): Int {
     val result = getStringPreference(context, key, defaultValue.toString())

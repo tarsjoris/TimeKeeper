@@ -15,9 +15,6 @@ import androidx.annotation.RequiresApi
 
 @RequiresApi(Build.VERSION_CODES.P)
 class PlaylistActivity : AbstractPlaylistActivity() {
-    private val fBubbleManager: BubbleManager by lazy { BubbleManager(this) }
-
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.playlist_actions, menu)
         return super.onCreateOptionsMenu(menu)
@@ -41,12 +38,11 @@ class PlaylistActivity : AbstractPlaylistActivity() {
     }
 
     override fun willOpenScore() {
-        if (!isInMultiWindowMode && !isInPictureInPictureMode) {
-            if (packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
-                switchToPictureInPictureMode()
-            } else {
-                fBubbleManager.showBubble()
-            }
+        if (!isInMultiWindowMode && !isInPictureInPictureMode && packageManager.hasSystemFeature(
+                PackageManager.FEATURE_PICTURE_IN_PICTURE
+            )
+        ) {
+            switchToPictureInPictureMode()
         }
     }
 

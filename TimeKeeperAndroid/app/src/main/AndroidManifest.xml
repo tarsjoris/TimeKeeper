@@ -72,22 +72,6 @@
             android:screenOrientation="locked"
             android:theme="@style/AppTheme" />
 
-        <activity
-            android:name=".BubbleActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:allowEmbedded="true"
-            android:resizeableActivity="true"
-            android:documentLaunchMode="always"
-            />
-
-        <activity
-            android:name=".PlaylistBubbleActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:allowEmbedded="true"
-            android:resizeableActivity="true"
-            android:documentLaunchMode="always"
-            />
-
     </application>
 
 </manifest>
