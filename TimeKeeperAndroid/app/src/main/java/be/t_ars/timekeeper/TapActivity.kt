@@ -2,7 +2,6 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -74,8 +73,7 @@ class TapActivity : AbstractActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation =
-            getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation = getSettingScreenOrientation(this)
         loadIntent()
     }
 

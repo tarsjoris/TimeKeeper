@@ -8,9 +8,7 @@ import android.util.Log
 import android.util.Xml
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
-import be.t_ars.timekeeper.PlaylistState
-import be.t_ars.timekeeper.getStringPreference
-import be.t_ars.timekeeper.kFOLDER
+import be.t_ars.timekeeper.*
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.io.FileOutputStream
@@ -19,15 +17,6 @@ import java.util.*
 import java.util.regex.Pattern
 
 class PlaylistStore(private val fContext: Context) {
-    private val fFolder: Uri
-
-    init {
-        val folder = getStringPreference(fContext, kFOLDER, "content://com.android.externalstorage.documents/tree/primary%3ATimeKeeper")
-        Log.i("TimeKeeper", fContext.getExternalFilesDir(null).toString())
-
-        fFolder = Uri.parse(folder)
-    }
-
     private class PlaylistComparator : Comparator<PlaylistHeader> {
         override fun compare(lhs: PlaylistHeader, rhs: PlaylistHeader): Int {
             return lhs.weight - rhs.weight
@@ -36,16 +25,17 @@ class PlaylistStore(private val fContext: Context) {
 
     fun readAllPlaylists(): List<PlaylistHeader> {
         val playlists = ArrayList<PlaylistHeader>()
-        DocumentFile.fromTreeUri(fContext, fFolder)
-                ?.listFiles()
-                ?.forEach { file ->
-                    val matcher = kFILENAME_PATTERN.matcher(file.name)
-                    if (matcher.matches()) {
-                        val id = matcher.group(1)
+        DocumentFile.fromTreeUri(fContext, getFolder())
+            ?.listFiles()!!
+            .forEach { file ->
+                val matcher = kFILENAME_PATTERN.matcher(file.name!!)
+                if (matcher.matches()) {
+                    matcher.group(1)?.let { id ->
                         readPlaylistHeader(file.uri, id)
-                                ?.also { playlists.add(it) }
+                            ?.let { playlists.add(it) }
                     }
                 }
+            }
         Collections.sort(playlists, kPLAYLIST_COMPARATOR)
         return playlists
     }
@@ -69,14 +59,21 @@ class PlaylistStore(private val fContext: Context) {
                         XmlPullParser.START_TAG -> {
                             if (kTAG_PLAYLIST == parser.name) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val weight = Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
+                                val weight =
+                                    Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
                                 playlist = Playlist(id, name, weight)
                             } else if (kTAG_SONG == parser.name) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
                                 val tempo = parser.getAttributeValue(null, kATTR_TEMPO)
-                                        ?.let(Integer::parseInt)
+                                    ?.let(Integer::parseInt)
                                 val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
-                                playlist?.addSong(Song(name = name, tempo = tempo, scoreLink = scoreLink))
+                                playlist?.addSong(
+                                    Song(
+                                        name = name,
+                                        tempo = tempo,
+                                        scoreLink = scoreLink
+                                    )
+                                )
                             }
                         }
                         XmlPullParser.END_DOCUMENT -> {
@@ -104,7 +101,7 @@ class PlaylistStore(private val fContext: Context) {
         deleteFile(getPlaylistUri(playlist.id))
     }
 
-    fun deleteFile(uri: Uri) {
+    private fun deleteFile(uri: Uri) {
         DocumentsContract.deleteDocument(fContext.contentResolver, uri)
     }
 
@@ -118,13 +115,13 @@ class PlaylistStore(private val fContext: Context) {
         }
 
     fun createDocumentRequest() =
-            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                type = "application/xml"
-                addCategory(Intent.CATEGORY_OPENABLE)
-                putExtra(DocumentsContract.EXTRA_INITIAL_URI, fFolder.toString())
-                val id = System.currentTimeMillis().toString()
-                putExtra(Intent.EXTRA_TITLE, "$id.xml")
-            }
+        Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            type = "application/xml"
+            addCategory(Intent.CATEGORY_OPENABLE)
+            putExtra(DocumentsContract.EXTRA_INITIAL_URI, getFolder().toString())
+            val id = System.currentTimeMillis().toString()
+            putExtra(Intent.EXTRA_TITLE, "$id.xml")
+        }
 
 
     fun acceptRequestedDocument(data: Intent?, documentIdConsumer: (Long) -> Unit) {
@@ -139,7 +136,8 @@ class PlaylistStore(private val fContext: Context) {
                             documentIdConsumer(filename.toLong())
                         } catch (e: NumberFormatException) {
                             deleteFile(uri)
-                            Toast.makeText(fContext, "Invalid id '$filename'", Toast.LENGTH_LONG).show()
+                            Toast.makeText(fContext, "Invalid id '$filename'", Toast.LENGTH_LONG)
+                                .show()
                         }
                     } else {
                         deleteFile(uri)
@@ -150,13 +148,14 @@ class PlaylistStore(private val fContext: Context) {
                 }
             } else {
                 deleteFile(uri)
-                Toast.makeText(fContext, "File should have extension 'xml'", Toast.LENGTH_LONG).show()
+                Toast.makeText(fContext, "File should have extension 'xml'", Toast.LENGTH_LONG)
+                    .show()
             }
         }
     }
 
     private fun isInCorrectFolder(uri: Uri): Boolean {
-        val tree = fFolder.toString().substringAfter("/tree/")
+        val tree = getFolder().toString().substringAfter("/tree/")
         val document = uri.toString().substringAfter("/document/")
         return document.startsWith("$tree%2F")
     }
@@ -172,7 +171,8 @@ class PlaylistStore(private val fContext: Context) {
                         XmlPullParser.START_TAG -> {
                             parser.require(XmlPullParser.START_TAG, null, kTAG_PLAYLIST)
                             val name = parser.getAttributeValue(null, kATTR_NAME)
-                            val weight = Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
+                            val weight =
+                                Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
                             return PlaylistHeader(id, name, weight)
                         }
                         XmlPullParser.END_DOCUMENT -> {
@@ -219,21 +219,54 @@ class PlaylistStore(private val fContext: Context) {
                     serializer.endDocument()
                 }
             }
-            PlaylistState.withCurrentPlaylist { currentPlaylist, _ ->
-                if (currentPlaylist.id == playlist.id) {
-                    PlaylistState.currentPlaylist = playlist
-                }
-            }
         } catch (e: IOException) {
             Log.e("TimeKeeper", "Could not write playlist: " + e.message, e)
         }
-
     }
 
-    private fun getPlaylistUri(id: Long) =
-            DocumentsContract.buildDocumentUriUsingTree(
-                    fFolder,
-                    DocumentsContract.getTreeDocumentId(fFolder) + "/$id.xml")
+    private fun getPlaylistUri(id: Long): Uri {
+        val folder = getFolder()
+        return DocumentsContract.buildDocumentUriUsingTree(
+            folder,
+            DocumentsContract.getTreeDocumentId(folder) + "/$id.xml"
+        )
+    }
+
+    private fun getFolder() =
+        Uri.parse(getSettingFolder(fContext))
+
+    fun setCurrentPlaylistID(playlistID: Long) {
+        val oldPlaylistID = getSettingCurrentPlaylistID(fContext)
+        setSettingCurrentPlaylistID(fContext, playlistID)
+        if (oldPlaylistID != playlistID) {
+            setSettingCurrentSongIndex(fContext, 0)
+        }
+    }
+
+    fun setCurrentSongIndex(index: Int) {
+        setSettingCurrentSongIndex(fContext, index)
+    }
+
+    fun withCurrentPlaylist(consumer: (Playlist, Int?) -> Unit) {
+        getSettingCurrentPlaylistID(fContext)
+            ?.let { readPlaylist(it) }
+            ?.let { playlist ->
+                val pos = getSettingCurrentSongIndex(fContext)
+                if (pos in playlist.songs.indices) {
+                    consumer(playlist, pos)
+                } else {
+                    consumer(playlist, null)
+                }
+            }
+    }
+
+    fun withCurrentSong(consumer: (Playlist, Song, Int) -> Unit) {
+        withCurrentPlaylist { playlist, pos ->
+            if (pos != null) {
+                consumer(playlist, playlist.songs[pos], pos)
+            }
+        }
+    }
 
     companion object {
         private const val kTAG_PLAYLIST = "playlist"

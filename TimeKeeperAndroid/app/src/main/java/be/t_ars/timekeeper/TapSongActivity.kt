@@ -1,7 +1,6 @@
 package be.t_ars.timekeeper
 
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -75,7 +74,7 @@ class TapSongActivity : AbstractActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation = getSettingScreenOrientation(this)
         loadIntent()
     }
 
@@ -94,7 +93,8 @@ class TapSongActivity : AbstractActivity() {
             R.id.tap_action_accept -> {
                 fBinding.tapPart.tempoSpinner.clearFocus()
 
-                val tempo = if (fBinding.tapPart.checkboxWithTempo.isChecked) fBinding.tapPart.tempoSpinner.value else -1
+                val tempo =
+                    if (fBinding.tapPart.checkboxWithTempo.isChecked) fBinding.tapPart.tempoSpinner.value else -1
                 Intent().also {
                     it.putExtra(kINTENT_DATA_NAME, fBinding.name.text.toString())
                     it.putExtra(kINTENT_DATA_SCORE_LINK, fBinding.scoreLink.text.toString())
@@ -170,14 +170,20 @@ class TapSongActivity : AbstractActivity() {
         const val kINTENT_DATA_NAME = "name"
         const val kINTENT_DATA_SCORE_LINK = "score_link"
 
-        fun startActivityForResult(context: FragmentActivity, tempo: Int?, name: String, scoreLink: String?, requestCode: Int) =
-                Intent(context, TapSongActivity::class.java)
-                        .also { intent ->
-                            intent.putExtra(kINTENT_DATA_TEMPO, tempo)
-                            intent.putExtra(kINTENT_DATA_NAME, name)
-                            if (scoreLink != null)
-                                intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)
-                        }
-                        .let { context.startActivityForResult(it, requestCode) }
+        fun startActivityForResult(
+            context: FragmentActivity,
+            tempo: Int?,
+            name: String,
+            scoreLink: String?,
+            requestCode: Int
+        ) =
+            Intent(context, TapSongActivity::class.java)
+                .also { intent ->
+                    intent.putExtra(kINTENT_DATA_TEMPO, tempo)
+                    intent.putExtra(kINTENT_DATA_NAME, name)
+                    if (scoreLink != null)
+                        intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)
+                }
+                .let { context.startActivityForResult(it, requestCode) }
     }
 }

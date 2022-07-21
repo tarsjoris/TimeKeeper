@@ -2,7 +2,6 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -206,7 +205,7 @@ class PlaylistEditActivity : AbstractActivity() {
             fNewPlaylistId?.let { id ->
                 val newPlaylist = Playlist(p, id, name, fStore.nextPlaylistWeight)
                 fStore.addPlaylist(newPlaylist)
-                PlaylistState.currentPlaylist = newPlaylist
+                fStore.setCurrentPlaylistID(newPlaylist.id)
 
                 PlaylistActivity.startActivity(this)
             }
@@ -215,8 +214,7 @@ class PlaylistEditActivity : AbstractActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation =
-            getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation = getSettingScreenOrientation(this)
         loadIntent()
     }
 

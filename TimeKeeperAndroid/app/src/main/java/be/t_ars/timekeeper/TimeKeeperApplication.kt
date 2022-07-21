@@ -6,9 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import be.t_ars.timekeeper.data.PlaylistStore
 
+@RequiresApi(Build.VERSION_CODES.P)
 class TimeKeeperApplication : Application() {
     private inner class TimeKeeperBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(content: Context?, intent: Intent?) {
@@ -30,6 +33,7 @@ class TimeKeeperApplication : Application() {
     }
 
     private val fBroadcastReceiver = TimeKeeperBroadcastReceiver()
+    private val fStore = PlaylistStore(this)
 
     override fun onCreate() {
         super.onCreate()
@@ -48,10 +52,10 @@ class TimeKeeperApplication : Application() {
     }
 
     private fun doNextSong(openScore: Boolean) {
-        PlaylistState.withCurrentSong { playlist, _, pos ->
+        fStore.withCurrentSong { playlist, _, pos ->
             if (pos < playlist.songs.size - 1) {
                 val newPos = pos + 1
-                PlaylistState.currentPos = newPos
+                fStore.setCurrentSongIndex(newPos)
 
                 songChanged()
 
@@ -63,12 +67,12 @@ class TimeKeeperApplication : Application() {
     }
 
     private fun selectSong(selection: Int) {
-        PlaylistState.currentPos = selection
+        fStore.setCurrentSongIndex(selection)
         songChanged()
     }
 
     private fun songChanged() {
-        if (getBoolPreference(this, kAUTOPLAY, true)) {
+        if (getSettingAutoplay(this)) {
             startMetronome()
         } else {
             SoundService.stopSound(this)
@@ -80,14 +84,14 @@ class TimeKeeperApplication : Application() {
     }
 
     private fun startMetronome() {
-        PlaylistState.withCurrentSong { _, song, _ ->
+        fStore.withCurrentSong { _, song, _ ->
             val tempo = song.tempo
             if (tempo != null) {
                 SoundService.startSound(
                     this,
                     song.name,
                     tempo,
-                    AbstractPlaylistActivity::class.java
+                    PlaylistActivity::class.java
                 )
             } else {
                 SoundService.stopSound(this)
@@ -100,7 +104,7 @@ class TimeKeeperApplication : Application() {
     }
 
     private fun openScore() {
-        PlaylistState.withCurrentSong { _, song, _ ->
+        fStore.withCurrentSong { _, song, _ ->
             song.scoreLink?.also(this::openLink)
         }
     }

@@ -1,7 +1,5 @@
 package be.t_ars.timekeeper.data
 
-import java.util.*
-
 class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, weight) {
     val songs: MutableList<Song> = ArrayList()
 
@@ -51,4 +49,10 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
         }
         store.savePlaylist(this)
     }
+
+    override fun hashCode() =
+        id.toInt()
+
+    override fun equals(other: Any?) =
+        if (other is Playlist) other.id == id && other.songs == songs else false
 }

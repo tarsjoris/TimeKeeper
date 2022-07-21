@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -26,8 +25,6 @@ import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
 import be.t_ars.timekeeper.databinding.OverviewBinding
-import java.util.*
-import kotlin.collections.ArrayList
 
 
 private const val kKEY_NAME = "name"
@@ -38,14 +35,18 @@ class OverviewActivity : AbstractActivity() {
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddPlaylistDialog = InputDialog()
     private val fDeleteDialog = ConfirmationDialog().apply {
-        setOptions(::deleteSelectedItems, R.string.overview_delete_message, R.string.overview_delete_yes, R.string.overview_delete_no)
+        setOptions(
+            ::deleteSelectedItems,
+            R.string.overview_delete_message,
+            R.string.overview_delete_yes,
+            R.string.overview_delete_no
+        )
     }
-    private var fStore: PlaylistStore? = null
+    private val fStore = PlaylistStore(this)
     private val fPlaylists: MutableList<PlaylistHeader> = ArrayList()
     private var fActionMode: ActionMode? = null
     private var fNewPlaylistId: Long? = null
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fBinding = OverviewBinding.inflate(layoutInflater)
@@ -53,25 +54,33 @@ class OverviewActivity : AbstractActivity() {
         setSupportActionBar(fBinding.toolbar)
 
         fBinding.fabAddPlaylist.setOnClickListener {
-            fStore?.createDocumentRequest()?.let { intent ->
-                startActivityForResult(intent, kREQUEST_DOCUMENT_CODE)
+            startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
+        }
+
+        fAddPlaylistDialog.setOptions(
+            null,
+            { view -> addPlaylist(view.findViewById<EditText>(R.id.overview_addplaylist_name).text.toString()) },
+            layoutInflater,
+            R.string.overview_action_addplaylist,
+            R.drawable.ic_plus_dark,
+            R.layout.overview_addplaylist,
+            R.string.overview_addplaylist_add,
+            R.string.overview_addplaylist_cancel
+        )
+
+        fBinding.overviewList.adapter = SimpleAdapter(
+            this,
+            fData,
+            R.layout.overview_entry,
+            arrayOf(kKEY_NAME),
+            intArrayOf(R.id.overview_entry_name)
+        )
+        fBinding.overviewList.onItemClickListener =
+            AdapterView.OnItemClickListener { _, _, position, _ ->
+                trigger(position)
             }
-        }
-
-        fAddPlaylistDialog.setOptions(null,
-                { view -> addPlaylist(view.findViewById<EditText>(R.id.overview_addplaylist_name).text.toString()) },
-                layoutInflater,
-                R.string.overview_action_addplaylist,
-                R.drawable.ic_plus_dark,
-                R.layout.overview_addplaylist,
-                R.string.overview_addplaylist_add,
-                R.string.overview_addplaylist_cancel)
-
-        fBinding.overviewList.adapter = SimpleAdapter(this, fData, R.layout.overview_entry, arrayOf(kKEY_NAME), intArrayOf(R.id.overview_entry_name))
-        fBinding.overviewList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            trigger(position)
-        }
-        fBinding.overviewList.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
+        fBinding.overviewList.setMultiChoiceModeListener(object :
+            AbsListView.MultiChoiceModeListener {
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
                 return false
             }
@@ -106,24 +115,36 @@ class OverviewActivity : AbstractActivity() {
                 }
             }
 
-            override fun onItemCheckedStateChanged(mode: ActionMode, position: Int, id: Long, checked: Boolean) {}
+            override fun onItemCheckedStateChanged(
+                mode: ActionMode,
+                position: Int,
+                id: Long,
+                checked: Boolean
+            ) {
+            }
         })
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.FOREGROUND_SERVICE), 1)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.FOREGROUND_SERVICE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.FOREGROUND_SERVICE),
+                1
+            )
         }
 
-        if (canReadFolder()) {
-            fStore = PlaylistStore(this)
-        } else {
+        if (!canReadFolder()) {
             requestSelectFolder()
         }
     }
 
     private fun canReadFolder(): Boolean {
-        val folder = getStringPreference(this, kFOLDER)
+        val folder = getSettingFolder(this)
         if (folder != null) {
             val folderUri = Uri.parse(folder)
             val folderDocument = DocumentFile.fromTreeUri(this, folderUri)
@@ -134,7 +155,7 @@ class OverviewActivity : AbstractActivity() {
 
     private fun requestSelectFolder() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        getStringPreference(this, kFOLDER)?.let {
+        getSettingFolder(this)?.let {
             intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
         }
         startActivityForResult(intent, kREQUEST_FOLDER_CODE)
@@ -144,7 +165,7 @@ class OverviewActivity : AbstractActivity() {
         fNewPlaylistId?.let { id ->
             val weight = if (fPlaylists.isEmpty()) 0 else fPlaylists[fPlaylists.size - 1].weight + 1
             val playlist = Playlist(id, name, weight)
-            fStore?.addPlaylist(playlist)
+            fStore.addPlaylist(playlist)
             openPlaylist(playlist)
         }
     }
@@ -155,7 +176,7 @@ class OverviewActivity : AbstractActivity() {
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 kREQUEST_FOLDER_CODE -> data?.data?.let(::acceptRequestedFolder)
-                kREQUEST_DOCUMENT_CODE -> fStore?.acceptRequestedDocument(data) { id ->
+                kREQUEST_DOCUMENT_CODE -> fStore.acceptRequestedDocument(data) { id ->
                     fNewPlaylistId = id
                     fAddPlaylistDialog.show(supportFragmentManager, "addplaylist")
                 }
@@ -164,19 +185,18 @@ class OverviewActivity : AbstractActivity() {
     }
 
     private fun acceptRequestedFolder(uri: Uri) {
-        setStringPreference(this, kFOLDER, uri.toString())
+        setSettingFolder(this, uri.toString())
 
         val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         contentResolver.takePersistableUriPermission(uri, takeFlags)
 
-        fStore = PlaylistStore(this)
         reloadList()
     }
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation = getSettingScreenOrientation(this)
         reloadList()
     }
 
@@ -206,7 +226,7 @@ class OverviewActivity : AbstractActivity() {
     private fun reloadList() {
         fData.clear()
         fPlaylists.clear()
-        fPlaylists.addAll(fStore?.readAllPlaylists() ?: emptyList())
+        fPlaylists.addAll(fStore.readAllPlaylists())
         for (i in 0 until fPlaylists.size) {
             val map = HashMap<String, String>()
             map[kKEY_NAME] = fPlaylists[i].name
@@ -220,7 +240,7 @@ class OverviewActivity : AbstractActivity() {
     }
 
     private fun openPlaylist(playlist: PlaylistHeader) {
-        PlaylistState.currentPlaylist = fStore?.readPlaylist(playlist.id)
+        fStore.setCurrentPlaylistID(playlist.id)
         PlaylistActivity.startActivity(this)
     }
 
@@ -228,7 +248,7 @@ class OverviewActivity : AbstractActivity() {
         val selection = fBinding.overviewList.checkedItemPositions
         (0 until fPlaylists.size).forEach { i ->
             if (selection.get(i)) {
-                fStore?.deletePlaylist(fPlaylists[i])
+                fStore.deletePlaylist(fPlaylists[i])
             }
         }
         fActionMode?.finish()
@@ -268,8 +288,8 @@ class OverviewActivity : AbstractActivity() {
         playlist2.weight = tempWeight
         fPlaylists[index1] = playlist2
         fPlaylists[index2] = playlist1
-        fStore?.storePlaylistHeader(playlist1)
-        fStore?.storePlaylistHeader(playlist2)
+        fStore.storePlaylistHeader(playlist1)
+        fStore.storePlaylistHeader(playlist2)
     }
 
     companion object {
@@ -277,7 +297,7 @@ class OverviewActivity : AbstractActivity() {
         private const val kREQUEST_DOCUMENT_CODE = 3
 
         fun startActivity(context: Context) =
-                Intent(context, OverviewActivity::class.java)
-                        .let(context::startActivity)
+            Intent(context, OverviewActivity::class.java)
+                .let(context::startActivity)
     }
 }
