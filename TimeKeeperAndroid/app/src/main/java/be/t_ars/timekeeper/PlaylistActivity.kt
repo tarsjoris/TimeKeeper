@@ -12,7 +12,6 @@ import android.os.Build
 import android.view.Menu
 import android.view.View
 import androidx.annotation.RequiresApi
-import kotlinx.android.synthetic.main.playlist.*
 
 @RequiresApi(Build.VERSION_CODES.P)
 class PlaylistActivity : AbstractPlaylistActivity() {
@@ -33,11 +32,11 @@ class PlaylistActivity : AbstractPlaylistActivity() {
 
     override fun updateView() {
         if (isInPictureInPictureMode) {
-            appbar.visibility = View.GONE
-            buttons.visibility = View.GONE
+            fBinding.appbar.visibility = View.GONE
+            fBinding.buttons.visibility = View.GONE
         } else {
-            appbar.visibility = View.VISIBLE
-            buttons.visibility = View.VISIBLE
+            fBinding.appbar.visibility = View.VISIBLE
+            fBinding.buttons.visibility = View.VISIBLE
         }
     }
 

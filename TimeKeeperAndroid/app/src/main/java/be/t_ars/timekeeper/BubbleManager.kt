@@ -52,7 +52,6 @@ class BubbleManager(private val context: Context) {
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     fun showBubble() {
         val contentIntent = Intent(context, PlaylistActivity::class.java)
         val contentPendingIntent =

@@ -51,7 +51,7 @@
 
             </android.widget.LinearLayout>
 
-            <include layout="@layout/tap_part" />
+            <include layout="@layout/tap_part" android:id="@+id/tap_part" />
 
             <android.widget.LinearLayout
                 android:layout_width="match_parent"

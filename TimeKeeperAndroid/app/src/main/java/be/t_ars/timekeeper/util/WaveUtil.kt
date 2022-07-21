@@ -14,9 +14,13 @@ import java.io.DataOutputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
+import kotlin.math.floor
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+import kotlin.math.sin
 
 object WaveUtil {
-    private const val kFREQ = 44100
+    private const val kSAMPLE_RATE = 44100
 
     /*
      WAV File Specification
@@ -101,25 +105,20 @@ a trimmed down version that most wav files adhere to.
     }
 
     fun generateSine(out: OutputStream, beepFrequency: Int, beepDuration: Int, bpm: Int) {
-        val totalSamples = kFREQ * 60 * 2 / bpm
-        val requestedToneSamples = kFREQ.toDouble() * beepDuration.toDouble() / 1000.0
-        val samplesPerSine = kFREQ.toDouble() / beepFrequency.toDouble() / 2.0
-        val toneSamples = Math.floor(Math.round(requestedToneSamples / samplesPerSine) * samplesPerSine).toInt()
-        val buffer = ByteArray(totalSamples)
-        val f = 2.0 * Math.PI * beepFrequency.toDouble() / kFREQ.toDouble()
-        var i = 0
-        while (i < toneSamples) {
-            val value = (Math.sin(i.toDouble() * f) + 1.0) * 255.0 / 2.0
-            buffer[i * 2] = toByte(Math.round(value).toInt())
-            buffer[i * 2 + 1] = buffer[i * 2]
-            ++i
+        val totalSamples = kSAMPLE_RATE * 60 / bpm
+        val requestedToneSamples = kSAMPLE_RATE.toDouble() * beepDuration.toDouble() / 1000.0
+        val samplesPerSine = kSAMPLE_RATE.toDouble() / beepFrequency.toDouble() / 2.0
+        val toneSamples = floor((requestedToneSamples / samplesPerSine).roundToLong() * samplesPerSine).toInt()
+        val factor = 2.0 * Math.PI * beepFrequency.toDouble() / kSAMPLE_RATE.toDouble()
+        val buffer = ByteArray(totalSamples * 2) { toByte(128) }
+        var i = (totalSamples - toneSamples) * 2
+        (0 until toneSamples).forEach { s ->
+            val value = (sin(s.toDouble() * factor) + 1.0) * 255.0 / 2.0
+            buffer[i] = toByte(value.roundToInt())
+            buffer[i + 1] = buffer[i]
+            i += 2
         }
-        i *= 2
-        while (i < totalSamples) {
-            buffer[i] = toByte(128)
-            ++i
-        }
-        save(out, 2, kFREQ, 1, buffer)
+        save(out, 2, kSAMPLE_RATE, 1, buffer)
     }
 
     fun save(out: OutputStream, channelCount: Int, sampleRate: Int, bytesPerChannel: Int, data: ByteArray) {

@@ -25,14 +25,16 @@ import androidx.preference.PreferenceManager
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
-import kotlinx.android.synthetic.main.overview.*
+import be.t_ars.timekeeper.databinding.OverviewBinding
 import java.util.*
 import kotlin.collections.ArrayList
 
 
 private const val kKEY_NAME = "name"
 
+@RequiresApi(Build.VERSION_CODES.P)
 class OverviewActivity : AbstractActivity() {
+    private lateinit var fBinding: OverviewBinding
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddPlaylistDialog = InputDialog()
     private val fDeleteDialog = ConfirmationDialog().apply {
@@ -46,10 +48,11 @@ class OverviewActivity : AbstractActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.overview)
-        setSupportActionBar(toolbar)
+        fBinding = OverviewBinding.inflate(layoutInflater)
+        setContentView(fBinding.root)
+        setSupportActionBar(fBinding.toolbar)
 
-        fab_add_playlist.setOnClickListener {
+        fBinding.fabAddPlaylist.setOnClickListener {
             fStore?.createDocumentRequest()?.let { intent ->
                 startActivityForResult(intent, kREQUEST_DOCUMENT_CODE)
             }
@@ -64,11 +67,11 @@ class OverviewActivity : AbstractActivity() {
                 R.string.overview_addplaylist_add,
                 R.string.overview_addplaylist_cancel)
 
-        overview_list.adapter = SimpleAdapter(this, fData, R.layout.overview_entry, arrayOf(kKEY_NAME), intArrayOf(R.id.overview_entry_name))
-        overview_list.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+        fBinding.overviewList.adapter = SimpleAdapter(this, fData, R.layout.overview_entry, arrayOf(kKEY_NAME), intArrayOf(R.id.overview_entry_name))
+        fBinding.overviewList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             trigger(position)
         }
-        overview_list.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
+        fBinding.overviewList.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
                 return false
             }
@@ -146,6 +149,7 @@ class OverviewActivity : AbstractActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
@@ -208,7 +212,7 @@ class OverviewActivity : AbstractActivity() {
             map[kKEY_NAME] = fPlaylists[i].name
             fData.add(map)
         }
-        (overview_list.adapter as SimpleAdapter).notifyDataSetChanged()
+        (fBinding.overviewList.adapter as SimpleAdapter).notifyDataSetChanged()
     }
 
     private fun trigger(selection: Int) {
@@ -221,7 +225,7 @@ class OverviewActivity : AbstractActivity() {
     }
 
     private fun deleteSelectedItems() {
-        val selection = overview_list.checkedItemPositions
+        val selection = fBinding.overviewList.checkedItemPositions
         (0 until fPlaylists.size).forEach { i ->
             if (selection.get(i)) {
                 fStore?.deletePlaylist(fPlaylists[i])
@@ -232,7 +236,7 @@ class OverviewActivity : AbstractActivity() {
     }
 
     private fun move(up: Boolean) {
-        val selection = overview_list.checkedItemPositions
+        val selection = fBinding.overviewList.checkedItemPositions
         var ignore = false
         var i = if (up) 0 else fPlaylists.size - 1
         while (if (up) i < fPlaylists.size else i >= 0) {
@@ -243,8 +247,8 @@ class OverviewActivity : AbstractActivity() {
                 } else if (!ignore) {
                     val otherIndex = if (up) i - 1 else i + 1
                     if (!selection.get(otherIndex)) {
-                        overview_list.setItemChecked(i, false)
-                        overview_list.setItemChecked(otherIndex, true)
+                        fBinding.overviewList.setItemChecked(i, false)
+                        fBinding.overviewList.setItemChecked(otherIndex, true)
                     }
                     switchPlaylists(otherIndex, i)
                 }

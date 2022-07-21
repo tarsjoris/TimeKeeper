@@ -6,6 +6,7 @@
 
     <include
         layout="@layout/playlist_entry"
+        android:id="@+id/included"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_weight="0"/>

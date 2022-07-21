@@ -5,36 +5,40 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
-import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.SimpleAdapter
+import androidx.annotation.RequiresApi
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import kotlinx.android.synthetic.main.playlist.*
-import java.util.*
+import be.t_ars.timekeeper.data.Playlist
+import be.t_ars.timekeeper.databinding.PlaylistBinding
 
 abstract class AbstractPlaylistActivity : AbstractActivity() {
     private inner class TimeKeeperBroadcastReceiver : BroadcastReceiver() {
-        override fun onReceive(content: Context?, intent: Intent?) {
+        override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == TimeKeeperApplication.kBROADCAST_EVENT_SONG_CHANGED) {
                 songChanged()
             }
         }
     }
 
+    protected lateinit var fBinding: PlaylistBinding
     private val fBroadcastReceiver = TimeKeeperBroadcastReceiver()
+    private var fCurrentPlaylist: Playlist? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.playlist)
-        setSupportActionBar(toolbar)
+        fBinding = PlaylistBinding.inflate(layoutInflater)
+
+        setContentView(fBinding.root)
+        setSupportActionBar(fBinding.toolbar)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        val playlistView = playlist
+        val playlistView = fBinding.playlist
         playlistView.onItemClickListener =
             AdapterView.OnItemClickListener { _, _, position, _ -> trigger(position) }
         playlistView.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
@@ -42,13 +46,13 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
                 scrollToPosition(pos)
             }
         }
-        button_start.setOnClickListener {
+        fBinding.buttonStart.setOnClickListener {
             sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_START_METRONOME))
         }
-        button_stop.setOnClickListener {
+        fBinding.buttonStop.setOnClickListener {
             sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_STOP_METRONOME))
         }
-        button_next.setOnClickListener {
+        fBinding.buttonNext.setOnClickListener {
             sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG).also {
                 it.putExtra(
                     TimeKeeperApplication.kBROADCAST_ACTION_NEXT_SONG_EXTRA_OPEN_SCORE,
@@ -79,9 +83,21 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
 
         updateView()
 
-        loadPlaylist()
+        PlaylistState.withCurrentPlaylist { playlist, pos ->
+            if (fCurrentPlaylist?.id != playlist.id) {
+                fCurrentPlaylist = playlist
+                loadPlaylist(playlist)
+            }
+
+            if (pos != null && pos in playlist.songs.indices) {
+                val playlistView = fBinding.playlist
+                playlistView.setItemChecked(pos, true)
+                playlistView.post { scrollToPosition(pos) }
+            }
+        }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.playlist_open_score -> {
@@ -117,56 +133,49 @@ abstract class AbstractPlaylistActivity : AbstractActivity() {
     protected open fun willOpenScore() {
     }
 
-    private fun loadPlaylist() {
-        val playlistView = playlist
-        PlaylistState.withCurrentPlaylist { playlist, pos ->
-            supportActionBar?.title = playlist.name
-            val data = ArrayList<Map<String, String>>()
-            if (isInPictureInPictureMode) {
-                playlist.songs.forEach { song ->
-                    val name = if (song.scoreLink != null) "${song.name}*" else song.name
-                    data.add(mapOf(kKEY_NAME to name))
-                }
-
-                playlistView.adapter = SimpleAdapter(
-                    this,
-                    data,
-                    R.layout.playlist_entry_name,
-                    arrayOf(kKEY_NAME),
-                    intArrayOf(R.id.playlist_entry_name_name)
-                )
-            } else {
-                playlist.songs.forEach { song ->
-                    val name = if (song.scoreLink != null) "${song.name}*" else song.name
-                    val tempo = if (song.tempo != null) "${song.tempo}" else "-"
-                    data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
-                }
-
-                playlistView.adapter = SimpleAdapter(
-                    this,
-                    data,
-                    R.layout.playlist_entry,
-                    arrayOf(kKEY_NAME, kKEY_TEMPO),
-                    intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
-                )
+    private fun loadPlaylist(playlist: Playlist) {
+        val playlistView = fBinding.playlist
+        supportActionBar?.title = playlist.name
+        val data = ArrayList<Map<String, String>>()
+        if (isInPictureInPictureMode) {
+            playlist.songs.forEach { song ->
+                val name = if (song.scoreLink != null) "${song.name}*" else song.name
+                data.add(mapOf(kKEY_NAME to name))
             }
 
-            if (pos != null && pos in playlist.songs.indices) {
-                playlistView.setItemChecked(pos, true)
-                playlistView.post { scrollToPosition(pos) }
+            playlistView.adapter = SimpleAdapter(
+                this,
+                data,
+                R.layout.playlist_entry_name,
+                arrayOf(kKEY_NAME),
+                intArrayOf(R.id.playlist_entry_name_name)
+            )
+        } else {
+            playlist.songs.forEach { song ->
+                val name = if (song.scoreLink != null) "${song.name}*" else song.name
+                val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
             }
+
+            playlistView.adapter = SimpleAdapter(
+                this,
+                data,
+                R.layout.playlist_entry,
+                arrayOf(kKEY_NAME, kKEY_TEMPO),
+                intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
+            )
         }
     }
 
     protected fun songChanged() {
         PlaylistState.withCurrentSong { _, _, pos ->
-            playlist.setItemChecked(pos, true)
+            fBinding.playlist.setItemChecked(pos, true)
             scrollToPosition(pos)
         }
     }
 
     private fun scrollToPosition(position: Int) {
-        val playlistView = playlist
+        val playlistView = fBinding.playlist
         val first = playlistView.firstVisiblePosition
         val last = playlistView.lastVisiblePosition
         val middle = (last - first) / 2 + first

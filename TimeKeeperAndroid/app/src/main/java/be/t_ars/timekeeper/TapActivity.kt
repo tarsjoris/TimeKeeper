@@ -3,15 +3,18 @@ package be.t_ars.timekeeper
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.view.MenuItem
 import android.view.MotionEvent
-import kotlinx.android.synthetic.main.tap.*
-import kotlinx.android.synthetic.main.tap_part.*
+import androidx.annotation.RequiresApi
+import be.t_ars.timekeeper.databinding.TapBinding
 import java.io.Serializable
 
+@RequiresApi(Build.VERSION_CODES.P)
 class TapActivity : AbstractActivity() {
+    private lateinit var fBinding: TapBinding
     private val delayedUpdate = DelayedUpdate()
     private val fTimestamps = LongArray(17) { 0 }
     private var fSize = 0
@@ -42,27 +45,28 @@ class TapActivity : AbstractActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tap)
-        setSupportActionBar(toolbar)
+        fBinding = TapBinding.inflate(layoutInflater)
+        setContentView(fBinding.root)
+        setSupportActionBar(fBinding.toolbar)
 
-        tempo_spinner.minValue = 10
-        tempo_spinner.maxValue = 500
-        tempo_spinner.value = 120
+        fBinding.tapPart.tempoSpinner.minValue = 10
+        fBinding.tapPart.tempoSpinner.maxValue = 500
+        fBinding.tapPart.tempoSpinner.value = 120
 
-        button_tap.setOnTouchListener { _, motionEvent ->
+        fBinding.tapPart.buttonTap.setOnTouchListener { _, motionEvent ->
             doTap(motionEvent)
             false
         }
-        tempo_spinner.setOnValueChangedListener { _, _, newValue ->
+        fBinding.tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
             if (fPlaying) {
                 delayedUpdate.update(newValue)
             }
         }
-        button_start.setOnClickListener {
+        fBinding.tapPart.buttonStart.setOnClickListener {
             fPlaying = true
-            startSound(tempo_spinner.value)
+            startSound(fBinding.tapPart.tempoSpinner.value)
         }
-        button_stop.setOnClickListener {
+        fBinding.tapPart.buttonStop.setOnClickListener {
             fPlaying = false
             SoundService.stopSound(this)
         }
@@ -70,7 +74,8 @@ class TapActivity : AbstractActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+        requestedOrientation =
+            getIntPreference(this, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
         loadIntent()
     }
 
@@ -90,7 +95,7 @@ class TapActivity : AbstractActivity() {
         val extras = intent.extras
         if (extras != null) {
             val tempo = extras.getInt(kINTENT_DATA_TEMPO, 120)
-            tempo_spinner.value = tempo
+            fBinding.tapPart.tempoSpinner.value = tempo
         }
     }
 
@@ -109,13 +114,13 @@ class TapActivity : AbstractActivity() {
 
     private fun displayStats() {
         calculateBPM(4)?.let { tempo ->
-            tempo4.text = "$tempo"
+            fBinding.tapPart.tempo4.text = "$tempo"
         }
         calculateBPM(8)?.let { tempo ->
-            tempo8.text = "$tempo"
+            fBinding.tapPart.tempo8.text = "$tempo"
         }
         calculateBPM(16)?.let { tempo ->
-            tempo16.text = "$tempo"
+            fBinding.tapPart.tempo16.text = "$tempo"
             setTempo(tempo)
         }
     }
@@ -130,8 +135,8 @@ class TapActivity : AbstractActivity() {
     }
 
     private fun setTempo(tempo: Int) {
-        if (tempo >= tempo_spinner.minValue && tempo <= tempo_spinner.maxValue) {
-            tempo_spinner.value = tempo
+        if (tempo >= fBinding.tapPart.tempoSpinner.minValue && tempo <= fBinding.tapPart.tempoSpinner.maxValue) {
+            fBinding.tapPart.tempoSpinner.value = tempo
             if (fPlaying) {
                 startSound(tempo)
             }
@@ -149,10 +154,10 @@ class TapActivity : AbstractActivity() {
         private const val kINTENT_DATA_TEMPO = "tempo"
 
         fun startActivity(context: Context, tempo: Int? = null) =
-                Intent(context, TapActivity::class.java)
-                        .also { intent ->
-                            tempo?.let { t -> intent.putExtra(kINTENT_DATA_TEMPO, t) }
-                        }
-                        .let(context::startActivity)
+            Intent(context, TapActivity::class.java)
+                .also { intent ->
+                    tempo?.let { t -> intent.putExtra(kINTENT_DATA_TEMPO, t) }
+                }
+                .let(context::startActivity)
     }
 }

@@ -3,6 +3,7 @@ package be.t_ars.timekeeper
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ActionMode
@@ -12,11 +13,11 @@ import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SimpleAdapter
+import androidx.annotation.RequiresApi
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistStore
 import be.t_ars.timekeeper.data.Song
-import kotlinx.android.synthetic.main.playlistedit.*
-import java.util.*
+import be.t_ars.timekeeper.databinding.PlaylisteditBinding
 import kotlin.math.max
 import kotlin.math.min
 
@@ -40,7 +41,9 @@ private enum class EditMode {
     NORMAL, SEND_TOP, SEND_BOTTOM
 }
 
+@RequiresApi(Build.VERSION_CODES.P)
 class PlaylistEditActivity : AbstractActivity() {
+    private lateinit var fBinding: PlaylisteditBinding
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddSongDialog: InputDialog = InputDialog()
     private val fRenamePlaylistDialog: InputDialog = InputDialog()
@@ -117,40 +120,45 @@ class PlaylistEditActivity : AbstractActivity() {
             R.string.playlistedit_delete_no
         )
 
-        setContentView(R.layout.playlistedit)
-        setSupportActionBar(toolbar)
+        fBinding = PlaylisteditBinding.inflate(layoutInflater)
+        setContentView(fBinding.root)
+        setSupportActionBar(fBinding.toolbar)
 
-        fab_add_song.setOnClickListener {
+        fBinding.fabAddSong.setOnClickListener {
             fAddSongDialog.show(supportFragmentManager, "addsong")
         }
 
-        playlistedit.adapter = SimpleAdapter(
+        fBinding.playlistedit.adapter = SimpleAdapter(
             this,
             fData,
             R.layout.playlist_entry,
             arrayOf(kKEY_NAME, kKEY_TEMPO),
             intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
         )
-        playlistedit.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            if (fPlaylist != null && position >= 0 && position < fPlaylist?.songs?.size ?: 0) {
-                when (fEditMode) {
-                    EditMode.NORMAL -> {
-                        fPosition = position
-                        editEntry()
-                    }
-                    EditMode.SEND_TOP -> {
-                        fPlaylist?.sendToTop(fStore, position)
-                        reloadSongs()
-                    }
-                    EditMode.SEND_BOTTOM -> {
-                        fPlaylist?.sendToBottom(fStore, position)
-                        reloadSongs()
+        fBinding.playlistedit.onItemClickListener =
+            AdapterView.OnItemClickListener { _, _, position, _ ->
+                if (fPlaylist != null && position >= 0 && position < (fPlaylist?.songs?.size
+                        ?: 0)
+                ) {
+                    when (fEditMode) {
+                        EditMode.NORMAL -> {
+                            fPosition = position
+                            editEntry()
+                        }
+                        EditMode.SEND_TOP -> {
+                            fPlaylist?.sendToTop(fStore, position)
+                            reloadSongs()
+                        }
+                        EditMode.SEND_BOTTOM -> {
+                            fPlaylist?.sendToBottom(fStore, position)
+                            reloadSongs()
+                        }
                     }
                 }
             }
-        }
 
-        playlistedit.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
+        fBinding.playlistedit.setMultiChoiceModeListener(object :
+            AbsListView.MultiChoiceModeListener {
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
                 return false
             }
@@ -212,6 +220,7 @@ class PlaylistEditActivity : AbstractActivity() {
         loadIntent()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode) {
             kREQUEST_TEMPO -> {
@@ -339,17 +348,18 @@ class PlaylistEditActivity : AbstractActivity() {
                     when (fEditMode) {
                         EditMode.SEND_TOP -> name = "\u2912 $name"
                         EditMode.SEND_BOTTOM -> name = "\u2913 $name"
+                        else -> {}
                     }
                     val tempo = if (song.tempo != null) "${song.tempo}" else "-"
                     mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
                 }
             )
         }
-        (playlistedit.adapter as SimpleAdapter).notifyDataSetChanged()
+        (fBinding.playlistedit.adapter as SimpleAdapter).notifyDataSetChanged()
     }
 
     private fun deleteSelectedItems() {
-        val selection = playlistedit.checkedItemPositions
+        val selection = fBinding.playlistedit.checkedItemPositions
         fData.indices.reversed().forEach { i ->
             if (selection.get(i)) {
                 fPlaylist?.removeSong(fStore, i)
@@ -360,7 +370,7 @@ class PlaylistEditActivity : AbstractActivity() {
     }
 
     private fun move(up: Boolean) {
-        val selection = playlistedit.checkedItemPositions
+        val selection = fBinding.playlistedit.checkedItemPositions
         var ignore = false
         var i = if (up) 0 else fData.size - 1
         while (if (up) i < fData.size else i >= 0) {
@@ -371,8 +381,8 @@ class PlaylistEditActivity : AbstractActivity() {
                 } else if (!ignore) {
                     val otherIndex = if (up) i - 1 else i + 1
                     if (!selection.get(otherIndex)) {
-                        playlistedit.setItemChecked(i, false)
-                        playlistedit.setItemChecked(otherIndex, true)
+                        fBinding.playlistedit.setItemChecked(i, false)
+                        fBinding.playlistedit.setItemChecked(otherIndex, true)
                     }
                     fPlaylist?.move(fStore, i, up)
                 }

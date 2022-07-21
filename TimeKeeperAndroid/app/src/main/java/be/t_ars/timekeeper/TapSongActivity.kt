@@ -10,10 +10,10 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import androidx.fragment.app.FragmentActivity
-import kotlinx.android.synthetic.main.tap_part.*
-import kotlinx.android.synthetic.main.tap_song.*
+import be.t_ars.timekeeper.databinding.TapSongBinding
 
 class TapSongActivity : AbstractActivity() {
+    private lateinit var fBinding: TapSongBinding
     private val delayedUpdate = DelayedUpdate()
     private val fTimestamps = LongArray(17) { 0 }
     private var fSize = 0
@@ -44,32 +44,33 @@ class TapSongActivity : AbstractActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tap_song)
-        setSupportActionBar(toolbar)
+        fBinding = TapSongBinding.inflate(layoutInflater)
+        setContentView(fBinding.root)
+        setSupportActionBar(fBinding.toolbar)
 
-        tempo_spinner.minValue = 10
-        tempo_spinner.maxValue = 500
-        tempo_spinner.value = 120
+        fBinding.tapPart.tempoSpinner.minValue = 10
+        fBinding.tapPart.tempoSpinner.maxValue = 500
+        fBinding.tapPart.tempoSpinner.value = 120
 
-        button_tap.setOnTouchListener { _, motionEvent ->
+        fBinding.tapPart.buttonTap.setOnTouchListener { _, motionEvent ->
             doTap(motionEvent)
             false
         }
-        tempo_spinner.setOnValueChangedListener { _, _, newValue ->
+        fBinding.tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
             if (fPlaying) {
                 delayedUpdate.update(newValue)
             }
         }
-        button_start.setOnClickListener {
+        fBinding.tapPart.buttonStart.setOnClickListener {
             fPlaying = true
-            SoundService.startSound(this, null, tempo_spinner.value)
+            SoundService.startSound(this, null, fBinding.tapPart.tempoSpinner.value)
         }
-        button_stop.setOnClickListener {
+        fBinding.tapPart.buttonStop.setOnClickListener {
             fPlaying = false
             SoundService.stopSound(this)
         }
 
-        checkbox_with_tempo.visibility = View.VISIBLE
+        fBinding.tapPart.checkboxWithTempo.visibility = View.VISIBLE
     }
 
     override fun onResume() {
@@ -91,12 +92,12 @@ class TapSongActivity : AbstractActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.tap_action_accept -> {
-                tempo_spinner.clearFocus()
+                fBinding.tapPart.tempoSpinner.clearFocus()
 
-                val tempo = if (checkbox_with_tempo.isChecked) tempo_spinner.value else -1
+                val tempo = if (fBinding.tapPart.checkboxWithTempo.isChecked) fBinding.tapPart.tempoSpinner.value else -1
                 Intent().also {
-                    it.putExtra(kINTENT_DATA_NAME, name.text.toString())
-                    it.putExtra(kINTENT_DATA_SCORE_LINK, score_link.text.toString())
+                    it.putExtra(kINTENT_DATA_NAME, fBinding.name.text.toString())
+                    it.putExtra(kINTENT_DATA_SCORE_LINK, fBinding.scoreLink.text.toString())
                     it.putExtra(kINTENT_DATA_TEMPO, tempo)
                     setResult(RESULT_OK, it)
                 }
@@ -110,14 +111,14 @@ class TapSongActivity : AbstractActivity() {
     }
 
     private fun loadIntent() {
-        name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
+        fBinding.name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
 
         val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, -1)
         val withTempo = newTempo != -1
-        checkbox_with_tempo.isChecked = withTempo
+        fBinding.tapPart.checkboxWithTempo.isChecked = withTempo
         setTempo(if (withTempo) newTempo else 120)
 
-        score_link.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
+        fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
 
     private fun doTap(motionEvent: MotionEvent): Boolean {
@@ -135,13 +136,13 @@ class TapSongActivity : AbstractActivity() {
 
     private fun displayStats() {
         calculateBPM(4)?.let { tempo ->
-            tempo4.text = "$tempo"
+            fBinding.tapPart.tempo4.text = "$tempo"
         }
         calculateBPM(8)?.let { tempo ->
-            tempo8.text = "$tempo"
+            fBinding.tapPart.tempo8.text = "$tempo"
         }
         calculateBPM(16)?.let { tempo ->
-            tempo16.text = "$tempo"
+            fBinding.tapPart.tempo16.text = "$tempo"
             setTempo(tempo)
         }
     }
@@ -156,8 +157,8 @@ class TapSongActivity : AbstractActivity() {
     }
 
     private fun setTempo(tempo: Int) {
-        if (tempo >= tempo_spinner.minValue && tempo <= tempo_spinner.maxValue) {
-            tempo_spinner.value = tempo
+        if (tempo >= fBinding.tapPart.tempoSpinner.minValue && tempo <= fBinding.tapPart.tempoSpinner.maxValue) {
+            fBinding.tapPart.tempoSpinner.value = tempo
             if (fPlaying) {
                 SoundService.startSound(this, null, tempo)
             }
