@@ -13,11 +13,11 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            app:contentInsetStartWithNavigation="0dp"
-            app:navigationIcon="@drawable/ic_pencil"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorAccent"
+            app:contentInsetStartWithNavigation="0dp"
+            app:navigationIcon="@drawable/ic_pencil"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -34,6 +34,73 @@
             android:layout_weight="1"
             android:choiceMode="multipleChoiceModal" />
 
+        <android.widget.LinearLayout
+            android:id="@+id/playlistedit_selectfrom_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:visibility="invisible">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="6"
+                android:visibility="invisible" />
+
+            <android.widget.LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="9"
+                android:orientation="vertical">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="invisible" />
+
+                <android.widget.LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="4"
+                    android:background="@color/tempoBackground"
+                    android:orientation="vertical"
+                    android:padding="5dp">
+
+                    <android.widget.ListView
+                        android:id="@+id/playlistedit_selectfrom_list"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="6"
+                        android:choiceMode="singleChoice"/>
+
+                    <android.widget.Button
+                        android:id="@+id/playlistedit_selectfrom_close"
+                        style="@style/button"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:text="@string/close" />
+
+                </android.widget.LinearLayout>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="2"
+                    android:visibility="invisible" />
+
+            </android.widget.LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:visibility="invisible" />
+
+        </android.widget.LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -42,6 +109,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
+        android:contentDescription="@string/playlistedit_action_addsong"
         android:title="@string/playlistedit_action_addsong"
         app:srcCompat="@drawable/ic_plus" />
 

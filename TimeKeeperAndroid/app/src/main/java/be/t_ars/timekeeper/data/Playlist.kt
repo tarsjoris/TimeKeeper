@@ -23,6 +23,13 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
         store.savePlaylist(this)
     }
 
+    fun removeSongAndAbove(store: PlaylistStore, position: Int) {
+        for (i in 0..position) {
+            songs.removeAt(0)
+        }
+        store.savePlaylist(this)
+    }
+
     fun move(store: PlaylistStore, position: Int, up: Boolean) {
         val otherPos = position + if (up) -1 else 1
         if (position in 0 until songs.size && otherPos in 0 until songs.size) {

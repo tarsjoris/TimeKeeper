@@ -13,4 +13,8 @@
           android:icon="@drawable/ic_delete"
           android:title="@string/playlistedit_action_delete"
 		app:showAsAction="ifRoom" />
+	<item android:id="@+id/playlistedit_action_delete_and_above"
+		android:icon="@drawable/delete_sweep"
+		android:title="@string/playlistedit_action_delete_and_above"
+		app:showAsAction="never" />
 </menu>

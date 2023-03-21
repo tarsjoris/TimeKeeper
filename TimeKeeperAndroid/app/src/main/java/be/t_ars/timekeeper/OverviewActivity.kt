@@ -15,24 +15,23 @@ import android.view.MenuItem
 import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
-import android.widget.SimpleAdapter
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
+import be.t_ars.timekeeper.components.PlaylistList
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
+import be.t_ars.timekeeper.data.Song
 import be.t_ars.timekeeper.databinding.OverviewBinding
 
-
-private const val kKEY_NAME = "name"
 
 @RequiresApi(Build.VERSION_CODES.P)
 class OverviewActivity : AbstractActivity() {
     private lateinit var fBinding: OverviewBinding
-    private val fData: MutableList<Map<String, String>> = ArrayList()
+    private val fPlaylistList = PlaylistList()
     private val fAddPlaylistDialog = InputDialog()
     private val fDeleteDialog = ConfirmationDialog().apply {
         setOptions(
@@ -68,13 +67,8 @@ class OverviewActivity : AbstractActivity() {
             R.string.overview_addplaylist_cancel
         )
 
-        fBinding.overviewList.adapter = SimpleAdapter(
-            this,
-            fData,
-            R.layout.overview_entry,
-            arrayOf(kKEY_NAME),
-            intArrayOf(R.id.overview_entry_name)
-        )
+        fPlaylistList.bindToView(this, fBinding.overviewList)
+
         fBinding.overviewList.onItemClickListener =
             AdapterView.OnItemClickListener { _, _, position, _ ->
                 trigger(position)
@@ -224,15 +218,9 @@ class OverviewActivity : AbstractActivity() {
     }
 
     private fun reloadList() {
-        fData.clear()
         fPlaylists.clear()
         fPlaylists.addAll(fStore.readAllPlaylists())
-        for (i in 0 until fPlaylists.size) {
-            val map = HashMap<String, String>()
-            map[kKEY_NAME] = fPlaylists[i].name
-            fData.add(map)
-        }
-        (fBinding.overviewList.adapter as SimpleAdapter).notifyDataSetChanged()
+        fPlaylistList.setPlaylists(fPlaylists)
     }
 
     private fun trigger(selection: Int) {

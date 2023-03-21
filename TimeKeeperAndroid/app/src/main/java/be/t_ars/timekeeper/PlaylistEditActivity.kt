@@ -8,12 +8,16 @@ import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SimpleAdapter
 import androidx.annotation.RequiresApi
+import be.t_ars.timekeeper.components.PlaylistList
+import be.t_ars.timekeeper.components.SongList
 import be.t_ars.timekeeper.data.Playlist
+import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
 import be.t_ars.timekeeper.data.Song
 import be.t_ars.timekeeper.databinding.PlaylisteditBinding
@@ -48,12 +52,18 @@ class PlaylistEditActivity : AbstractActivity() {
     private val fRenamePlaylistDialog: InputDialog = InputDialog()
     private val fCopyDialog: InputDialog = InputDialog()
     private val fDeleteDialog: ConfirmationDialog = ConfirmationDialog()
+    private val fDeleteAndAboveDialog: ConfirmationDialog = ConfirmationDialog()
+    private val fInsertfromPlaylistList = PlaylistList()
+    private val fInsertfromSongList = SongList()
+
     private lateinit var fStore: PlaylistStore
     private var fPlaylist: Playlist? = null
     private var fActionMode: ActionMode? = null
     private var fPosition: Int = 0
     private var fNewPlaylistId: Long? = null
     private var fEditMode = EditMode.NORMAL
+    private val fInsertFromPlaylists: MutableList<PlaylistHeader> = ArrayList()
+    private val fInsertFromSongs: MutableList<Song> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +125,12 @@ class PlaylistEditActivity : AbstractActivity() {
         fDeleteDialog.setOptions(
             this::deleteSelectedItems,
             R.string.playlistedit_delete_message,
+            R.string.playlistedit_delete_yes,
+            R.string.playlistedit_delete_no
+        )
+        fDeleteAndAboveDialog.setOptions(
+            this::deleteSelectedItemsAndAbove,
+            R.string.playlistedit_delete_and_above_message,
             R.string.playlistedit_delete_yes,
             R.string.playlistedit_delete_no
         )
@@ -183,6 +199,9 @@ class PlaylistEditActivity : AbstractActivity() {
                     R.id.playlistedit_action_delete -> {
                         fDeleteDialog.show(supportFragmentManager, "delete_songs")
                     }
+                    R.id.playlistedit_action_delete_and_above -> {
+                        fDeleteAndAboveDialog.show(supportFragmentManager, "delete_songs_and_above")
+                    }
                     else -> {
                         return false
                     }
@@ -198,6 +217,10 @@ class PlaylistEditActivity : AbstractActivity() {
             ) {
             }
         })
+
+        fBinding.playlisteditSelectfromClose.setOnClickListener {
+            fBinding.playlisteditSelectfromLayout.visibility = View.INVISIBLE
+        }
     }
 
     private fun copyPlaylist(name: String) {
@@ -276,6 +299,9 @@ class PlaylistEditActivity : AbstractActivity() {
             }
             R.id.playlistedit_action_copy -> {
                 startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
+            }
+            R.id.playlistedit_action_insertfrom -> {
+                startInsertFrom()
             }
             R.id.playlistedit_action_normalmode -> {
                 fEditMode = EditMode.NORMAL
@@ -367,6 +393,16 @@ class PlaylistEditActivity : AbstractActivity() {
         reloadSongs()
     }
 
+    private fun deleteSelectedItemsAndAbove() {
+        val selection = fBinding.playlistedit.checkedItemPositions
+        val highestSelection = fData.indices.reversed().firstOrNull(selection::get)
+        if (highestSelection != null) {
+            fPlaylist?.removeSongAndAbove(fStore, highestSelection)
+            fActionMode?.finish()
+            reloadSongs()
+        }
+    }
+
     private fun move(up: Boolean) {
         val selection = fBinding.playlistedit.checkedItemPositions
         var ignore = false
@@ -390,6 +426,47 @@ class PlaylistEditActivity : AbstractActivity() {
             i += if (up) 1 else -1
         }
         reloadSongs()
+    }
+
+    private fun startInsertFrom() {
+        fInsertfromPlaylistList.bindToView(this, fBinding.playlisteditSelectfromList)
+
+        fInsertFromPlaylists.clear()
+        fInsertFromPlaylists.addAll(fStore.readAllPlaylists())
+        fInsertfromPlaylistList.setPlaylists(fInsertFromPlaylists)
+
+        fBinding.playlisteditSelectfromLayout.visibility = View.VISIBLE
+
+        fBinding.playlisteditSelectfromList.onItemClickListener =
+            AdapterView.OnItemClickListener { _, _, position, _ ->
+                loadInsertFromPlaylist(position)
+            }
+    }
+
+    private fun loadInsertFromPlaylist(selection: Int) {
+        val playlist = fStore.readPlaylist(fInsertFromPlaylists[selection].id)
+        if (playlist != null) {
+            fInsertfromSongList.bindToView(this, fBinding.playlisteditSelectfromList)
+
+            fInsertFromSongs.clear()
+            fInsertFromSongs.addAll(playlist.songs)
+            fInsertfromSongList.setSongs(fInsertFromSongs)
+
+            fBinding.playlisteditSelectfromList.onItemClickListener =
+                AdapterView.OnItemClickListener { _, _, position, _ ->
+                    fBinding.playlisteditSelectfromList.setItemChecked(position, true)
+
+                    val song = fInsertFromSongs[position]
+                    fPlaylist?.addSong(fStore, Song(song))
+                    reloadSongs()
+
+                    fPlaylist?.songs?.size?.also {
+                        val pos = it - 1
+                        //fBinding.playlistedit.setItemChecked(pos, true)
+                        fBinding.playlistedit.smoothScrollToPosition(pos)
+                    }
+                }
+        }
     }
 
     companion object {
