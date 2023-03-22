@@ -1,10 +1,16 @@
 package be.t_ars.timekeeper
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import java.io.Serializable
 
 
@@ -63,6 +69,23 @@ class SoundService : Service() {
         returnActivityExtras: HashMap<out Any, out Any>?
     ) {
         Log.i("SoundService", "Starting $bpm")
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            showNotification(label, bpm, returnActivityClass, returnActivityExtras)
+        }
+        fSoundGenerator.start(bpm)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun showNotification(
+        label: String?,
+        bpm: Int,
+        returnActivityClass: Class<out Any>?,
+        returnActivityExtras: HashMap<out Any, out Any>?
+    ) {
         val text = "$bpm BPM"
         val title = label ?: text
         val details = if (label == null) null else text
@@ -76,14 +99,21 @@ class SoundService : Service() {
                     }
                 }
             }
-            ?.let { PendingIntent.getActivity(this, 0, it, PendingIntent.FLAG_UPDATE_CURRENT) }
+            ?.let {
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    it,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+            }
         val stopIntent = PendingIntent.getService(
             this,
             0,
             createStopIntent(this),
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = Notification.Builder(this, fChannelID)
+        val notification = NotificationCompat.Builder(this, fChannelID)
             .setContentTitle(title)
             .also { notificationBuilder ->
                 if (details != null) {
@@ -98,7 +128,7 @@ class SoundService : Service() {
             .setSmallIcon(R.drawable.notification)
             .setTicker(title)
             .addAction(
-                Notification.Action.Builder(
+                NotificationCompat.Action.Builder(
                     android.R.drawable.ic_media_pause,
                     "Stop",
                     stopIntent
@@ -106,13 +136,16 @@ class SoundService : Service() {
             )
             .setDeleteIntent(stopIntent)
             .build()
-        startForeground(1, notification)
-        fSoundGenerator.start(bpm)
+        with(NotificationManagerCompat.from(this)) {
+            notify(1, notification)
+        }
     }
 
     private fun doStop() {
         fSoundGenerator.stop()
-        stopForeground(true)
+        with(NotificationManagerCompat.from(this)) {
+            cancelAll()
+        }
         stopSelf()
     }
 

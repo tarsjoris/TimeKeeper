@@ -6,12 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import be.t_ars.timekeeper.data.PlaylistStore
 
-@RequiresApi(Build.VERSION_CODES.P)
 class TimeKeeperApplication : Application() {
     private inner class TimeKeeperBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(content: Context?, intent: Intent?) {

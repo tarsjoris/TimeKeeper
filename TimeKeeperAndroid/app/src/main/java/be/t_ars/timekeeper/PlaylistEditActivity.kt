@@ -2,7 +2,6 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ActionMode
@@ -13,7 +12,6 @@ import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
 import android.widget.SimpleAdapter
-import androidx.annotation.RequiresApi
 import be.t_ars.timekeeper.components.PlaylistList
 import be.t_ars.timekeeper.components.SongList
 import be.t_ars.timekeeper.data.Playlist
@@ -44,7 +42,6 @@ private enum class EditMode {
     NORMAL, SEND_TOP, SEND_BOTTOM
 }
 
-@RequiresApi(Build.VERSION_CODES.P)
 class PlaylistEditActivity : AbstractActivity() {
     private lateinit var fBinding: PlaylisteditBinding
     private val fData: MutableList<Map<String, String>> = ArrayList()

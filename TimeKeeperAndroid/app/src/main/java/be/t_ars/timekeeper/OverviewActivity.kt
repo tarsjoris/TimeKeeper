@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.view.ActionMode
@@ -15,7 +14,6 @@ import android.view.MenuItem
 import android.widget.AbsListView
 import android.widget.AdapterView
 import android.widget.EditText
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
@@ -24,11 +22,9 @@ import be.t_ars.timekeeper.components.PlaylistList
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
-import be.t_ars.timekeeper.data.Song
 import be.t_ars.timekeeper.databinding.OverviewBinding
 
 
-@RequiresApi(Build.VERSION_CODES.P)
 class OverviewActivity : AbstractActivity() {
     private lateinit var fBinding: OverviewBinding
     private val fPlaylistList = PlaylistList()
