@@ -2,45 +2,15 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.view.MenuItem
-import android.view.MotionEvent
-import androidx.annotation.RequiresApi
+import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.databinding.TapBinding
 import java.io.Serializable
 
-@RequiresApi(Build.VERSION_CODES.P)
 class TapActivity : AbstractActivity() {
     private lateinit var fBinding: TapBinding
-    private val delayedUpdate = DelayedUpdate()
-    private val fTimestamps = LongArray(17) { 0 }
-    private var fSize = 0
-    private var fIndex = 0
-    private var fPlaying = false
-
-    private inner class DelayedUpdate : Runnable {
-        private var tempo = 0
-        private var hasRun = true
-
-        fun update(newTempo: Int) {
-            synchronized(this) {
-                tempo = newTempo
-                if (hasRun) {
-                    hasRun = false
-                    Handler().postDelayed(this, 500)
-                }
-            }
-        }
-
-        override fun run() {
-            synchronized(this) {
-                startSound(tempo)
-                hasRun = true
-            }
-        }
-    }
+    private lateinit var fTapPartComponent: TapPartComponent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,27 +18,7 @@ class TapActivity : AbstractActivity() {
         setContentView(fBinding.root)
         setSupportActionBar(fBinding.toolbar)
 
-        fBinding.tapPart.tempoSpinner.minValue = 10
-        fBinding.tapPart.tempoSpinner.maxValue = 500
-        fBinding.tapPart.tempoSpinner.value = 120
-
-        fBinding.tapPart.buttonTap.setOnTouchListener { _, motionEvent ->
-            doTap(motionEvent)
-            false
-        }
-        fBinding.tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
-            if (fPlaying) {
-                delayedUpdate.update(newValue)
-            }
-        }
-        fBinding.tapPart.buttonStart.setOnClickListener {
-            fPlaying = true
-            startSound(fBinding.tapPart.tempoSpinner.value)
-        }
-        fBinding.tapPart.buttonStop.setOnClickListener {
-            fPlaying = false
-            SoundService.stopSound(this)
-        }
+        fTapPartComponent = TapPartComponent(fBinding.tapPart, this::startSound, this::stopSound)
     }
 
     override fun onResume() {
@@ -97,55 +47,15 @@ class TapActivity : AbstractActivity() {
         }
     }
 
-    private fun doTap(motionEvent: MotionEvent): Boolean {
-        if (motionEvent.action == MotionEvent.ACTION_DOWN) {
-            fIndex = (fIndex + 1) % fTimestamps.size
-            fTimestamps[fIndex] = System.currentTimeMillis()
-            if (fSize < fTimestamps.size) {
-                ++fSize
-            }
-            displayStats()
-            return true
-        }
-        return false
-    }
-
-    private fun displayStats() {
-        calculateBPM(4)?.let { tempo ->
-            fBinding.tapPart.tempo4.text = "$tempo"
-        }
-        calculateBPM(8)?.let { tempo ->
-            fBinding.tapPart.tempo8.text = "$tempo"
-        }
-        calculateBPM(16)?.let { tempo ->
-            fBinding.tapPart.tempo16.text = "$tempo"
-            setTempo(tempo)
-        }
-    }
-
-    private fun calculateBPM(granularity: Int): Int? {
-        if (fSize > granularity) {
-            val index2 = (fIndex + (fTimestamps.size - granularity)) % fTimestamps.size
-            val diff = fTimestamps[fIndex] - fTimestamps[index2]
-            return (60000 * granularity / diff).toInt()
-        }
-        return null
-    }
-
-    private fun setTempo(tempo: Int) {
-        if (tempo >= fBinding.tapPart.tempoSpinner.minValue && tempo <= fBinding.tapPart.tempoSpinner.maxValue) {
-            fBinding.tapPart.tempoSpinner.value = tempo
-            if (fPlaying) {
-                startSound(tempo)
-            }
-        }
-    }
-
-    private fun startSound(tempo: Int) {
+    private fun startSound(tempo: Int, divisions: Int) {
         val extras = HashMap<String, Serializable>().also {
             it[kINTENT_DATA_TEMPO] = tempo
         }
-        SoundService.startSound(this, null, tempo, TapActivity::class.java, extras)
+        SoundService.startSound(this, null, tempo, divisions, TapActivity::class.java, extras)
+    }
+
+    private fun stopSound() {
+        SoundService.stopSound(this)
     }
 
     companion object {

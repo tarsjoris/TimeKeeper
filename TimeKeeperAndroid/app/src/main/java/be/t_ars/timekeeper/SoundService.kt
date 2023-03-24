@@ -191,7 +191,6 @@ class SoundService : Service() {
                     }
                 }
                 .let(context::startForegroundService)
-
         }
 
         private fun createStopIntent(context: Context) =
