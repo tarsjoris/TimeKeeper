@@ -1,14 +1,13 @@
 package be.t_ars.timekeeper
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.*
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import java.io.Serializable
@@ -33,7 +32,9 @@ class SoundService : Service() {
         super.onCreate()
         val frequency = getSettingFrequency(this)
         val duration = getSettingDuration(this)
-        fSoundGenerator = SoundGenerator(this, frequency, duration)
+        val divisionFrequency = getSettingDivisionFrequency(this)
+        val divisionAmplitudePercentage = getSettingDivisionAmplitudePercentage(this)
+        fSoundGenerator = SoundGenerator(this, frequency, duration, divisionFrequency, divisionAmplitudePercentage)
 
         createNotificationChannel()
     }
@@ -51,6 +52,7 @@ class SoundService : Service() {
                     "start" -> doStart(
                         extras.getString(kINTENT_DATA_LABEL),
                         extras.getInt(kINTENT_DATA_BPM),
+                        extras.getInt(kINTENT_DATA_DIVISIONS),
                         extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
                             ?.let { if (it is Class<*>) it else null },
                         extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
@@ -65,21 +67,15 @@ class SoundService : Service() {
     private fun doStart(
         label: String?,
         bpm: Int,
+        divisions: Int,
         returnActivityClass: Class<out Any>?,
         returnActivityExtras: HashMap<out Any, out Any>?
     ) {
         Log.i("SoundService", "Starting $bpm")
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
             showNotification(label, bpm, returnActivityClass, returnActivityExtras)
-        }
-        fSoundGenerator.start(bpm)
+        fSoundGenerator.start(bpm, divisions)
     }
 
-    @SuppressLint("MissingPermission")
     private fun showNotification(
         label: String?,
         bpm: Int,
@@ -136,9 +132,7 @@ class SoundService : Service() {
             )
             .setDeleteIntent(stopIntent)
             .build()
-        with(NotificationManagerCompat.from(this)) {
-            notify(1, notification)
-        }
+        startForeground(1, notification)
     }
 
     private fun doStop() {
@@ -165,6 +159,7 @@ class SoundService : Service() {
         private const val kINTENT_DATA_ACTION = "action"
         private const val kINTENT_DATA_LABEL = "label"
         private const val kINTENT_DATA_BPM = "bpm"
+        private const val kINTENT_DATA_DIVISIONS = "divisions"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
 
@@ -172,14 +167,16 @@ class SoundService : Service() {
             context: Context,
             label: String?,
             tempo: Int,
+            divisions: Int,
             returnActivityClass: Class<out Any>? = null,
             returnActivityExtras: HashMap<String, Serializable>? = null
-        ) =
+        ) {
             Intent(context, SoundService::class.java)
                 .also { intent ->
                     intent.putExtra(kINTENT_DATA_ACTION, "start")
                     intent.putExtra(kINTENT_DATA_LABEL, label)
                     intent.putExtra(kINTENT_DATA_BPM, tempo)
+                    intent.putExtra(kINTENT_DATA_DIVISIONS, divisions)
                     returnActivityClass?.let {
                         intent.putExtra(
                             kINTENT_DATA_RETURN_ACTIVITY_CLASS,
@@ -194,6 +191,8 @@ class SoundService : Service() {
                     }
                 }
                 .let(context::startForegroundService)
+
+        }
 
         private fun createStopIntent(context: Context) =
             Intent(context, SoundService::class.java)

@@ -12,7 +12,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SoundGenerator(context: Context, private val fBeepFrequency: Int, private val fBeepDuration: Int) : OnLoadCompleteListener {
+class SoundGenerator(context: Context, private val fBeepFrequency: Int, private val fBeepDuration: Int, private val fDivisionFrequency: Int, private val fDivisionAmplitude: Int) : OnLoadCompleteListener {
     private val fFile: File = File(context.cacheDir, "beep.wav")
     private val fSoundPool: SoundPool
     private var fSoundID = -1
@@ -33,10 +33,10 @@ class SoundGenerator(context: Context, private val fBeepFrequency: Int, private 
         fSoundPool.release()
     }
 
-    private fun configure(bpm: Int) {
+    private fun configure(bpm: Int, divisions: Int) {
         try {
             BufferedOutputStream(FileOutputStream(fFile)).use { out ->
-                WaveUtil.generateSine(out, fBeepFrequency, fBeepDuration, bpm)
+                WaveUtil.generateSine(out, fBeepFrequency, fBeepDuration, bpm, fDivisionFrequency, fDivisionAmplitude, divisions)
             }
             synchronized(fPlaying) {
                 fSoundPool.autoPause()
@@ -52,11 +52,11 @@ class SoundGenerator(context: Context, private val fBeepFrequency: Int, private 
 
     }
 
-    fun start(bpm: Int) {
+    fun start(bpm: Int, divisions: Int) {
         synchronized(fPlaying) {
             fPlaying.set(true)
         }
-        configure(bpm)
+        configure(bpm, divisions)
     }
 
     fun stop() {

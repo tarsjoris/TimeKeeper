@@ -14,6 +14,20 @@
 		android:inputType="number"
 		android:defaultValue="20"
 		/>
+	<EditTextPreference
+		android:key="divisionfrequency"
+		android:title="@string/pref_title_divisionfrequency"
+		android:summary="@string/pref_summary_divisionfrequency"
+		android:inputType="number"
+		android:defaultValue="880"
+		/>
+	<EditTextPreference
+		android:key="divisionamplitudepercentage"
+		android:title="@string/pref_title_divisionamplitudepercentage"
+		android:summary="@string/pref_summary_divisionamplitudepercentage"
+		android:inputType="number"
+		android:defaultValue="880"
+		/>
     <ListPreference
         android:key="screenorientation"
         android:title="@string/pref_title_screenorientation"
@@ -27,11 +41,5 @@
 		android:title="@string/pref_title_autoplay"
 		android:summary="@string/pref_summary_autoplay"
 		android:defaultValue="true"
-		/>
-	<CheckBoxPreference
-		android:key="playlist-in-bubble"
-		android:title="@string/pref_title_playlist_in_bubble"
-		android:summary="@string/pref_summary_playlist_in_bubble"
-		android:defaultValue="false"
 		/>
 </PreferenceScreen>

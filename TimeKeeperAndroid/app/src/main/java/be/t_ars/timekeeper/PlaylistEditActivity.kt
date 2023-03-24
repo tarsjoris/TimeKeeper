@@ -73,7 +73,7 @@ class PlaylistEditActivity : AbstractActivity() {
                 val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
                 val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
                 val tempo = parseTempo(tempoS)
-                val song = Song(name = name.toString(), tempo = tempo)
+                val song = Song(name.toString(), tempo, 1)
                 fPlaylist?.addSong(fStore, song)
                 reloadSongs()
             },
@@ -251,6 +251,7 @@ class PlaylistEditActivity : AbstractActivity() {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
                             val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
                                 .let { if (it == -1) null else it }
+                            val newDivisions = d.getIntExtra(TapSongActivity.kINTENT_DATA_DIVISIONS, 1)
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { if (it.isBlank()) null else it }
@@ -258,12 +259,15 @@ class PlaylistEditActivity : AbstractActivity() {
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != song.tempo
+                            val replaceDivisions = newDivisions != song.divisions
                             val replaceScoreLink = newScoreLink != song.scoreLink
-                            if (replaceName || replaceTempo || replaceScoreLink) {
+                            if (replaceName || replaceTempo || replaceDivisions || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
                                 if (replaceTempo)
                                     song.tempo = newTempo
+                                if (replaceDivisions)
+                                    song.divisions = newDivisions
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -346,6 +350,7 @@ class PlaylistEditActivity : AbstractActivity() {
             TapSongActivity.startActivityForResult(
                 this,
                 song.tempo,
+                song.divisions,
                 song.name,
                 song.scoreLink,
                 kREQUEST_TEMPO

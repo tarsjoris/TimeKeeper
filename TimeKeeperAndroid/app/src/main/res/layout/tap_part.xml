@@ -7,40 +7,40 @@
 
     <android.widget.LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:orientation="horizontal"
         android:layout_margin="5dp"
-        android:layout_weight="1">
+        android:layout_weight="3">
 
         <android.widget.Button
             android:id="@+id/button_tap"
             style="@style/button"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="5dp"
-            android:layout_weight="1"
+            android:layout_weight="4"
             android:text="@string/tap" />
 
         <android.widget.LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:layout_weight="3">
+            android:layout_weight="2">
 
             <android.widget.NumberPicker
                 android:id="@+id/tempo_spinner"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
                 android:layout_margin="5dp"
-                android:layout_weight="1"
+                android:layout_weight="3"
                 />
 
             <android.widget.CheckBox
                 android:id="@+id/checkbox_with_tempo"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
                 android:layout_margin="5dp"
-                android:layout_weight="2"
+                android:layout_weight="1"
                 android:text="@string/tap_with_tempo"
                 android:visibility="invisible"
                 />
@@ -51,15 +51,85 @@
 
     <android.widget.LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:layout_margin="5dp"
+        android:layout_weight="1">
+
+        <android.widget.ToggleButton
+            android:id="@+id/division1"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:checked="true"
+            android:textOn="1"
+            android:textOff="1"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/division2"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="2"
+            android:textOff="2"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/division3"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="3"
+            android:textOff="3"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/division4"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="4"
+            android:textOff="4"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/division5"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="5"
+            android:textOff="5"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/division7"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="7"
+            android:textOff="7"/>
+
+    </android.widget.LinearLayout>
+
+    <android.widget.LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:orientation="vertical"
         android:layout_margin="10dp"
-        android:layout_weight="1">
+        android:layout_weight="3">
 
         <android.widget.TextView
             android:id="@+id/tempo16"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:layout_margin="5dp"
             android:layout_weight="1"
             style="@style/text_tempo"
@@ -67,20 +137,20 @@
 
         <android.widget.LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:orientation="horizontal"
             android:layout_margin="5dp"
             android:layout_weight="1">
 
             <android.widget.TextView
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 />
 
             <android.widget.TextView
                 android:id="@+id/tempo8"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 style="@style/text_tempo"
@@ -90,22 +160,22 @@
 
         <android.widget.LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:orientation="horizontal"
             android:layout_margin="5dp"
             android:layout_weight="1">
 
             <android.widget.TextView
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="3"
                 />
 
             <android.widget.TextView
                 android:id="@+id/tempo4"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="3"
+                android:layout_weight="1"
                 style="@style/text_tempo"
                 />
 
@@ -115,16 +185,16 @@
 
     <android.widget.LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:orientation="horizontal"
         android:layout_margin="5dp"
-        android:layout_weight="1">
+        android:layout_weight="2">
 
         <android.widget.Button
             android:id="@+id/button_start"
             android:text="@string/start"
             style="@style/button"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="5dp"
             android:layout_weight="1"
@@ -134,7 +204,7 @@
             android:id="@+id/button_stop"
             android:text="@string/stop"
             style="@style/button"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="5dp"
             android:layout_weight="1"

@@ -20,7 +20,7 @@ import kotlin.math.roundToLong
 import kotlin.math.sin
 
 object WaveUtil {
-    private const val kSAMPLE_RATE = 44100
+    private const val kSAMPLES_PER_SECOND = 44100
 
     /*
      WAV File Specification
@@ -96,7 +96,7 @@ a trimmed down version that most wav files adhere to.
     @JvmStatic fun main(args: Array<String>) {
         try {
             FileOutputStream("beep.wav").use { out->
-                generateSine(out, 440, 20, 120)
+                generateSine(out, 880, 50, 120, 440, 70, 2)
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -104,24 +104,40 @@ a trimmed down version that most wav files adhere to.
 
     }
 
-    fun generateSine(out: OutputStream, beepFrequency: Int, beepDuration: Int, bpm: Int) {
-        val totalSamples = kSAMPLE_RATE * 60 / bpm
-        val requestedToneSamples = kSAMPLE_RATE.toDouble() * beepDuration.toDouble() / 1000.0
-        val samplesPerSine = kSAMPLE_RATE.toDouble() / beepFrequency.toDouble() / 2.0
-        val toneSamples = floor((requestedToneSamples / samplesPerSine).roundToLong() * samplesPerSine).toInt()
-        val factor = 2.0 * Math.PI * beepFrequency.toDouble() / kSAMPLE_RATE.toDouble()
-        val buffer = ByteArray(totalSamples * 2) { toByte(128) }
-        var i = (totalSamples - toneSamples) * 2
-        (0 until toneSamples).forEach { s ->
-            val value = (sin(s.toDouble() * factor) + 1.0) * 255.0 / 2.0
-            buffer[i] = toByte(value.roundToInt())
-            buffer[i + 1] = buffer[i]
-            i += 2
+    fun generateSine(out: OutputStream, beepFrequency: Int, beepDurationMillis: Int, bpm: Int, divisionFrequency: Int, divisionAmplitudePercentage: Int, divisionCount: Int) {
+        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(totalSamples * 2) { -128 }
+        writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, 0)
+        if (divisionCount in 2..7) {
+            (1 until divisionCount).forEach { subDivisionIndex ->
+                val samplesOffset = (totalSamples.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
+                writeBeepInBuffer(divisionFrequency, beepDurationMillis, divisionAmplitudePercentage, buffer, samplesOffset)
+            }
         }
-        save(out, 2, kSAMPLE_RATE, 1, buffer)
+        save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
     }
 
-    fun save(out: OutputStream, channelCount: Int, sampleRate: Int, bytesPerChannel: Int, data: ByteArray) {
+    private fun writeBeepInBuffer(sinesPerSecond: Int, beepDurationMillis: Int, amplitudePercentage: Int, buffer: ByteArray, samplesOffset: Int) {
+        val desiredToneSamples = kSAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
+        val samplesBetweenZeroCrossings = kSAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
+        val actualToneSamples = floor((desiredToneSamples / samplesBetweenZeroCrossings).roundToLong() * samplesBetweenZeroCrossings).toInt()
+        val amplitudeStepPerSample = 2.0 * Math.PI * sinesPerSecond.toDouble() / kSAMPLES_PER_SECOND.toDouble()
+        (0 until actualToneSamples).forEach { s ->
+            val amplitude = sin(s.toDouble() * amplitudeStepPerSample)
+            val volumeAdjusted = if (amplitudePercentage in 1..100) amplitude * amplitudePercentage.toDouble() / 100.0 else amplitude;
+            val value = (volumeAdjusted + 1.0) * 255.0 / 2.0
+            val byte = toByte(value.roundToInt())
+            val index = (samplesOffset + s) * 2
+            if (index in buffer.indices) {
+                buffer[index] = byte
+            }
+            if (index + 1 in buffer.indices) {
+                buffer[index + 1] = byte
+            }
+        }
+    }
+
+    private fun save(out: OutputStream, channelCount: Int, sampleRate: Int, bytesPerChannel: Int, data: ByteArray) {
         val outFile = DataOutputStream(out)
 
         // write the wav file per the wav file format

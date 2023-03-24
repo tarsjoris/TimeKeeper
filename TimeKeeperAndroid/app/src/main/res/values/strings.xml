@@ -58,6 +58,10 @@
     <string name="pref_summary_frequency">The frequency of the beep in Hz</string>
     <string name="pref_title_duration">Duration</string>
     <string name="pref_summary_duration">The duration of the beep in ms</string>
+    <string name="pref_title_divisionfrequency">Division frequency</string>
+    <string name="pref_summary_divisionfrequency">The frequency of subdivisions in Hz</string>
+    <string name="pref_title_divisionamplitudepercentage">Division volume</string>
+    <string name="pref_summary_divisionamplitudepercentage">Volume of divisions between 1 and 100</string>
     <string name="pref_title_screenorientation">Screen orientation</string>
     <string name="pref_summary_screenorientation">The screen will be locked in this orientation.</string>
     <string-array name="pref_entrievalues_screenorientation">
@@ -76,6 +80,4 @@
     </string-array>
     <string name="pref_title_autoplay">Autoplay</string>
     <string name="pref_summary_autoplay">Start metronome when selecting song or pressing next.</string>
-    <string name="pref_title_playlist_in_bubble">Playlist in bubble</string>
-    <string name="pref_summary_playlist_in_bubble">Show entire playlist in bubble.</string>
 </resources>

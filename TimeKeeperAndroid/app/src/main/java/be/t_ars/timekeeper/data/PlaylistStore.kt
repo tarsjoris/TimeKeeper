@@ -66,13 +66,11 @@ class PlaylistStore(private val fContext: Context) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
                                 val tempo = parser.getAttributeValue(null, kATTR_TEMPO)
                                     ?.let(Integer::parseInt)
+                                val divisions = parser.getAttributeValue(null, kATTR_DIVISIONS)
+                                    ?.let(Integer::parseInt) ?: 1
                                 val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
                                 playlist?.addSong(
-                                    Song(
-                                        name = name,
-                                        tempo = tempo,
-                                        scoreLink = scoreLink
-                                    )
+                                    Song(name, tempo, divisions, scoreLink)
                                 )
                             }
                         }
@@ -211,6 +209,7 @@ class PlaylistStore(private val fContext: Context) {
                         serializer.attribute(null, kATTR_NAME, song.name)
                         if (song.tempo != null)
                             serializer.attribute(null, kATTR_TEMPO, song.tempo.toString())
+                        serializer.attribute(null, kATTR_DIVISIONS, song.divisions.toString())
                         if (song.scoreLink != null)
                             serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
                         serializer.endTag(null, kTAG_SONG)
@@ -274,6 +273,7 @@ class PlaylistStore(private val fContext: Context) {
         private const val kATTR_NAME = "name"
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
+        private const val kATTR_DIVISIONS = "divisions"
         private const val kATTR_SCORE_LINK = "score_link"
 
         private val kPLAYLIST_COMPARATOR = PlaylistComparator()
