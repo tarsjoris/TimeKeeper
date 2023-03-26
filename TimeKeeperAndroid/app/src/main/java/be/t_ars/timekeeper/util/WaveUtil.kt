@@ -10,14 +10,14 @@ package be.t_ars.timekeeper.util
 // if you catch any bugs in this, or improve upon it significantly, send me the changes
 // at evan at thisisnotalabel dot com, so we can share your changes with the world
 
-import java.io.DataOutputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
+import android.content.Context
+import java.io.*
 import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
+
+typealias OpenFile = (String) -> InputStream
 
 object WaveUtil {
     private const val kSAMPLES_PER_SECOND = 44100
@@ -93,41 +93,82 @@ a trimmed down version that most wav files adhere to.
 
 */
 
-    @JvmStatic fun main(args: Array<String>) {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val bytes = shortToByteArray(32767)
+        bytes.forEach { b -> println(b.toInt()) }
         try {
-            FileOutputStream("beep.wav").use { out->
+            FileOutputStream("beep.wav").use { out ->
                 generateSine(out, 880, 50, 120, 440, 70, 2)
             }
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
+        try {
+            FileOutputStream("loop.wav").use { out ->
+                generateShakerLoop({ name -> FileInputStream(File(name)) }, out, 60)
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
     }
 
-    fun generateSine(out: OutputStream, beepFrequency: Int, beepDurationMillis: Int, bpm: Int, divisionFrequency: Int, divisionAmplitudePercentage: Int, divisionCount: Int) {
+    fun generateSine(
+        out: OutputStream,
+        beepFrequency: Int,
+        beepDurationMillis: Int,
+        bpm: Int,
+        divisionFrequency: Int,
+        divisionAmplitudePercentage: Int,
+        divisionCount: Int
+    ) {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(totalSamples * 2) { -128 }
         writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, 0)
         if (divisionCount in 2..7) {
             (1 until divisionCount).forEach { subDivisionIndex ->
-                val samplesOffset = (totalSamples.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
-                writeBeepInBuffer(divisionFrequency, beepDurationMillis, divisionAmplitudePercentage, buffer, samplesOffset)
+                val samplesOffset =
+                    (totalSamples.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
+                writeBeepInBuffer(
+                    divisionFrequency,
+                    beepDurationMillis,
+                    divisionAmplitudePercentage,
+                    buffer,
+                    samplesOffset
+                )
             }
         }
         save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
     }
 
-    private fun writeBeepInBuffer(sinesPerSecond: Int, beepDurationMillis: Int, amplitudePercentage: Int, buffer: ByteArray, samplesOffset: Int) {
-        val desiredToneSamples = kSAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
-        val samplesBetweenZeroCrossings = kSAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
-        val actualToneSamples = floor((desiredToneSamples / samplesBetweenZeroCrossings).roundToLong() * samplesBetweenZeroCrossings).toInt()
-        val amplitudeStepPerSample = 2.0 * Math.PI * sinesPerSecond.toDouble() / kSAMPLES_PER_SECOND.toDouble()
-        (0 until actualToneSamples).forEach { s ->
-            val amplitude = sin(s.toDouble() * amplitudeStepPerSample)
-            val volumeAdjusted = if (amplitudePercentage in 1..100) amplitude * amplitudePercentage.toDouble() / 100.0 else amplitude;
-            val value = (volumeAdjusted + 1.0) * 255.0 / 2.0
-            val byte = toByte(value.roundToInt())
-            val index = (samplesOffset + s) * 2
+    private fun writeBeepInBuffer(
+        sinesPerSecond: Int,
+        beepDurationMillis: Int,
+        maxVolume: Int,
+        buffer: ByteArray,
+        samplesOffset: Int
+    ) {
+        val maxVolume: Double = if (maxVolume in 1..100) maxVolume.toDouble() / 100.0 else 1.0
+        val desiredSampleCount =
+            kSAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
+        val samplesBetweenZeroCrossings =
+            kSAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
+        val actualSampleCount =
+            floor((desiredSampleCount / samplesBetweenZeroCrossings).roundToLong() * samplesBetweenZeroCrossings).toInt()
+        val fadeInSampleCount: Int = (actualSampleCount.toDouble() / 3.0).toInt()
+        val amplitudeStepPerSample =
+            2.0 * Math.PI * sinesPerSecond.toDouble() / kSAMPLES_PER_SECOND.toDouble()
+        (0 until actualSampleCount).forEach { s ->
+            val fadeCorrection = if (s < fadeInSampleCount)
+                s.toDouble() / fadeInSampleCount.toDouble()
+            else
+                (actualSampleCount - s).toDouble() / (actualSampleCount.toDouble() - fadeInSampleCount.toDouble())
+
+            val amplitude: Double = sin(s.toDouble() * amplitudeStepPerSample)
+            val volumeAdjustedAmplitude: Double = amplitude * fadeCorrection * maxVolume
+            val value: Double = (volumeAdjustedAmplitude + 1.0) * 255.0 / 2.0
+            val byte: Byte = toByte(value.roundToInt())
+            val index: Int = (samplesOffset + s) * 2
             if (index in buffer.indices) {
                 buffer[index] = byte
             }
@@ -137,7 +178,55 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    private fun save(out: OutputStream, channelCount: Int, sampleRate: Int, bytesPerChannel: Int, data: ByteArray) {
+    fun generateShakerLoop(context: Context, out: OutputStream, bpm: Int) {
+        generateShakerLoop({ name -> context.assets.open(name) }, out, bpm)
+    }
+
+    fun generateShakerLoop(openFile: OpenFile, out: OutputStream, bpm: Int) {
+        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(totalSamples * 4) { if (it % 2 == 0) -128 else 0 }
+        val samples = readSamples(openFile)
+        copyBytes(samples[0], buffer, 0)
+        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt())
+        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt())
+        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt())
+        save(out, 2, kSAMPLES_PER_SECOND, 2, buffer)
+    }
+
+    private fun readSamples(openFile: OpenFile) =
+        arrayOf(
+            readSample(openFile, "shakerloop1.wav"),
+            readSample(openFile, "shakerloop2.wav"),
+            readSample(openFile, "shakerloop3.wav"),
+            readSample(openFile, "shakerloop4.wav")
+        )
+
+    private fun readSample(openFile: OpenFile, filename: String): ByteArray {
+        openFile(filename).use { input ->
+            input.skip(40)
+            val size = readInt(input)
+            val buffer = ByteArray(size)
+            input.read(buffer)
+            return buffer
+        }
+    }
+
+    private fun copyBytes(from: ByteArray, to: ByteArray, samplesOffset: Int) {
+        from.indices.forEach { index ->
+            val targetIndex = samplesOffset * 4 + index
+            if (targetIndex in to.indices) {
+                to[targetIndex] = from[index]
+            }
+        }
+    }
+
+    private fun save(
+        out: OutputStream,
+        channelCount: Int,
+        sampleRate: Int,
+        bytesPerChannel: Int,
+        data: ByteArray
+    ) {
         val outFile = DataOutputStream(out)
 
         // write the wav file per the wav file format
@@ -182,6 +271,14 @@ a trimmed down version that most wav files adhere to.
         b[2] = (i shr 16 and 0x000000FF).toByte()
         b[3] = (i shr 24 and 0x000000FF).toByte()
         return b
+    }
+
+    private fun readInt(input: InputStream): Int {
+        var value = input.read()
+        value += input.read() shl 8
+        value += input.read() shl 16
+        value += input.read() shl 24
+        return value
     }
 
     // convert a short to a byte array
