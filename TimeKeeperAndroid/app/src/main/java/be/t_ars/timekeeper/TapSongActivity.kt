@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.fragment.app.FragmentActivity
 import be.t_ars.timekeeper.components.TapPartComponent
+import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapSongBinding
 
 class TapSongActivity : AbstractActivity() {
@@ -44,13 +45,13 @@ class TapSongActivity : AbstractActivity() {
             R.id.tap_action_accept -> {
                 fBinding.tapPart.tempoSpinner.clearFocus()
 
-                Intent().also {
+                val intent = Intent().also {
                     it.putExtra(kINTENT_DATA_NAME, fBinding.name.text.toString())
                     it.putExtra(kINTENT_DATA_SCORE_LINK, fBinding.scoreLink.text.toString())
                     it.putExtra(kINTENT_DATA_TEMPO, fTapPartComponent.getTempo())
-                    it.putExtra(kINTENT_DATA_DIVISIONS, fTapPartComponent.getDivisions())
-                    setResult(RESULT_OK, it)
+                    it.putExtra(kINTENT_DATA_CLICK_TYPE, fTapPartComponent.getClickType().value)
                 }
+                setResult(RESULT_OK, intent)
                 finish()
             }
             else -> {
@@ -68,14 +69,15 @@ class TapSongActivity : AbstractActivity() {
         fBinding.tapPart.checkboxWithTempo.isChecked = withTempo
         fTapPartComponent.setTempo(if (withTempo) newTempo else 120)
 
-        val newDivisions = intent.getIntExtra(kINTENT_DATA_DIVISIONS, 1)
-        fTapPartComponent.setDivisions(newDivisions)
+        val newClickType = intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DIVISIONS_1.value)
+            .let(EClickType::of)
+        fTapPartComponent.setClickType(newClickType)
 
         fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
 
-    private fun startSound(tempo: Int, divisions: Int) {
-        SoundService.startSound(this, null, tempo, divisions)
+    private fun startSound(tempo: Int, clickType: EClickType) {
+        SoundService.startSound(this, null, tempo, clickType)
     }
 
     private fun stopSound() {
@@ -85,14 +87,14 @@ class TapSongActivity : AbstractActivity() {
 
     companion object {
         const val kINTENT_DATA_TEMPO = "tempo"
-        const val kINTENT_DATA_DIVISIONS = "divisions"
+        const val kINTENT_DATA_CLICK_TYPE = "click_type"
         const val kINTENT_DATA_NAME = "name"
         const val kINTENT_DATA_SCORE_LINK = "score_link"
 
         fun startActivityForResult(
             context: FragmentActivity,
             tempo: Int?,
-            divisions: Int,
+            clickType: EClickType,
             name: String,
             scoreLink: String?,
             requestCode: Int
@@ -100,7 +102,7 @@ class TapSongActivity : AbstractActivity() {
             Intent(context, TapSongActivity::class.java)
                 .also { intent ->
                     intent.putExtra(kINTENT_DATA_TEMPO, tempo)
-                    intent.putExtra(kINTENT_DATA_DIVISIONS, divisions)
+                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, clickType.value)
                     intent.putExtra(kINTENT_DATA_NAME, name)
                     if (scoreLink != null)
                         intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)

@@ -88,7 +88,7 @@ class TimeKeeperApplication : Application() {
                     this,
                     song.name,
                     tempo,
-                    song.divisions,
+                    song.clickType,
                     PlaylistActivity::class.java
                 )
             } else {

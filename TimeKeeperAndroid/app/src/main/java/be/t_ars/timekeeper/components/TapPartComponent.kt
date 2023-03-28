@@ -1,24 +1,26 @@
 package be.t_ars.timekeeper.components
 
 import android.os.Handler
+import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapPartBinding
 
 class TapPartComponent(
     private val tapPart: TapPartBinding,
-    private val startSound: (Int, Int) -> Unit,
+    private val startSound: (Int, EClickType) -> Unit,
     private val stopSound: () -> Unit
 ) {
-    private val divisionSelection: ToggleGroup<Int> = ToggleGroup(
+    private val clickTypeSelection: ToggleGroup<EClickType> = ToggleGroup(
         arrayOf(
-            ToggleEntry(1, tapPart.division1),
-            ToggleEntry(2, tapPart.division2),
-            ToggleEntry(3, tapPart.division3),
-            ToggleEntry(4, tapPart.division4),
-            ToggleEntry(5, tapPart.division5),
-            ToggleEntry(7, tapPart.division7),
+            ToggleEntry(EClickType.DIVISIONS_1, tapPart.clicktype1),
+            ToggleEntry(EClickType.DIVISIONS_2, tapPart.clicktype2),
+            ToggleEntry(EClickType.DIVISIONS_3, tapPart.clicktype3),
+            ToggleEntry(EClickType.DIVISIONS_4, tapPart.clicktype4),
+            ToggleEntry(EClickType.DIVISIONS_5, tapPart.clicktype5),
+            ToggleEntry(EClickType.DIVISIONS_7, tapPart.clicktype7),
+            ToggleEntry(EClickType.SHAKER, tapPart.clicktypeShaker),
         )
-    ) { count ->
-        divisions = count
+    ) { type ->
+        clickType = type
         if (playing) {
             startSound()
         }
@@ -30,7 +32,7 @@ class TapPartComponent(
     private var playing = false
 
     private var tempo = 120
-    private var divisions = 1
+    private var clickType = EClickType.DIVISIONS_1
 
     private inner class DelayedUpdate : Runnable {
         private var hasRun = true
@@ -88,9 +90,9 @@ class TapPartComponent(
         }
     }
 
-    fun setDivisions(newDivisions: Int) {
-        if (divisionSelection.setValue(newDivisions)) {
-            divisions = newDivisions
+    fun setClickType(type: EClickType) {
+        if (clickTypeSelection.setValue(type)) {
+            clickType = type
             if (playing) {
                 startSound()
             }
@@ -100,8 +102,8 @@ class TapPartComponent(
     fun getTempo() =
         tempo
 
-    fun getDivisions() =
-        divisions
+    fun getClickType() =
+        clickType
 
     private fun doTap() {
         index = (index + 1) % timestamps.size
@@ -135,6 +137,6 @@ class TapPartComponent(
     }
 
     private fun startSound() {
-        startSound(tempo, divisions)
+        startSound(tempo, clickType)
     }
 }

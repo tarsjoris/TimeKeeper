@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import be.t_ars.timekeeper.components.TapPartComponent
+import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapBinding
 import java.io.Serializable
 
@@ -47,11 +48,11 @@ class TapActivity : AbstractActivity() {
         }
     }
 
-    private fun startSound(tempo: Int, divisions: Int) {
+    private fun startSound(tempo: Int, clickType: EClickType) {
         val extras = HashMap<String, Serializable>().also {
             it[kINTENT_DATA_TEMPO] = tempo
         }
-        SoundService.startSound(this, null, tempo, divisions, TapActivity::class.java, extras)
+        SoundService.startSound(this, null, tempo, clickType, TapActivity::class.java, extras)
     }
 
     private fun stopSound() {

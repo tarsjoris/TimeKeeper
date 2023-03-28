@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import be.t_ars.timekeeper.data.EClickType
 import java.io.Serializable
 
 
@@ -52,7 +53,8 @@ class SoundService : Service() {
                     "start" -> doStart(
                         extras.getString(kINTENT_DATA_LABEL),
                         extras.getInt(kINTENT_DATA_BPM),
-                        extras.getInt(kINTENT_DATA_DIVISIONS),
+                        extras.getInt(kINTENT_DATA_CLICK_TYPE)
+                            .let(EClickType::of),
                         extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
                             ?.let { if (it is Class<*>) it else null },
                         extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
@@ -67,13 +69,13 @@ class SoundService : Service() {
     private fun doStart(
         label: String?,
         bpm: Int,
-        divisions: Int,
+        clickType: EClickType,
         returnActivityClass: Class<out Any>?,
         returnActivityExtras: HashMap<out Any, out Any>?
     ) {
         Log.i("SoundService", "Starting $bpm")
             showNotification(label, bpm, returnActivityClass, returnActivityExtras)
-        fSoundGenerator.start(bpm, divisions)
+        fSoundGenerator.start(bpm, clickType)
     }
 
     private fun showNotification(
@@ -159,7 +161,7 @@ class SoundService : Service() {
         private const val kINTENT_DATA_ACTION = "action"
         private const val kINTENT_DATA_LABEL = "label"
         private const val kINTENT_DATA_BPM = "bpm"
-        private const val kINTENT_DATA_DIVISIONS = "divisions"
+        private const val kINTENT_DATA_CLICK_TYPE = "clickType"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
 
@@ -167,7 +169,7 @@ class SoundService : Service() {
             context: Context,
             label: String?,
             tempo: Int,
-            divisions: Int,
+            clickType: EClickType,
             returnActivityClass: Class<out Any>? = null,
             returnActivityExtras: HashMap<String, Serializable>? = null
         ) {
@@ -176,7 +178,7 @@ class SoundService : Service() {
                     intent.putExtra(kINTENT_DATA_ACTION, "start")
                     intent.putExtra(kINTENT_DATA_LABEL, label)
                     intent.putExtra(kINTENT_DATA_BPM, tempo)
-                    intent.putExtra(kINTENT_DATA_DIVISIONS, divisions)
+                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, clickType.value)
                     returnActivityClass?.let {
                         intent.putExtra(
                             kINTENT_DATA_RETURN_ACTIVITY_CLASS,

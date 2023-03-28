@@ -57,7 +57,7 @@
         android:layout_weight="1">
 
         <android.widget.ToggleButton
-            android:id="@+id/division1"
+            android:id="@+id/clicktype1"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -68,7 +68,7 @@
             android:textOff="1"/>
 
         <android.widget.ToggleButton
-            android:id="@+id/division2"
+            android:id="@+id/clicktype2"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -78,7 +78,7 @@
             android:textOff="2"/>
 
         <android.widget.ToggleButton
-            android:id="@+id/division3"
+            android:id="@+id/clicktype3"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -88,7 +88,7 @@
             android:textOff="3"/>
 
         <android.widget.ToggleButton
-            android:id="@+id/division4"
+            android:id="@+id/clicktype4"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -98,7 +98,7 @@
             android:textOff="4"/>
 
         <android.widget.ToggleButton
-            android:id="@+id/division5"
+            android:id="@+id/clicktype5"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -108,7 +108,7 @@
             android:textOff="5"/>
 
         <android.widget.ToggleButton
-            android:id="@+id/division7"
+            android:id="@+id/clicktype7"
             style="@style/button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -116,6 +116,16 @@
             android:layout_weight="1"
             android:textOn="7"
             android:textOff="7"/>
+
+        <android.widget.ToggleButton
+            android:id="@+id/clicktypeShaker"
+            style="@style/button"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_margin="5dp"
+            android:layout_weight="1"
+            android:textOn="S"
+            android:textOff="S"/>
 
     </android.widget.LinearLayout>
 

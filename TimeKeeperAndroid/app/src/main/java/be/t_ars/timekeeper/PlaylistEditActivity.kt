@@ -14,10 +14,7 @@ import android.widget.EditText
 import android.widget.SimpleAdapter
 import be.t_ars.timekeeper.components.PlaylistList
 import be.t_ars.timekeeper.components.SongList
-import be.t_ars.timekeeper.data.Playlist
-import be.t_ars.timekeeper.data.PlaylistHeader
-import be.t_ars.timekeeper.data.PlaylistStore
-import be.t_ars.timekeeper.data.Song
+import be.t_ars.timekeeper.data.*
 import be.t_ars.timekeeper.databinding.PlaylisteditBinding
 import kotlin.math.max
 import kotlin.math.min
@@ -73,7 +70,7 @@ class PlaylistEditActivity : AbstractActivity() {
                 val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
                 val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
                 val tempo = parseTempo(tempoS)
-                val song = Song(name.toString(), tempo, 1)
+                val song = Song(name.toString(), tempo, EClickType.DIVISIONS_1)
                 fPlaylist?.addSong(fStore, song)
                 reloadSongs()
             },
@@ -251,7 +248,7 @@ class PlaylistEditActivity : AbstractActivity() {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
                             val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
                                 .let { if (it == -1) null else it }
-                            val newDivisions = d.getIntExtra(TapSongActivity.kINTENT_DATA_DIVISIONS, 1)
+                            val newClickType = EClickType.of(d.getIntExtra(TapSongActivity.kINTENT_DATA_CLICK_TYPE, EClickType.DIVISIONS_1.value))
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { if (it.isBlank()) null else it }
@@ -259,7 +256,7 @@ class PlaylistEditActivity : AbstractActivity() {
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != song.tempo
-                            val replaceDivisions = newDivisions != song.divisions
+                            val replaceDivisions = newClickType != song.clickType
                             val replaceScoreLink = newScoreLink != song.scoreLink
                             if (replaceName || replaceTempo || replaceDivisions || replaceScoreLink) {
                                 if (replaceName && newName != null)
@@ -267,7 +264,7 @@ class PlaylistEditActivity : AbstractActivity() {
                                 if (replaceTempo)
                                     song.tempo = newTempo
                                 if (replaceDivisions)
-                                    song.divisions = newDivisions
+                                    song.clickType = newClickType
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -350,7 +347,7 @@ class PlaylistEditActivity : AbstractActivity() {
             TapSongActivity.startActivityForResult(
                 this,
                 song.tempo,
-                song.divisions,
+                song.clickType,
                 song.name,
                 song.scoreLink,
                 kREQUEST_TEMPO

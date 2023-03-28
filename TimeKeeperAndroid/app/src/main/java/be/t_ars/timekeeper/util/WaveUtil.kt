@@ -182,7 +182,7 @@ a trimmed down version that most wav files adhere to.
         generateShakerLoop({ name -> context.assets.open(name) }, out, bpm)
     }
 
-    fun generateShakerLoop(openFile: OpenFile, out: OutputStream, bpm: Int) {
+    private fun generateShakerLoop(openFile: OpenFile, out: OutputStream, bpm: Int) {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(totalSamples * 4) { if (it % 2 == 0) -128 else 0 }
         val samples = readSamples(openFile)
