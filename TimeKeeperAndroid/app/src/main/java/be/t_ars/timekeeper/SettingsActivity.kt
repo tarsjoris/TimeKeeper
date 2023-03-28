@@ -28,7 +28,7 @@ fun getSettingDivisionFrequency(context: Context) =
     getIntPreference(context, kDIVISION_FREQUENCY, 440)
 
 fun getSettingDivisionAmplitudePercentage(context: Context) =
-    getIntPreference(context, kDIVISION_AMPLITUDE_PERCENTAGE, 60)
+    PreferenceManager.getDefaultSharedPreferences(context).getInt(kDIVISION_AMPLITUDE_PERCENTAGE, 60)
 
 fun getSettingScreenOrientation(context: Context) =
     getIntPreference(context, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)

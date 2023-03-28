@@ -21,12 +21,13 @@
 		android:inputType="number"
 		android:defaultValue="880"
 		/>
-	<EditTextPreference
+	<SeekBarPreference
 		android:key="divisionamplitudepercentage"
 		android:title="@string/pref_title_divisionamplitudepercentage"
 		android:summary="@string/pref_summary_divisionamplitudepercentage"
-		android:inputType="number"
-		android:defaultValue="880"
+		android:min="1"
+		android:max="100"
+		android:defaultValue="60"
 		/>
     <ListPreference
         android:key="screenorientation"
