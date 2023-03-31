@@ -1,12 +1,13 @@
 package be.t_ars.timekeeper.components
 
 import android.os.Handler
+import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapPartBinding
 
 class TapPartComponent(
     private val tapPart: TapPartBinding,
-    private val startSound: (Int, EClickType) -> Unit,
+    private val startSoundCallback: (ClickDescription) -> Unit,
     private val stopSound: () -> Unit
 ) {
     private val clickTypeSelection: ToggleGroup<EClickType> = ToggleGroup(
@@ -31,8 +32,9 @@ class TapPartComponent(
     private var index = 0
     private var playing = false
 
-    private var tempo = 120
-    private var clickType = EClickType.DIVISIONS_1
+    private var tempo = ClickDescription.DEFAULT_TEMPO
+    private var clickType = EClickType.DEFAULT
+    private var countOff = ClickDescription.DEFAULT_COUNT_OFF
 
     private inner class DelayedUpdate : Runnable {
         private var hasRun = true
@@ -61,13 +63,16 @@ class TapPartComponent(
 
         tapPart.tempoSpinner.minValue = 10
         tapPart.tempoSpinner.maxValue = 500
-        tapPart.tempoSpinner.value = 120
+        tapPart.tempoSpinner.value = ClickDescription.DEFAULT_TEMPO
 
         tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
+            tempo = newValue
             if (playing) {
-                tempo = newValue
                 delayedUpdate.update()
             }
+        }
+        tapPart.checkboxCountOff.setOnCheckedChangeListener { _, newValue ->
+            countOff = newValue
         }
         tapPart.buttonStart.setOnClickListener {
             playing = true
@@ -99,11 +104,19 @@ class TapPartComponent(
         }
     }
 
+    fun setCountOff(countOff: Boolean) {
+        tapPart.checkboxCountOff.isChecked = countOff
+        this.countOff = countOff
+    }
+
     fun getTempo() =
         tempo
 
     fun getClickType() =
         clickType
+
+    fun isCountOff() =
+        countOff
 
     private fun doTap() {
         index = (index + 1) % timestamps.size
@@ -137,6 +150,6 @@ class TapPartComponent(
     }
 
     private fun startSound() {
-        startSound(tempo, clickType)
+        startSoundCallback(ClickDescription(tempo, clickType, countOff))
     }
 }

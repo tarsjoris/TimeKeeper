@@ -23,16 +23,16 @@ import kotlin.math.min
 private const val kKEY_NAME = "name"
 private const val kKEY_TEMPO = "tempo"
 
-private fun parseTempo(tempo: CharSequence): Int? {
+private fun parseTempo(tempo: CharSequence): Int {
     if (tempo.isBlank()) {
-        return null
+        return ClickDescription.DEFAULT_TEMPO
     }
     try {
         return min(300, max(30, Integer.parseInt(tempo.toString())))
     } catch (e: NumberFormatException) {
         Log.e("TimeKeeper", "Invalid tempo: " + e.message, e)
     }
-    return null
+    return ClickDescription.DEFAULT_TEMPO
 }
 
 private enum class EditMode {
@@ -70,7 +70,15 @@ class PlaylistEditActivity : AbstractActivity() {
                 val name = view.findViewById<EditText>(R.id.playlistedit_song_name).text
                 val tempoS = view.findViewById<EditText>(R.id.playlistedit_song_tempo).text
                 val tempo = parseTempo(tempoS)
-                val song = Song(name.toString(), tempo, EClickType.DIVISIONS_1)
+                val song =
+                    Song(
+                        name.toString(),
+                        ClickDescription(
+                            tempo,
+                            EClickType.DEFAULT,
+                            ClickDescription.DEFAULT_COUNT_OFF
+                        )
+                    )
                 fPlaylist?.addSong(fStore, song)
                 reloadSongs()
             },
@@ -246,25 +254,37 @@ class PlaylistEditActivity : AbstractActivity() {
                     fPlaylist?.let { playlist ->
                         if (fPosition in 0 until playlist.songs.size) {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
-                            val newTempo = d.getIntExtra(TapSongActivity.kINTENT_DATA_TEMPO, -1)
-                                .let { if (it == -1) null else it }
-                            val newClickType = EClickType.of(d.getIntExtra(TapSongActivity.kINTENT_DATA_CLICK_TYPE, EClickType.DIVISIONS_1.value))
+                            val newTempo = d.getIntExtra(
+                                TapSongActivity.kINTENT_DATA_TEMPO,
+                                ClickDescription.DEFAULT_TEMPO
+                            )
+                            val newClickType = EClickType.of(
+                                d.getIntExtra(
+                                    TapSongActivity.kINTENT_DATA_CLICK_TYPE,
+                                    EClickType.DEFAULT.value
+                                )
+                            )
+                            val newCountOff =
+                                d.getBooleanExtra(
+                                    TapSongActivity.kINTENT_DATA_COUNT_OFF,
+                                    ClickDescription.DEFAULT_COUNT_OFF
+                                )
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { if (it.isBlank()) null else it }
 
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
-                            val replaceTempo = newTempo != song.tempo
-                            val replaceDivisions = newClickType != song.clickType
+                            val replaceTempo = newTempo != song.click.bpm
+                            val replaceDivisions = newClickType != song.click.type
+                            val replaceCountOff = newCountOff != song.click.countOff
                             val replaceScoreLink = newScoreLink != song.scoreLink
                             if (replaceName || replaceTempo || replaceDivisions || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
-                                if (replaceTempo)
-                                    song.tempo = newTempo
-                                if (replaceDivisions)
-                                    song.clickType = newClickType
+                                if (replaceTempo || replaceDivisions || replaceCountOff)
+                                    song.click =
+                                        ClickDescription(newTempo, newClickType, newCountOff)
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -346,8 +366,7 @@ class PlaylistEditActivity : AbstractActivity() {
             val song = playlist.songs[fPosition]
             TapSongActivity.startActivityForResult(
                 this,
-                song.tempo,
-                song.clickType,
+                song.click,
                 song.name,
                 song.scoreLink,
                 kREQUEST_TEMPO
@@ -373,7 +392,7 @@ class PlaylistEditActivity : AbstractActivity() {
                         EditMode.SEND_BOTTOM -> name = "\u2913 $name"
                         else -> {}
                     }
-                    val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                    val tempo = "${song.click.bpm}"
                     mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo)
                 }
             )

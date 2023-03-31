@@ -36,13 +36,12 @@
                 />
 
             <android.widget.CheckBox
-                android:id="@+id/checkbox_with_tempo"
+                android:id="@+id/checkbox_count_off"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_margin="5dp"
                 android:layout_weight="1"
-                android:text="@string/tap_with_tempo"
-                android:visibility="invisible"
+                android:text="@string/tap_count_off"
                 />
 
         </android.widget.LinearLayout>

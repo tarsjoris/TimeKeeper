@@ -2,16 +2,12 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioFormat
+import android.media.AudioTrack
 import android.media.SoundPool
-import android.media.SoundPool.OnLoadCompleteListener
-import android.util.Log
+import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.util.WaveUtil
-import java.io.BufferedOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SoundGenerator(
@@ -20,13 +16,9 @@ class SoundGenerator(
     private val fBeepDuration: Int,
     private val fDivisionFrequency: Int,
     private val fDivisionAmplitude: Int
-) : OnLoadCompleteListener {
-    private val fFile: File = File(context.cacheDir, "beep.wav")
-    private val fSoundPool: SoundPool
-    private var fSoundID = -1
-    private val fPlaying = AtomicBoolean(false)
-    private var fLastBPM = 0
-    private var fLastClickType = EClickType.DIVISIONS_1
+) {
+    private var fPlaying = AtomicBoolean(false)
+    private var fLastClick: ClickDescription? = null
 
     init {
         val audioAttributesBuilder = AudioAttributes.Builder()
@@ -34,87 +26,84 @@ class SoundGenerator(
         val soundPoolBuilder = SoundPool.Builder()
         soundPoolBuilder.setAudioAttributes(audioAttributesBuilder.build())
         soundPoolBuilder.setMaxStreams(1)
-        fSoundPool = soundPoolBuilder.build()
-        fSoundPool.setOnLoadCompleteListener(this)
     }
 
     fun close() {
         stop()
-        fSoundPool.release()
     }
 
-    fun prepare(bpm: Int, clickType: EClickType) {
+    fun start(click: ClickDescription) {
         synchronized(fPlaying) {
-            stop()
-            if (!clickEquals(bpm, clickType)) {
-                configure()
+            if (fLastClick != click || !fPlaying.get()) {
+                fPlaying.set(false)
+                fLastClick = click
+                fPlaying = AtomicBoolean(true)
+                Thread {
+                    generateSound(click, fPlaying)
+                }.start()
             }
         }
     }
 
-    fun start(bpm: Int, clickType: EClickType) {
-        synchronized(fPlaying) {
-            fPlaying.set(true)
-            if (clickEquals(bpm, clickType)) {
-                if (fSoundID != -1) {
-                    fSoundPool.play(fSoundID, 1f, 1f, 1, -1, 1f)
+    private fun generateSound(click: ClickDescription, playing: AtomicBoolean) {
+        val clickBuffer = createClickBuffer(click)
+
+        val audioTrack = AudioTrack.Builder()
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            .setAudioFormat(
+                AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
+                    .setSampleRate(WaveUtil.kSAMPLES_PER_SECOND)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                    .build()
+            )
+            .setBufferSizeInBytes(clickBuffer.size)
+            .build()
+        audioTrack.play()
+
+        if (click.countOff) {
+            val countOffBuffers = WaveUtil.generateCountOff(context, click.bpm)
+            countOffBuffers.forEach { countOffBuffer ->
+                audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
+                synchronized(playing) {
+                    if (!playing.get()) {
+                        return
+                    }
                 }
-            } else {
-                fLastBPM = bpm
-                fLastClickType = clickType
-                configure()
+            }
+        }
+
+        while (true) {
+            audioTrack.write(clickBuffer, 0, clickBuffer.size)
+            synchronized(playing) {
+                if (!playing.get()) {
+                    return
+                }
             }
         }
     }
 
-    private fun configure() {
-        try {
-            BufferedOutputStream(FileOutputStream(fFile)).use(this::generateWaveData)
-            fSoundPool.autoPause()
-            if (fSoundID != -1) {
-                fSoundPool.unload(fSoundID)
-                fSoundID = -1
-            }
-            fSoundPool.load(fFile.absolutePath, 1)
-        } catch (e: IOException) {
-            Log.e("TimeKeeper", "Failed to write WAV file to " + fFile.absolutePath, e)
+    private fun createClickBuffer(click: ClickDescription) =
+        when (click.type) {
+            EClickType.SHAKER -> WaveUtil.generateShakerLoop(context, click.bpm)
+            else -> WaveUtil.generateSine(
+                fBeepFrequency,
+                fBeepDuration,
+                click.bpm,
+                fDivisionFrequency,
+                fDivisionAmplitude,
+                click.type.value
+            )
         }
-    }
-
-    private fun generateWaveData(out: OutputStream) {
-        when (fLastClickType) {
-            EClickType.SHAKER -> WaveUtil.generateShakerLoop(context, out, fLastBPM)
-            else -> {
-                val divisions = fLastClickType.value
-                WaveUtil.generateSine(
-                    out,
-                    fBeepFrequency,
-                    fBeepDuration,
-                    fLastBPM,
-                    fDivisionFrequency,
-                    fDivisionAmplitude,
-                    divisions
-                )
-            }
-        }
-    }
 
     fun stop() {
         synchronized(fPlaying) {
             fPlaying.set(false)
-            fSoundPool.autoPause()
-        }
-    }
-
-    private fun clickEquals(bpm: Int, clickType: EClickType) =
-        fLastBPM == bpm && fLastClickType == clickType
-
-    override fun onLoadComplete(soundPool: SoundPool, sampleId: Int, status: Int) {
-        synchronized(fPlaying) {
-            fSoundID = sampleId
-            if (fPlaying.get()) {
-                fSoundPool.play(fSoundID, 1f, 1f, 1, -1, 1f)
-            }
         }
     }
 }

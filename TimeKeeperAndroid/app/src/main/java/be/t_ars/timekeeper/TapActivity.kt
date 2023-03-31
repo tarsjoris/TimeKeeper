@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import be.t_ars.timekeeper.components.TapPartComponent
+import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapBinding
 import java.io.Serializable
@@ -43,16 +44,16 @@ class TapActivity : AbstractActivity() {
     private fun loadIntent() {
         val extras = intent.extras
         if (extras != null) {
-            val tempo = extras.getInt(kINTENT_DATA_TEMPO, 120)
+            val tempo = extras.getInt(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
             fBinding.tapPart.tempoSpinner.value = tempo
         }
     }
 
-    private fun startSound(tempo: Int, clickType: EClickType) {
+    private fun startSound(click: ClickDescription) {
         val extras = HashMap<String, Serializable>().also {
-            it[kINTENT_DATA_TEMPO] = tempo
+            it[kINTENT_DATA_TEMPO] = click.bpm
         }
-        SoundService.startSound(this, null, tempo, clickType, TapActivity::class.java, extras)
+        SoundService.startSound(this, null, click, TapActivity::class.java, extras)
     }
 
     private fun stopSound() {

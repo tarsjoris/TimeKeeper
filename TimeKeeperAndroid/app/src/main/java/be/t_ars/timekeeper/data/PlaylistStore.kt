@@ -64,15 +64,17 @@ class PlaylistStore(private val fContext: Context) {
                                 playlist = Playlist(id, name, weight)
                             } else if (kTAG_SONG == parser.name) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)
-                                    ?.let(Integer::parseInt)
+                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)?.toInt() ?: ClickDescription.DEFAULT_TEMPO
                                 val clickType = parser.getAttributeValue(null, kATTR_CLICK_TYPE)
                                     ?.let(Integer::parseInt)
                                     ?.let(EClickType::of)
-                                    ?: EClickType.DIVISIONS_1
+                                    ?: EClickType.DEFAULT
+                                val countOff = parser.getAttributeValue(null, kATTR_COUNT_OFF)
+                                    ?.let { it.toBoolean() }
+                                    ?: false
                                 val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
                                 playlist?.addSong(
-                                    Song(name, tempo, clickType, scoreLink)
+                                    Song(name, ClickDescription(tempo, clickType, countOff), scoreLink)
                                 )
                             }
                         }
@@ -209,9 +211,9 @@ class PlaylistStore(private val fContext: Context) {
                     for (song in playlist.songs) {
                         serializer.startTag(null, kTAG_SONG)
                         serializer.attribute(null, kATTR_NAME, song.name)
-                        if (song.tempo != null)
-                            serializer.attribute(null, kATTR_TEMPO, song.tempo.toString())
-                        serializer.attribute(null, kATTR_CLICK_TYPE, song.clickType.value.toString())
+                        serializer.attribute(null, kATTR_TEMPO, song.click.bpm.toString())
+                        serializer.attribute(null, kATTR_CLICK_TYPE, song.click.type.value.toString())
+                        serializer.attribute(null, kATTR_COUNT_OFF, song.click.countOff.toString())
                         if (song.scoreLink != null)
                             serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
                         serializer.endTag(null, kTAG_SONG)
@@ -276,6 +278,7 @@ class PlaylistStore(private val fContext: Context) {
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
         private const val kATTR_CLICK_TYPE = "click_type"
+        private const val kATTR_COUNT_OFF = "count_off"
         private const val kATTR_SCORE_LINK = "score_link"
 
         private val kPLAYLIST_COMPARATOR = PlaylistComparator()

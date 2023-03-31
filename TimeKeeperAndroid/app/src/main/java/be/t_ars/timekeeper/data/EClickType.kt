@@ -10,7 +10,8 @@ enum class EClickType(val value: Int) {
     SHAKER(-1);
 
     companion object {
+        val DEFAULT = DIVISIONS_1
         fun of(value: Int) =
-            values().firstOrNull { it.value == value } ?: DIVISIONS_1
+            values().firstOrNull { it.value == value } ?: DEFAULT
     }
 }

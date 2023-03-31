@@ -1,11 +1,12 @@
 package be.t_ars.timekeeper
+
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import androidx.fragment.app.FragmentActivity
 import be.t_ars.timekeeper.components.TapPartComponent
+import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapSongBinding
 
@@ -18,8 +19,6 @@ class TapSongActivity : AbstractActivity() {
         fBinding = TapSongBinding.inflate(layoutInflater)
         setContentView(fBinding.root)
         setSupportActionBar(fBinding.toolbar)
-
-        fBinding.tapPart.checkboxWithTempo.visibility = View.VISIBLE
 
         fTapPartComponent = TapPartComponent(fBinding.tapPart, this::startSound, this::stopSound)
     }
@@ -50,6 +49,7 @@ class TapSongActivity : AbstractActivity() {
                     it.putExtra(kINTENT_DATA_SCORE_LINK, fBinding.scoreLink.text.toString())
                     it.putExtra(kINTENT_DATA_TEMPO, fTapPartComponent.getTempo())
                     it.putExtra(kINTENT_DATA_CLICK_TYPE, fTapPartComponent.getClickType().value)
+                    it.putExtra(kINTENT_DATA_COUNT_OFF, fTapPartComponent.isCountOff())
                 }
                 setResult(RESULT_OK, intent)
                 finish()
@@ -64,20 +64,22 @@ class TapSongActivity : AbstractActivity() {
     private fun loadIntent() {
         fBinding.name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
 
-        val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, -1)
-        val withTempo = newTempo != -1
-        fBinding.tapPart.checkboxWithTempo.isChecked = withTempo
-        fTapPartComponent.setTempo(if (withTempo) newTempo else 120)
+        val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
+        fTapPartComponent.setTempo(newTempo)
 
-        val newClickType = intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DIVISIONS_1.value)
-            .let(EClickType::of)
+        val newClickType =
+            intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DEFAULT.value)
+                .let(EClickType::of)
         fTapPartComponent.setClickType(newClickType)
+
+        val newCountOff = intent.getBooleanExtra(kINTENT_DATA_COUNT_OFF, false)
+        fTapPartComponent.setCountOff(newCountOff)
 
         fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
 
-    private fun startSound(tempo: Int, clickType: EClickType) {
-        SoundService.startSound(this, null, tempo, clickType)
+    private fun startSound(click: ClickDescription) {
+        SoundService.startSound(this, null, click)
     }
 
     private fun stopSound() {
@@ -88,21 +90,22 @@ class TapSongActivity : AbstractActivity() {
     companion object {
         const val kINTENT_DATA_TEMPO = "tempo"
         const val kINTENT_DATA_CLICK_TYPE = "click_type"
+        const val kINTENT_DATA_COUNT_OFF = "count_off"
         const val kINTENT_DATA_NAME = "name"
         const val kINTENT_DATA_SCORE_LINK = "score_link"
 
         fun startActivityForResult(
             context: FragmentActivity,
-            tempo: Int?,
-            clickType: EClickType,
+            click: ClickDescription,
             name: String,
             scoreLink: String?,
             requestCode: Int
         ) =
             Intent(context, TapSongActivity::class.java)
                 .also { intent ->
-                    intent.putExtra(kINTENT_DATA_TEMPO, tempo)
-                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, clickType.value)
+                    intent.putExtra(kINTENT_DATA_TEMPO, click.bpm)
+                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
+                    intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
                     intent.putExtra(kINTENT_DATA_NAME, name)
                     if (scoreLink != null)
                         intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)

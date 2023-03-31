@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import java.io.Serializable
 
@@ -35,7 +36,13 @@ class SoundService : Service() {
         val duration = getSettingDuration(this)
         val divisionFrequency = getSettingDivisionFrequency(this)
         val divisionAmplitudePercentage = getSettingDivisionAmplitudePercentage(this)
-        fSoundGenerator = SoundGenerator(this, frequency, duration, divisionFrequency, divisionAmplitudePercentage)
+        fSoundGenerator = SoundGenerator(
+            this,
+            frequency,
+            duration,
+            divisionFrequency,
+            divisionAmplitudePercentage
+        )
 
         createNotificationChannel()
     }
@@ -50,32 +57,34 @@ class SoundService : Service() {
             val extras = intent.extras
             if (extras != null) {
                 when (extras.getString(kINTENT_DATA_ACTION)) {
-                    "start" -> doStart(
-                        extras.getString(kINTENT_DATA_LABEL),
-                        extras.getInt(kINTENT_DATA_BPM),
-                        extras.getInt(kINTENT_DATA_CLICK_TYPE)
-                            .let(EClickType::of),
-                        extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
-                            ?.let { if (it is Class<*>) it else null },
-                        extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
-                            ?.let { if (it is HashMap<*, *>) it else null })
+                    "start" -> {
+                        val label = extras.getString(kINTENT_DATA_LABEL)
+                        val click = ClickDescription(
+                            extras.getInt(kINTENT_DATA_BPM),
+                            extras.getInt(kINTENT_DATA_CLICK_TYPE).let(EClickType::of),
+                            extras.getBoolean(kINTENT_DATA_COUNT_OFF, false)
+                        )
+                        val returnActivityClass = extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
+                            ?.let { if (it is Class<*>) it else null }
+                        val returnActivityExtras = extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
+                            ?.let { if (it is HashMap<*, *>) it else null }
+                        doStart(label, click, returnActivityClass, returnActivityExtras)
+                    }
                     "stop" -> doStop()
                 }
-                return
             }
         }
     }
 
     private fun doStart(
         label: String?,
-        bpm: Int,
-        clickType: EClickType,
+        click: ClickDescription,
         returnActivityClass: Class<out Any>?,
         returnActivityExtras: HashMap<out Any, out Any>?
     ) {
-        Log.i("SoundService", "Starting $bpm")
-            showNotification(label, bpm, returnActivityClass, returnActivityExtras)
-        fSoundGenerator.start(bpm, clickType)
+        Log.i("SoundService", "Starting ${click.bpm}")
+        showNotification(label, click.bpm, returnActivityClass, returnActivityExtras)
+        fSoundGenerator.start(click)
     }
 
     private fun showNotification(
@@ -162,14 +171,14 @@ class SoundService : Service() {
         private const val kINTENT_DATA_LABEL = "label"
         private const val kINTENT_DATA_BPM = "bpm"
         private const val kINTENT_DATA_CLICK_TYPE = "clickType"
+        private const val kINTENT_DATA_COUNT_OFF = "countOff"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
 
         fun startSound(
             context: Context,
             label: String?,
-            tempo: Int,
-            clickType: EClickType,
+            click: ClickDescription,
             returnActivityClass: Class<out Any>? = null,
             returnActivityExtras: HashMap<String, Serializable>? = null
         ) {
@@ -177,8 +186,9 @@ class SoundService : Service() {
                 .also { intent ->
                     intent.putExtra(kINTENT_DATA_ACTION, "start")
                     intent.putExtra(kINTENT_DATA_LABEL, label)
-                    intent.putExtra(kINTENT_DATA_BPM, tempo)
-                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, clickType.value)
+                    intent.putExtra(kINTENT_DATA_BPM, click.bpm)
+                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
+                    intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
                     returnActivityClass?.let {
                         intent.putExtra(
                             kINTENT_DATA_RETURN_ACTIVITY_CLASS,

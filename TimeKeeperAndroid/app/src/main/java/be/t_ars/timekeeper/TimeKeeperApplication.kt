@@ -82,18 +82,12 @@ class TimeKeeperApplication : Application() {
 
     private fun startMetronome() {
         fStore.withCurrentSong { _, song, _ ->
-            val tempo = song.tempo
-            if (tempo != null) {
                 SoundService.startSound(
                     this,
                     song.name,
-                    tempo,
-                    song.clickType,
+                    song.click,
                     PlaylistActivity::class.java
                 )
-            } else {
-                SoundService.stopSound(this)
-            }
         }
     }
 

@@ -20,7 +20,7 @@ import kotlin.math.sin
 typealias OpenFile = (String) -> InputStream
 
 object WaveUtil {
-    private const val kSAMPLES_PER_SECOND = 44100
+    const val kSAMPLES_PER_SECOND = 44100
 
     /*
      WAV File Specification
@@ -122,6 +122,25 @@ a trimmed down version that most wav files adhere to.
         divisionAmplitudePercentage: Int,
         divisionCount: Int
     ) {
+        val buffer = generateSine(
+            beepFrequency,
+            beepDurationMillis,
+            bpm,
+            divisionFrequency,
+            divisionAmplitudePercentage,
+            divisionCount
+        )
+        save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
+    }
+
+    fun generateSine(
+        beepFrequency: Int,
+        beepDurationMillis: Int,
+        bpm: Int,
+        divisionFrequency: Int,
+        divisionAmplitudePercentage: Int,
+        divisionCount: Int
+    ): ByteArray {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(totalSamples * 2) { -128 }
         writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, 0)
@@ -138,7 +157,7 @@ a trimmed down version that most wav files adhere to.
                 )
             }
         }
-        save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
+        return buffer
     }
 
     private fun writeBeepInBuffer(
@@ -183,22 +202,44 @@ a trimmed down version that most wav files adhere to.
     }
 
     private fun generateShakerLoop(openFile: OpenFile, out: OutputStream, bpm: Int) {
-        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(totalSamples * 4) { if (it % 2 == 0) -128 else 0 }
-        val samples = readSamples(openFile)
-        copyBytes(samples[0], buffer, 0)
-        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt())
-        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt())
-        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt())
+        val buffer = generateShakerLoop(openFile, bpm)
         save(out, 2, kSAMPLES_PER_SECOND, 2, buffer)
     }
 
-    private fun readSamples(openFile: OpenFile) =
+    fun generateShakerLoop(context: Context, bpm: Int) =
+        generateShakerLoop({ name -> context.assets.open(name) }, bpm)
+
+    private fun generateShakerLoop(openFile: OpenFile, bpm: Int): ByteArray {
+        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(totalSamples * 2) { -128 }
+        val samples = readSamples(openFile, "shakerloop")
+        copyBytes(samples[0], buffer, 0)
+        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt() * 2)
+        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * 3)
+        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * 3)
+        return buffer
+    }
+
+    fun generateCountOff(context: Context, bpm: Int) =
+        generateCountOff({ name -> context.assets.open(name) }, bpm)
+
+    private fun generateCountOff(openFile: OpenFile, bpm: Int): Array<ByteArray> {
+        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
+        val buffers = Array(4) { ByteArray(totalSamples * 2) { -128 } }
+        val samples = readSamples(openFile, "countdown")
+        copyBytes(samples[0], buffers[0], 0)
+        copyBytes(samples[1], buffers[1], 0)
+        copyBytes(samples[2], buffers[2], 0)
+        copyBytes(samples[3], buffers[3], 0)
+        return buffers
+    }
+
+    private fun readSamples(openFile: OpenFile, prefix: String) =
         arrayOf(
-            readSample(openFile, "shakerloop1.wav"),
-            readSample(openFile, "shakerloop2.wav"),
-            readSample(openFile, "shakerloop3.wav"),
-            readSample(openFile, "shakerloop4.wav")
+            readSample(openFile, "${prefix}1.wav"),
+            readSample(openFile, "${prefix}2.wav"),
+            readSample(openFile, "${prefix}3.wav"),
+            readSample(openFile, "${prefix}4.wav")
         )
 
     private fun readSample(openFile: OpenFile, filename: String): ByteArray {
@@ -211,9 +252,9 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    private fun copyBytes(from: ByteArray, to: ByteArray, samplesOffset: Int) {
+    private fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
         from.indices.forEach { index ->
-            val targetIndex = samplesOffset * 4 + index
+            val targetIndex = bufferOffset + index
             if (targetIndex in to.indices) {
                 to[targetIndex] = from[index]
             }

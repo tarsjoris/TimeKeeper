@@ -148,7 +148,7 @@ class PlaylistActivity : AbstractActivity() {
         } else {
             playlist.songs.forEach { song ->
                 val name = if (song.scoreLink != null) "${song.name}*" else song.name
-                val tempo = if (song.tempo != null) "${song.tempo}" else "-"
+                val tempo = "${song.click.bpm}"
                 data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
             }
 
