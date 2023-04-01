@@ -91,7 +91,7 @@ class SoundGenerator(
     private fun createClickBuffer(click: ClickDescription) =
         when (click.type) {
             EClickType.SHAKER -> WaveUtil.generateShakerLoop(context, click.bpm)
-            else -> WaveUtil.generateSine(
+            else -> WaveUtil.generateClick(
                 fBeepFrequency,
                 fBeepDuration,
                 click.bpm,

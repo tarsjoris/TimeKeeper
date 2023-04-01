@@ -95,45 +95,36 @@ a trimmed down version that most wav files adhere to.
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val bytes = shortToByteArray(32767)
-        bytes.forEach { b -> println(b.toInt()) }
         try {
-            FileOutputStream("beep.wav").use { out ->
-                generateSine(out, 880, 50, 120, 440, 70, 2)
+            val countOff = generateCountOff(this::openFile, 120)
+            //val click = generateClick(880, 50, 120, 440, 60, 2)
+            val click = generateShakerLoop(this::openFile, 120)
+            val buffer = ByteArray(countOff.sumOf { b -> b.size } + click.size * 4)
+            var offset = 0
+            copyBytes(countOff[0], buffer, offset)
+            offset += countOff[0].size
+            copyBytes(countOff[1], buffer, offset)
+            offset += countOff[1].size
+            copyBytes(countOff[2], buffer, offset)
+            offset += countOff[3].size
+            copyBytes(countOff[3], buffer, offset)
+            offset += countOff[3].size
+            repeat(4) {
+                copyBytes(click, buffer, offset)
+                offset += click.size
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-        try {
-            FileOutputStream("loop.wav").use { out ->
-                generateShakerLoop({ name -> FileInputStream(File(name)) }, out, 60)
+            FileOutputStream("click.wav").use { out ->
+                save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
             }
         } catch (e: IOException) {
             e.printStackTrace()
         }
     }
 
-    fun generateSine(
-        out: OutputStream,
-        beepFrequency: Int,
-        beepDurationMillis: Int,
-        bpm: Int,
-        divisionFrequency: Int,
-        divisionAmplitudePercentage: Int,
-        divisionCount: Int
-    ) {
-        val buffer = generateSine(
-            beepFrequency,
-            beepDurationMillis,
-            bpm,
-            divisionFrequency,
-            divisionAmplitudePercentage,
-            divisionCount
-        )
-        save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
-    }
+    private fun openFile(name: String) =
+        FileInputStream("app\\src\\main\\assets\\$name")
 
-    fun generateSine(
+    fun generateClick(
         beepFrequency: Int,
         beepDurationMillis: Int,
         bpm: Int,
@@ -197,15 +188,6 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    fun generateShakerLoop(context: Context, out: OutputStream, bpm: Int) {
-        generateShakerLoop({ name -> context.assets.open(name) }, out, bpm)
-    }
-
-    private fun generateShakerLoop(openFile: OpenFile, out: OutputStream, bpm: Int) {
-        val buffer = generateShakerLoop(openFile, bpm)
-        save(out, 2, kSAMPLES_PER_SECOND, 2, buffer)
-    }
-
     fun generateShakerLoop(context: Context, bpm: Int) =
         generateShakerLoop({ name -> context.assets.open(name) }, bpm)
 
@@ -215,8 +197,8 @@ a trimmed down version that most wav files adhere to.
         val samples = readSamples(openFile, "shakerloop")
         copyBytes(samples[0], buffer, 0)
         copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt() * 2)
-        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * 3)
-        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * 3)
+        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * 2)
+        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * 2)
         return buffer
     }
 
