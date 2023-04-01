@@ -34,7 +34,7 @@
         android:title="@string/pref_title_screenorientation"
         android:summary="@string/pref_summary_screenorientation"
         android:entries="@array/pref_entries_screenorientation"
-        android:entryValues="@array/pref_entrievalues_screenorientation"
+        android:entryValues="@array/pref_entryvalues_screenorientation"
         android:defaultValue="10"
         />
 	<CheckBoxPreference
@@ -42,5 +42,12 @@
 		android:title="@string/pref_title_autoplay"
 		android:summary="@string/pref_summary_autoplay"
 		android:defaultValue="true"
+		/>
+	<ListPreference
+		android:key="outputdevice"
+		android:title="@string/pref_title_outputdevice"
+		android:summary="@string/pref_summary_outputdevice"
+		android:entries="@array/pref_entryvalues_outputdevice"
+		android:entryValues="@array/pref_entries_outputdevice"
 		/>
 </PreferenceScreen>

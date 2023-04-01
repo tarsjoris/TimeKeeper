@@ -65,6 +65,7 @@ class SoundGenerator(
             .setBufferSizeInBytes(clickBuffer.size)
             .build()
         try {
+            getSettingOutputDevice(context)?.let { audioTrack.setPreferredDevice(it) }
             audioTrack.play()
 
             if (click.countOff) {
@@ -87,8 +88,7 @@ class SoundGenerator(
                     }
                 }
             }
-        }
-        finally {
+        } finally {
             audioTrack.stop()
         }
     }

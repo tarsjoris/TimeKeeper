@@ -4,8 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Bundle
 import android.preference.PreferenceManager
+import androidx.preference.ListPreference
 
 
 private const val kFREQUENCY = "frequency"
@@ -15,6 +18,7 @@ private const val kDIVISION_VOLUME = "divisionvolume"
 private const val kSCREEN_ORIENTATION = "screenorientation"
 private const val kFOLDER = "folder"
 private const val kAUTOPLAY = "autoplay"
+private const val kOUTPUT_DEVICE = "outputdevice"
 private const val kCURRENT_PLAYLIST_ID = "currentplaylistid"
 private const val kCURRENT_SONG_INDEX = "currentsongindex"
 
@@ -45,6 +49,14 @@ fun setSettingFolder(context: Context, uri: String) =
 
 fun getSettingAutoplay(context: Context) =
     getBoolPreference(context, kAUTOPLAY, true)
+
+fun getSettingOutputDevice(context: Context): AudioDeviceInfo? {
+    val pref = getStringPreference(context, kOUTPUT_DEVICE)?.toInt()
+    val audioManager: AudioManager =
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        .first { device -> device.id == pref }
+}
 
 fun getSettingCurrentPlaylistID(context: Context): Long? =
     getLongPreference(context, kCURRENT_PLAYLIST_ID)
