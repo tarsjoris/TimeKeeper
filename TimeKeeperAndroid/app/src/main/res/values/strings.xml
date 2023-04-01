@@ -60,8 +60,8 @@
     <string name="pref_summary_duration">The duration of the beep in ms</string>
     <string name="pref_title_divisionfrequency">Division frequency</string>
     <string name="pref_summary_divisionfrequency">The frequency of subdivisions in Hz</string>
-    <string name="pref_title_divisionamplitudepercentage">Subdivision volume</string>
-    <string name="pref_summary_divisionamplitudepercentage">Relative volume of subdivisions</string>
+    <string name="pref_title_divisionvolume">Subdivision volume</string>
+    <string name="pref_summary_divisionvolume">Relative volume of subdivisions</string>
     <string name="pref_title_screenorientation">Screen orientation</string>
     <string name="pref_summary_screenorientation">The screen will be locked in this orientation.</string>
     <string-array name="pref_entrievalues_screenorientation">

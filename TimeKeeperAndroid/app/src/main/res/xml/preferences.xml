@@ -22,9 +22,9 @@
 		android:defaultValue="880"
 		/>
 	<SeekBarPreference
-		android:key="divisionamplitudepercentage"
-		android:title="@string/pref_title_divisionamplitudepercentage"
-		android:summary="@string/pref_summary_divisionamplitudepercentage"
+		android:key="divisionvolume"
+		android:title="@string/pref_title_divisionvolume"
+		android:summary="@string/pref_summary_divisionvolume"
 		android:min="1"
 		android:max="100"
 		android:defaultValue="60"

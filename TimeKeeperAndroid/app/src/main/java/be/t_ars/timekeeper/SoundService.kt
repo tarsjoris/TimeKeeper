@@ -35,13 +35,13 @@ class SoundService : Service() {
         val frequency = getSettingFrequency(this)
         val duration = getSettingDuration(this)
         val divisionFrequency = getSettingDivisionFrequency(this)
-        val divisionAmplitudePercentage = getSettingDivisionAmplitudePercentage(this)
+        val divisionVolume = getSettingDivisionVolume(this)
         fSoundGenerator = SoundGenerator(
             this,
             frequency,
             duration,
             divisionFrequency,
-            divisionAmplitudePercentage
+            divisionVolume
         )
 
         createNotificationChannel()

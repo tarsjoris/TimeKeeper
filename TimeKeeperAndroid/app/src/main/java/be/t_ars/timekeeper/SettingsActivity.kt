@@ -11,7 +11,7 @@ import android.preference.PreferenceManager
 private const val kFREQUENCY = "frequency"
 private const val kDURATION = "duration"
 private const val kDIVISION_FREQUENCY = "divisionfrequency"
-private const val kDIVISION_AMPLITUDE_PERCENTAGE = "divisionamplitudepercentage"
+private const val kDIVISION_VOLUME = "divisionvolume"
 private const val kSCREEN_ORIENTATION = "screenorientation"
 private const val kFOLDER = "folder"
 private const val kAUTOPLAY = "autoplay"
@@ -27,8 +27,8 @@ fun getSettingDuration(context: Context) =
 fun getSettingDivisionFrequency(context: Context) =
     getIntPreference(context, kDIVISION_FREQUENCY, 440)
 
-fun getSettingDivisionAmplitudePercentage(context: Context) =
-    PreferenceManager.getDefaultSharedPreferences(context).getInt(kDIVISION_AMPLITUDE_PERCENTAGE, 60)
+fun getSettingDivisionVolume(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).getInt(kDIVISION_VOLUME, 60)
 
 fun getSettingScreenOrientation(context: Context) =
     getIntPreference(context, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)

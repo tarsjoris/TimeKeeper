@@ -129,7 +129,7 @@ a trimmed down version that most wav files adhere to.
         beepDurationMillis: Int,
         bpm: Int,
         divisionFrequency: Int,
-        divisionAmplitudePercentage: Int,
+        divisionVolume: Int,
         divisionCount: Int
     ): ByteArray {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
@@ -142,7 +142,7 @@ a trimmed down version that most wav files adhere to.
                 writeBeepInBuffer(
                     divisionFrequency,
                     beepDurationMillis,
-                    divisionAmplitudePercentage,
+                    divisionVolume,
                     buffer,
                     samplesOffset
                 )

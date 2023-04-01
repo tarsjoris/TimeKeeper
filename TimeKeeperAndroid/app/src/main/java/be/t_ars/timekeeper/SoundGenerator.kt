@@ -15,7 +15,7 @@ class SoundGenerator(
     private val fBeepFrequency: Int,
     private val fBeepDuration: Int,
     private val fDivisionFrequency: Int,
-    private val fDivisionAmplitude: Int
+    private val fDivisionVolume: Int
 ) {
     private var fPlaying = AtomicBoolean(false)
     private var fLastClick: ClickDescription? = null
@@ -64,12 +64,23 @@ class SoundGenerator(
             )
             .setBufferSizeInBytes(clickBuffer.size)
             .build()
-        audioTrack.play()
+        try {
+            audioTrack.play()
 
-        if (click.countOff) {
-            val countOffBuffers = WaveUtil.generateCountOff(context, click.bpm)
-            countOffBuffers.forEach { countOffBuffer ->
-                audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
+            if (click.countOff) {
+                val countOffBuffers = WaveUtil.generateCountOff(context, click.bpm)
+                countOffBuffers.forEach { countOffBuffer ->
+                    audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
+                    synchronized(playing) {
+                        if (!playing.get()) {
+                            return
+                        }
+                    }
+                }
+            }
+
+            while (true) {
+                audioTrack.write(clickBuffer, 0, clickBuffer.size)
                 synchronized(playing) {
                     if (!playing.get()) {
                         return
@@ -77,14 +88,8 @@ class SoundGenerator(
                 }
             }
         }
-
-        while (true) {
-            audioTrack.write(clickBuffer, 0, clickBuffer.size)
-            synchronized(playing) {
-                if (!playing.get()) {
-                    return
-                }
-            }
+        finally {
+            audioTrack.stop()
         }
     }
 
@@ -96,7 +101,7 @@ class SoundGenerator(
                 fBeepDuration,
                 click.bpm,
                 fDivisionFrequency,
-                fDivisionAmplitude,
+                fDivisionVolume,
                 click.type.value
             )
         }
