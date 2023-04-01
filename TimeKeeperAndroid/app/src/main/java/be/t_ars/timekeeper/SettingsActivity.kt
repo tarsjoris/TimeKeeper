@@ -4,8 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.provider.DocumentsContract
 
 
 private const val kFREQUENCY = "frequency"
@@ -32,6 +34,17 @@ fun getSettingDivisionVolume(context: Context) =
 
 fun getSettingScreenOrientation(context: Context) =
     getIntPreference(context, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
+
+fun resolveFileUri(context: Context, filename: String): Uri {
+    val folder = getStorageFolder(context)
+    return DocumentsContract.buildDocumentUriUsingTree(
+        folder,
+        DocumentsContract.getTreeDocumentId(folder) + "/" + filename
+    )
+}
+
+fun getStorageFolder(context: Context) =
+    Uri.parse(getSettingFolder(context))
 
 fun getSettingFolder(context: Context) =
     getStringPreference(

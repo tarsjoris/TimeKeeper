@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -44,6 +45,18 @@ class OverviewActivity : AbstractActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val audioManager: AudioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        devices.forEach { device ->
+            println("productName ${device.productName}")
+            println("type ${device.type}")
+            println("id ${device.id}")
+            device.channelCounts.forEach { count ->
+                println("Count:  $count")
+            }
+        }
+
         fBinding = OverviewBinding.inflate(layoutInflater)
         setContentView(fBinding.root)
         setSupportActionBar(fBinding.toolbar)

@@ -96,21 +96,21 @@ a trimmed down version that most wav files adhere to.
     @JvmStatic
     fun main(args: Array<String>) {
         try {
-            val countOff = generateCountOff(this::openFile, 120)
+            val countOff = generateCountOff(this::openFile, 120, 2)
             //val click = generateClick(880, 50, 120, 440, 60, 2)
-            val click = generateShakerLoop(this::openFile, 120)
+            val click = generateShakerLoop(this::openFile, 120, 2)
             val buffer = ByteArray(countOff.sumOf { b -> b.size } + click.size * 4)
             var offset = 0
-            copyBytes(countOff[0], buffer, offset)
+            copyBytes(countOff[0], buffer, offset, 2)
             offset += countOff[0].size
-            copyBytes(countOff[1], buffer, offset)
+            copyBytes(countOff[1], buffer, offset, 2)
             offset += countOff[1].size
-            copyBytes(countOff[2], buffer, offset)
+            copyBytes(countOff[2], buffer, offset, 2)
             offset += countOff[3].size
-            copyBytes(countOff[3], buffer, offset)
+            copyBytes(countOff[3], buffer, offset, 2)
             offset += countOff[3].size
             repeat(4) {
-                copyBytes(click, buffer, offset)
+                copyBytes(click, buffer, offset, 2)
                 offset += click.size
             }
             FileOutputStream("click.wav").use { out ->
@@ -130,11 +130,12 @@ a trimmed down version that most wav files adhere to.
         bpm: Int,
         divisionFrequency: Int,
         divisionVolume: Int,
-        divisionCount: Int
+        divisionCount: Int,
+        channelCount: Int
     ): ByteArray {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(totalSamples * 2) { -128 }
-        writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, 0)
+        val buffer = ByteArray(totalSamples * channelCount) { -128 }
+        writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, channelCount, 0)
         if (divisionCount in 2..7) {
             (1 until divisionCount).forEach { subDivisionIndex ->
                 val samplesOffset =
@@ -144,6 +145,7 @@ a trimmed down version that most wav files adhere to.
                     beepDurationMillis,
                     divisionVolume,
                     buffer,
+                    channelCount,
                     samplesOffset
                 )
             }
@@ -156,6 +158,7 @@ a trimmed down version that most wav files adhere to.
         beepDurationMillis: Int,
         maxVolume: Int,
         buffer: ByteArray,
+        channelCount: Int,
         samplesOffset: Int
     ) {
         val maxVolume: Double = if (maxVolume in 1..100) maxVolume.toDouble() / 100.0 else 1.0
@@ -178,41 +181,42 @@ a trimmed down version that most wav files adhere to.
             val volumeAdjustedAmplitude: Double = amplitude * fadeCorrection * maxVolume
             val value: Double = (volumeAdjustedAmplitude + 1.0) * 255.0 / 2.0
             val byte: Byte = toByte(value.roundToInt())
-            val index: Int = (samplesOffset + s) * 2
-            if (index in buffer.indices) {
-                buffer[index] = byte
-            }
-            if (index + 1 in buffer.indices) {
-                buffer[index + 1] = byte
+            val sampleIndex: Int = (samplesOffset + s) * channelCount
+            (0 until 2).forEach { channel ->
+                val index = sampleIndex + channel
+                if (index in buffer.indices)
+                {
+                    buffer[index] = byte
+                }
             }
         }
     }
 
-    fun generateShakerLoop(context: Context, bpm: Int) =
-        generateShakerLoop({ name -> context.assets.open(name) }, bpm)
+    fun generateShakerLoop(context: Context, bpm: Int, channelCount: Int) =
+        generateShakerLoop({ name -> context.assets.open(name) }, bpm, channelCount)
 
-    private fun generateShakerLoop(openFile: OpenFile, bpm: Int): ByteArray {
+    private fun generateShakerLoop(openFile: OpenFile, bpm: Int, channelCount: Int): ByteArray {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(totalSamples * 2) { -128 }
+        val buffer = ByteArray(totalSamples * channelCount) { -128 }
         val samples = readSamples(openFile, "shakerloop")
-        copyBytes(samples[0], buffer, 0)
-        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt() * 2)
-        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * 2)
-        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * 2)
+        copyBytes(samples[0], buffer, 0, channelCount)
+        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt() * channelCount, channelCount)
+        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * channelCount, channelCount)
+        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * channelCount, channelCount)
         return buffer
     }
 
-    fun generateCountOff(context: Context, bpm: Int) =
-        generateCountOff({ name -> context.assets.open(name) }, bpm)
+    fun generateCountOff(context: Context, bpm: Int, channelCount: Int) =
+        generateCountOff({ name -> context.assets.open(name) }, bpm, channelCount)
 
-    private fun generateCountOff(openFile: OpenFile, bpm: Int): Array<ByteArray> {
+    private fun generateCountOff(openFile: OpenFile, bpm: Int, channelCount: Int): Array<ByteArray> {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffers = Array(4) { ByteArray(totalSamples * 2) { -128 } }
+        val buffers = Array(4) { ByteArray(totalSamples * channelCount) { -128 } }
         val samples = readSamples(openFile, "countdown")
-        copyBytes(samples[0], buffers[0], 0)
-        copyBytes(samples[1], buffers[1], 0)
-        copyBytes(samples[2], buffers[2], 0)
-        copyBytes(samples[3], buffers[3], 0)
+        copyBytes(samples[0], buffers[0], 0, channelCount)
+        copyBytes(samples[1], buffers[1], 0, channelCount)
+        copyBytes(samples[2], buffers[2], 0, channelCount)
+        copyBytes(samples[3], buffers[3], 0, channelCount)
         return buffers
     }
 
@@ -234,11 +238,13 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    private fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
-        from.indices.forEach { index ->
-            val targetIndex = bufferOffset + index
-            if (targetIndex in to.indices) {
-                to[targetIndex] = from[index]
+    private fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int, channelCount: Int) {
+        (0 until from.size / 2).forEach { sampleIndex ->
+            val sourceIndex = sampleIndex * 2
+            val targetIndex = bufferOffset + sampleIndex * channelCount
+            if ((targetIndex + 1) in to.indices) {
+                to[targetIndex] = from[sourceIndex]
+                to[targetIndex + 1] = from[sourceIndex + 1]
             }
         }
     }

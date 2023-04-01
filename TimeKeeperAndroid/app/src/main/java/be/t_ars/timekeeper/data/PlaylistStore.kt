@@ -64,7 +64,8 @@ class PlaylistStore(private val fContext: Context) {
                                 playlist = Playlist(id, name, weight)
                             } else if (kTAG_SONG == parser.name) {
                                 val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)?.toInt() ?: ClickDescription.DEFAULT_TEMPO
+                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)?.toInt()
+                                    ?: ClickDescription.DEFAULT_TEMPO
                                 val clickType = parser.getAttributeValue(null, kATTR_CLICK_TYPE)
                                     ?.let(Integer::parseInt)
                                     ?.let(EClickType::of)
@@ -74,7 +75,11 @@ class PlaylistStore(private val fContext: Context) {
                                     ?: false
                                 val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
                                 playlist?.addSong(
-                                    Song(name, ClickDescription(tempo, clickType, countOff), scoreLink)
+                                    Song(
+                                        name,
+                                        ClickDescription(tempo, clickType, countOff),
+                                        scoreLink
+                                    )
                                 )
                             }
                         }
@@ -212,7 +217,11 @@ class PlaylistStore(private val fContext: Context) {
                         serializer.startTag(null, kTAG_SONG)
                         serializer.attribute(null, kATTR_NAME, song.name)
                         serializer.attribute(null, kATTR_TEMPO, song.click.bpm.toString())
-                        serializer.attribute(null, kATTR_CLICK_TYPE, song.click.type.value.toString())
+                        serializer.attribute(
+                            null,
+                            kATTR_CLICK_TYPE,
+                            song.click.type.value.toString()
+                        )
                         serializer.attribute(null, kATTR_COUNT_OFF, song.click.countOff.toString())
                         if (song.scoreLink != null)
                             serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
@@ -227,16 +236,11 @@ class PlaylistStore(private val fContext: Context) {
         }
     }
 
-    private fun getPlaylistUri(id: Long): Uri {
-        val folder = getFolder()
-        return DocumentsContract.buildDocumentUriUsingTree(
-            folder,
-            DocumentsContract.getTreeDocumentId(folder) + "/$id.xml"
-        )
-    }
+    private fun getPlaylistUri(id: Long) =
+        resolveFileUri(fContext, "$id.xml")
 
     private fun getFolder() =
-        Uri.parse(getSettingFolder(fContext))
+        getStorageFolder(fContext)
 
     fun setCurrentPlaylistID(playlistID: Long) {
         val oldPlaylistID = getSettingCurrentPlaylistID(fContext)
