@@ -1,4 +1,4 @@
-package be.t_ars.timekeeper.util
+package be.t_ars.timekeeper.sound
 
 // by Evan X. Merz
 // www.thisisnotalabel.com
@@ -16,8 +16,6 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
-
-typealias OpenFile = (String) -> InputStream
 
 object WaveUtil {
     const val kSAMPLES_PER_SECOND = 44100
@@ -92,38 +90,6 @@ a trimmed down version that most wav files adhere to.
 
 
 */
-
-    @JvmStatic
-    fun main(args: Array<String>) {
-        try {
-            val countOff = generateCountOff(this::openFile, 120)
-            //val click = generateClick(880, 50, 120, 440, 60, 2)
-            val click = generateShakerLoop(this::openFile, 120)
-            val buffer = ByteArray(countOff.sumOf { b -> b.size } + click.size * 4)
-            var offset = 0
-            copyBytes(countOff[0], buffer, offset)
-            offset += countOff[0].size
-            copyBytes(countOff[1], buffer, offset)
-            offset += countOff[1].size
-            copyBytes(countOff[2], buffer, offset)
-            offset += countOff[3].size
-            copyBytes(countOff[3], buffer, offset)
-            offset += countOff[3].size
-            repeat(4) {
-                copyBytes(click, buffer, offset)
-                offset += click.size
-            }
-            FileOutputStream("click.wav").use { out ->
-                save(out, 2, kSAMPLES_PER_SECOND, 1, buffer)
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun openFile(name: String) =
-        FileInputStream("app\\src\\main\\assets\\$name")
-
     fun generateClick(
         beepFrequency: Int,
         beepDurationMillis: Int,
@@ -191,7 +157,7 @@ a trimmed down version that most wav files adhere to.
     fun generateShakerLoop(context: Context, bpm: Int) =
         generateShakerLoop({ name -> context.assets.open(name) }, bpm)
 
-    private fun generateShakerLoop(openFile: OpenFile, bpm: Int): ByteArray {
+    fun generateShakerLoop(openFile: OpenFile, bpm: Int): ByteArray {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(totalSamples * 2) { -128 }
         val samples = readSamples(openFile, "shakerloop")
@@ -205,7 +171,7 @@ a trimmed down version that most wav files adhere to.
     fun generateCountOff(context: Context, bpm: Int) =
         generateCountOff({ name -> context.assets.open(name) }, bpm)
 
-    private fun generateCountOff(openFile: OpenFile, bpm: Int): Array<ByteArray> {
+    fun generateCountOff(openFile: OpenFile, bpm: Int): Array<ByteArray> {
         val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
         val buffers = Array(4) { ByteArray(totalSamples * 2) { -128 } }
         val samples = readSamples(openFile, "countdown")
@@ -234,7 +200,7 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    private fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
+    fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
         from.indices.forEach { index ->
             val targetIndex = bufferOffset + index
             if (targetIndex in to.indices) {
@@ -243,70 +209,12 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    private fun save(
-        out: OutputStream,
-        channelCount: Int,
-        sampleRate: Int,
-        bytesPerChannel: Int,
-        data: ByteArray
-    ) {
-        val outFile = DataOutputStream(out)
-
-        // write the wav file per the wav file format
-        // 00 - RIFF
-        outFile.writeBytes("RIFF")
-        // 04 - how big is the rest of this file?
-        outFile.write(intToByteArray(36 + data.size))
-        // 08 - WAVE
-        outFile.writeBytes("WAVE")
-        // 12 - fmt
-        outFile.writeBytes("fmt ")
-        // 16 - size of this chunk
-        outFile.write(intToByteArray(16))
-        // 20 - what is the audio format? 1 for PCM = Pulse Code Modulation
-        outFile.write(shortToByteArray(1))
-        // 22 - mono or stereo? 1 or 2? (or 5 or ???)
-        outFile.write(shortToByteArray(channelCount))
-        // 24 - samples per second (numbers per second)
-        outFile.write(intToByteArray(sampleRate))
-        // 28 - bytes per second
-        outFile.write(intToByteArray(bytesPerChannel * channelCount * sampleRate))
-        // 32 - # of bytes in one sample, for all channels
-        outFile.write(shortToByteArray(bytesPerChannel * channelCount))
-        // 34 - how many bits in a sample(number)? usually 16 or 24
-        outFile.write(shortToByteArray(bytesPerChannel * 8))
-        // 36 - data
-        outFile.writeBytes("data")
-        // 40 - how big is this data chunk
-        outFile.write(intToByteArray(data.size))
-        // 44 - the actual data itself - just a long string of numbers
-        outFile.write(data)
-    }
-
-    // ===========================
-    // CONVERT JAVA TYPES TO BYTES
-    // ===========================
-    // returns a byte array of length 4
-    private fun intToByteArray(i: Int): ByteArray {
-        val b = ByteArray(4)
-        b[0] = (i and 0x00FF).toByte()
-        b[1] = (i shr 8 and 0x000000FF).toByte()
-        b[2] = (i shr 16 and 0x000000FF).toByte()
-        b[3] = (i shr 24 and 0x000000FF).toByte()
-        return b
-    }
-
     private fun readInt(input: InputStream): Int {
         var value = input.read()
         value += input.read() shl 8
         value += input.read() shl 16
         value += input.read() shl 24
         return value
-    }
-
-    // convert a short to a byte array
-    private fun shortToByteArray(data: Int): ByteArray {
-        return byteArrayOf((data and 0xff).toByte(), (data.ushr(8) and 0xff).toByte())
     }
 
     // convert a short to a byte array

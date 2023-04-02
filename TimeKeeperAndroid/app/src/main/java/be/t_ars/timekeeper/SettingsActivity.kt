@@ -6,9 +6,10 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
-import androidx.preference.ListPreference
+import android.provider.DocumentsContract
 
 
 private const val kFREQUENCY = "frequency"
@@ -37,6 +38,17 @@ fun getSettingDivisionVolume(context: Context) =
 fun getSettingScreenOrientation(context: Context) =
     getIntPreference(context, kSCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR)
 
+fun resolveFileUri(context: Context, filename: String): Uri {
+    val folder = getStorageFolder(context)
+    return DocumentsContract.buildDocumentUriUsingTree(
+        folder,
+        DocumentsContract.getTreeDocumentId(folder) + "/" + filename
+    )
+}
+
+fun getStorageFolder(context: Context) =
+    Uri.parse(getSettingFolder(context))
+
 fun getSettingFolder(context: Context) =
     getStringPreference(
         context,
@@ -55,7 +67,7 @@ fun getSettingOutputDevice(context: Context): AudioDeviceInfo? {
     val audioManager: AudioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        .first { device -> device.id == pref }
+        .firstOrNull { device -> device.id == pref }
 }
 
 fun getSettingCurrentPlaylistID(context: Context): Long? =

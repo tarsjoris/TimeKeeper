@@ -45,13 +45,20 @@ class TapActivity : AbstractActivity() {
         val extras = intent.extras
         if (extras != null) {
             val tempo = extras.getInt(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
-            fBinding.tapPart.tempoSpinner.value = tempo
+            val type = EClickType.of(extras.getInt(kINTENT_TYPE, EClickType.DEFAULT.value))
+            val countOff = extras.getBoolean(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_COUNT_OFF)
+
+            fTapPartComponent.setTempo(tempo)
+            fTapPartComponent.setClickType(type)
+            fTapPartComponent.setCountOff(countOff)
         }
     }
 
     private fun startSound(click: ClickDescription) {
         val extras = HashMap<String, Serializable>().also {
             it[kINTENT_DATA_TEMPO] = click.bpm
+            it[kINTENT_TYPE] = click.type.value
+            it[kINTENT_COUNT_OFF] = click.countOff
         }
         SoundService.startSound(this, null, click, TapActivity::class.java, extras)
     }
@@ -62,12 +69,11 @@ class TapActivity : AbstractActivity() {
 
     companion object {
         private const val kINTENT_DATA_TEMPO = "tempo"
+        private const val kINTENT_TYPE = "type"
+        private const val kINTENT_COUNT_OFF = "countoff"
 
-        fun startActivity(context: Context, tempo: Int? = null) =
+        fun startActivity(context: Context) =
             Intent(context, TapActivity::class.java)
-                .also { intent ->
-                    tempo?.let { t -> intent.putExtra(kINTENT_DATA_TEMPO, t) }
-                }
                 .let(context::startActivity)
     }
 }

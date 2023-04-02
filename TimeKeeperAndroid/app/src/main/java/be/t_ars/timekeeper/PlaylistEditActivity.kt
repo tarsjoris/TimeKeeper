@@ -269,22 +269,25 @@ class PlaylistEditActivity : AbstractActivity() {
                                     TapSongActivity.kINTENT_DATA_COUNT_OFF,
                                     ClickDescription.DEFAULT_COUNT_OFF
                                 )
+                            val newTrackPath =
+                                d.getStringExtra(TapSongActivity.kINTENT_DATA_TRACK_PATH)
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
-                                    ?.let { if (it.isBlank()) null else it }
+                                    ?.let { it.ifBlank { null } }
 
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != song.click.bpm
                             val replaceDivisions = newClickType != song.click.type
                             val replaceCountOff = newCountOff != song.click.countOff
+                            val replaceTrackPath = newTrackPath != song.click.trackPath
                             val replaceScoreLink = newScoreLink != song.scoreLink
-                            if (replaceName || replaceTempo || replaceDivisions || replaceScoreLink) {
+                            if (replaceName || replaceTempo || replaceDivisions || replaceTrackPath || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
-                                if (replaceTempo || replaceDivisions || replaceCountOff)
+                                if (replaceTempo || replaceDivisions || replaceCountOff || replaceTrackPath)
                                     song.click =
-                                        ClickDescription(newTempo, newClickType, newCountOff)
+                                        ClickDescription(newTempo, newClickType, newCountOff, newTrackPath)
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -383,10 +386,7 @@ class PlaylistEditActivity : AbstractActivity() {
         fPlaylist?.let { playlist ->
             fData.addAll(
                 playlist.songs.map { song ->
-                    var name = song.name
-                    if (song.scoreLink != null) {
-                        name += "*"
-                    }
+                    var name = song.displayName()
                     when (fEditMode) {
                         EditMode.SEND_TOP -> name = "\u2912 $name"
                         EditMode.SEND_BOTTOM -> name = "\u2913 $name"

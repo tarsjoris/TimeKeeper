@@ -11,6 +11,11 @@ class Song(
         other.scoreLink
     )
 
+    fun displayName() =
+        name
+            .let { if (scoreLink != null) "$it\u00B2" else it}
+            .let { if (click.trackPath != null) "$it\u00B3" else it}
+
     override fun hashCode() =
         name.hashCode()
 

@@ -1,4 +1,4 @@
-package be.t_ars.timekeeper
+package be.t_ars.timekeeper.sound
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -7,7 +7,7 @@ import android.media.AudioTrack
 import android.media.SoundPool
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
-import be.t_ars.timekeeper.util.WaveUtil
+import be.t_ars.timekeeper.getSettingOutputDevice
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SoundGenerator(

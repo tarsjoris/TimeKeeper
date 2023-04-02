@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
+import be.t_ars.timekeeper.sound.SoundGenerator
+import be.t_ars.timekeeper.sound.TrackPlayer
 import java.io.Serializable
 
 
@@ -19,6 +21,7 @@ class SoundService : Service() {
     private val fChannelID = "TimeKeeperChannel"
 
     private lateinit var fSoundGenerator: SoundGenerator
+    private val fTrackPlayer = TrackPlayer()
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         loadIntent(intent)
@@ -62,7 +65,8 @@ class SoundService : Service() {
                         val click = ClickDescription(
                             extras.getInt(kINTENT_DATA_BPM),
                             extras.getInt(kINTENT_DATA_CLICK_TYPE).let(EClickType::of),
-                            extras.getBoolean(kINTENT_DATA_COUNT_OFF, false)
+                            extras.getBoolean(kINTENT_DATA_COUNT_OFF, false),
+                            extras.getString(kINTENT_DATA_TRACK_PATH)
                         )
                         val returnActivityClass = extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
                             ?.let { if (it is Class<*>) it else null }
@@ -84,7 +88,11 @@ class SoundService : Service() {
     ) {
         Log.i("SoundService", "Starting ${click.bpm}")
         showNotification(label, click.bpm, returnActivityClass, returnActivityExtras)
-        fSoundGenerator.start(click)
+        if (click.trackPath != null) {
+            fTrackPlayer.playTrack(this, click.trackPath)
+        } else {
+            fSoundGenerator.start(click)
+        }
     }
 
     private fun showNotification(
@@ -147,6 +155,7 @@ class SoundService : Service() {
     }
 
     private fun doStop() {
+        fTrackPlayer.stop()
         fSoundGenerator.stop()
         with(NotificationManagerCompat.from(this)) {
             cancelAll()
@@ -172,6 +181,7 @@ class SoundService : Service() {
         private const val kINTENT_DATA_BPM = "bpm"
         private const val kINTENT_DATA_CLICK_TYPE = "clickType"
         private const val kINTENT_DATA_COUNT_OFF = "countOff"
+        private const val kINTENT_DATA_TRACK_PATH = "trackPath"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
 
@@ -189,6 +199,7 @@ class SoundService : Service() {
                     intent.putExtra(kINTENT_DATA_BPM, click.bpm)
                     intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
                     intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
+                    click.trackPath?.let { intent.putExtra(kINTENT_DATA_TRACK_PATH, it) }
                     returnActivityClass?.let {
                         intent.putExtra(
                             kINTENT_DATA_RETURN_ACTIVITY_CLASS,

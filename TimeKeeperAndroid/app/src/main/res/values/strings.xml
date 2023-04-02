@@ -31,6 +31,8 @@
     <string name="playlistedit_action_delete">Delete</string>
     <string name="playlistedit_action_delete_and_above">Delete and all above</string>
     <string name="playlistedit_song_name">Name</string>
+    <string name="playlistedit_select_track">Backing track</string>
+    <string name="playlistedit_clear_track">Clear</string>
     <string name="playlistedit_score_link">Score link</string>
     <string name="playlistedit_song_tempo">Tempo</string>
     <string name="playlistedit_addsong_add">Add</string>
