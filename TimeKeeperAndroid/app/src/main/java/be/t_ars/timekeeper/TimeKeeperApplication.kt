@@ -105,7 +105,7 @@ class TimeKeeperApplication : Application() {
         val openURL = Intent(Intent.ACTION_VIEW)
             .apply {
                 data = Uri.parse(link)
-                flags = Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT or Intent.FLAG_ACTIVITY_NEW_TASK
+                flags =  Intent.FLAG_ACTIVITY_NEW_TASK
             }
         startActivity(openURL)
     }
