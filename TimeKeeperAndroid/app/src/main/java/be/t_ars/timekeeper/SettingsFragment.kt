@@ -2,13 +2,18 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.media.AudioDeviceInfo
+import android.media.AudioFormat
 import android.media.AudioManager
 import android.os.Bundle
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragment
 
-private fun getDeviceDescription(device: AudioDeviceInfo) =
-    "${device.productName} (${getDeviceType(device)})"
+fun getDeviceDescription(device: AudioDeviceInfo) =
+    "${device.productName} (${getDeviceType(device)}; ${device.sampleRates.joinToString()}; ${
+        getEncodings(
+            device
+        )
+    })"
 
 private fun getDeviceType(device: AudioDeviceInfo) =
     when (device.type) {
@@ -44,6 +49,43 @@ private fun getDeviceType(device: AudioDeviceInfo) =
         else -> "Unknown"
     }
 
+private fun getEncodings(device: AudioDeviceInfo) =
+    device.encodings.joinToString { getEncoding(it) }
+
+private fun getEncoding(encoding: Int) =
+    when (encoding) {
+        AudioFormat.ENCODING_AAC_ELD -> "AAC ELD"
+        AudioFormat.ENCODING_AAC_HE_V1 -> "AAC HE V1"
+        AudioFormat.ENCODING_AAC_HE_V2 -> "AAC HE V2"
+        AudioFormat.ENCODING_AAC_LC -> "AAC LC"
+        AudioFormat.ENCODING_AAC_XHE -> "AAC XHE"
+        AudioFormat.ENCODING_AC3 -> "AC3"
+        AudioFormat.ENCODING_AC4 -> "AC4"
+        AudioFormat.ENCODING_DEFAULT -> "Default"
+        AudioFormat.ENCODING_DOLBY_MAT -> "Dolby MAT"
+        AudioFormat.ENCODING_DOLBY_TRUEHD -> "Dolby True HD"
+        AudioFormat.ENCODING_DRA -> "DRA"
+        AudioFormat.ENCODING_DTS -> "DTS"
+        AudioFormat.ENCODING_DTS_HD -> "DTS HD"
+        AudioFormat.ENCODING_DTS_UHD -> "DTS UHD"
+        AudioFormat.ENCODING_E_AC3 -> "E AC3"
+        AudioFormat.ENCODING_E_AC3_JOC -> "E AC3 JOC"
+        AudioFormat.ENCODING_IEC61937 -> "IEC61937"
+        AudioFormat.ENCODING_INVALID -> "Invalid"
+        AudioFormat.ENCODING_MP3 -> "MP3"
+        AudioFormat.ENCODING_MPEGH_BL_L3 -> "MPEGH BL L3"
+        AudioFormat.ENCODING_MPEGH_BL_L4 -> "MPEGH BL L4"
+        AudioFormat.ENCODING_MPEGH_LC_L3 -> "MPEGH LC L3"
+        AudioFormat.ENCODING_MPEGH_LC_L4 -> "MPEGH LC L4"
+        AudioFormat.ENCODING_OPUS -> "Opus"
+        AudioFormat.ENCODING_PCM_16BIT -> "PCM 18bit"
+        AudioFormat.ENCODING_PCM_24BIT_PACKED -> "PCM 24bit packed"
+        AudioFormat.ENCODING_PCM_32BIT -> "PCM 32bit"
+        AudioFormat.ENCODING_PCM_8BIT -> "PCM 8bit"
+        AudioFormat.ENCODING_PCM_FLOAT -> "PCM float"
+        else -> "Unknown"
+    }
+
 class SettingsFragment : PreferenceFragment() {
     @Deprecated("Deprecated in Java")
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -54,6 +96,7 @@ class SettingsFragment : PreferenceFragment() {
             context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         outputDevice?.entries = devices.map(::getDeviceDescription).toTypedArray()
-        outputDevice?.entryValues = devices.map { device -> device.id.toString() }.toTypedArray()
+        outputDevice?.entryValues =
+            devices.map { device -> "${device.productName}/${device.type}" }.toTypedArray()
     }
 }

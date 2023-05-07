@@ -62,12 +62,15 @@ fun setSettingFolder(context: Context, uri: String) =
 fun getSettingAutoplay(context: Context) =
     getBoolPreference(context, kAUTOPLAY, true)
 
+fun getSettingOutputDeviceString(context: Context) =
+    getStringPreference(context, kOUTPUT_DEVICE)
+
 fun getSettingOutputDevice(context: Context): AudioDeviceInfo? {
-    val pref = getStringPreference(context, kOUTPUT_DEVICE)?.toInt()
+    val pref = getSettingOutputDeviceString(context)
     val audioManager: AudioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     return audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        .firstOrNull { device -> device.id == pref }
+        .firstOrNull { device -> "${device.productName}/${device.type}" == pref }
 }
 
 fun getSettingCurrentPlaylistID(context: Context): Long? =
