@@ -282,7 +282,7 @@ class PlaylistEditActivity : AbstractActivity() {
                             val replaceCountOff = newCountOff != song.click.countOff
                             val replaceTrackPath = newTrackPath != song.click.trackPath
                             val replaceScoreLink = newScoreLink != song.scoreLink
-                            if (replaceName || replaceTempo || replaceDivisions || replaceTrackPath || replaceScoreLink) {
+                            if (replaceName || replaceTempo || replaceDivisions || replaceCountOff || replaceTrackPath || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
                                 if (replaceTempo || replaceDivisions || replaceCountOff || replaceTrackPath)
