@@ -13,4 +13,8 @@
         android:icon="@drawable/ic_pencil"
         android:title="@string/overview_action_folder"
         app:showAsAction="never" />
+    <!--<item android:id="@+id/overview_action_merge_audio"
+        android:icon="@drawable/ic_audio"
+        android:title="@string/overview_action_merge_audio"
+        app:showAsAction="never" />-->
 </menu>

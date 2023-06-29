@@ -73,6 +73,15 @@
             android:screenOrientation="locked"
             android:theme="@style/AppTheme" />
 
+        <activity
+            android:name=".MergeAudioActivity"
+            android:icon="@drawable/ic_audio"
+            android:label="@string/merge_audio"
+            android:launchMode="singleTop"
+            android:parentActivityName=".OverviewActivity"
+            android:screenOrientation="locked"
+            android:theme="@style/AppTheme.NoActionBar" />
+
     </application>
 
 </manifest>

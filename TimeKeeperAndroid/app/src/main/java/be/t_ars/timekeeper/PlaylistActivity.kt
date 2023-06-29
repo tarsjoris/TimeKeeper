@@ -160,8 +160,22 @@ class PlaylistActivity : AbstractActivity() {
                 intArrayOf(R.id.playlist_entry_name, R.id.playlist_entry_tempo)
             )
         }
+
+        //takeFilePermissions(playlist)
     }
 
+    /*
+        private fun takeFilePermissions(playlist: Playlist) {
+            playlist.songs.map(Song::click)
+                .mapNotNull(ClickDescription::trackPath)
+                .forEach(this::takeFilePermission)
+        }
+
+        private fun takeFilePermission(trackPath: String) {
+            val uri = Uri.parse(trackPath)
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    */
     private fun songChanged() {
         fStore.withCurrentSong { _, _, pos ->
             fBinding.playlist.setItemChecked(pos, true)
