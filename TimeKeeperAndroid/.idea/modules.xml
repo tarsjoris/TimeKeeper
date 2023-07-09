@@ -7,10 +7,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/TimeKeeperAndroid.app.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.iml" filepath="$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.main.iml" filepath="$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/wear/TimeKeeperAndroid.wear.unitTest.iml" />
     </modules>
   </component>
 </project>
