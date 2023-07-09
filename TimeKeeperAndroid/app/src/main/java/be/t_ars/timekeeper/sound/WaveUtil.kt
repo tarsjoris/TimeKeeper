@@ -131,17 +131,11 @@ a trimmed down version that most wav files adhere to.
             kSAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
         val actualSampleCount =
             floor((desiredSampleCount / samplesBetweenZeroCrossings).roundToLong() * samplesBetweenZeroCrossings).toInt()
-        val fadeInSampleCount: Int = (actualSampleCount.toDouble() / 3.0).toInt()
         val amplitudeStepPerSample =
             2.0 * Math.PI * sinesPerSecond.toDouble() / kSAMPLES_PER_SECOND.toDouble()
         (0 until actualSampleCount).forEach { s ->
-            val fadeCorrection = if (s < fadeInSampleCount)
-                s.toDouble() / fadeInSampleCount.toDouble()
-            else
-                (actualSampleCount - s).toDouble() / (actualSampleCount.toDouble() - fadeInSampleCount.toDouble())
-
             val amplitude: Double = sin(s.toDouble() * amplitudeStepPerSample)
-            val volumeAdjustedAmplitude: Double = amplitude * fadeCorrection * maxVolume
+            val volumeAdjustedAmplitude: Double = amplitude * maxVolume
             val value: Double = (volumeAdjustedAmplitude + 1.0) * 255.0 / 2.0
             val byte: Byte = toByte(value.roundToInt())
             val index: Int = (samplesOffset + s) * 2
