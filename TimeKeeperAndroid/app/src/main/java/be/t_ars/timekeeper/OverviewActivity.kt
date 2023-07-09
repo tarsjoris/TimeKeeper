@@ -206,9 +206,9 @@ class OverviewActivity : AbstractActivity() {
             R.id.overview_action_folder -> {
                 requestSelectFolder()
             }
-            R.id.overview_action_merge_audio -> {
+            /*R.id.overview_action_merge_audio -> {
                 MergeAudioActivity.startActivity(this)
-            }
+            }*/
             else -> {
                 return super.onOptionsItemSelected(item)
             }
