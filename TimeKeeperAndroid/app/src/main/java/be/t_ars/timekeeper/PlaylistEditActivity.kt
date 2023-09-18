@@ -76,6 +76,8 @@ class PlaylistEditActivity : AbstractActivity() {
                         ClickDescription(
                             tempo,
                             EClickType.DEFAULT,
+                            ClickDescription.DEFAULT_DIVISION_COUNT,
+                            ClickDescription.DEFAULT_BEAT_COUNT,
                             ClickDescription.DEFAULT_COUNT_OFF
                         )
                     )
@@ -162,10 +164,12 @@ class PlaylistEditActivity : AbstractActivity() {
                             fPosition = position
                             editEntry()
                         }
+
                         EditMode.SEND_TOP -> {
                             fPlaylist?.sendToTop(fStore, position)
                             reloadSongs()
                         }
+
                         EditMode.SEND_BOTTOM -> {
                             fPlaylist?.sendToBottom(fStore, position)
                             reloadSongs()
@@ -195,15 +199,19 @@ class PlaylistEditActivity : AbstractActivity() {
                     R.id.playlistedit_action_up -> {
                         move(true)
                     }
+
                     R.id.playlistedit_action_down -> {
                         move(false)
                     }
+
                     R.id.playlistedit_action_delete -> {
                         fDeleteDialog.show(supportFragmentManager, "delete_songs")
                     }
+
                     R.id.playlistedit_action_delete_and_above -> {
                         fDeleteAndAboveDialog.show(supportFragmentManager, "delete_songs_and_above")
                     }
+
                     else -> {
                         return false
                     }
@@ -264,6 +272,14 @@ class PlaylistEditActivity : AbstractActivity() {
                                     EClickType.DEFAULT.value
                                 )
                             )
+                            val newDivisionCount = d.getIntExtra(
+                                TapSongActivity.kINTENT_DATA_DIVISION_COUNT,
+                                ClickDescription.DEFAULT_DIVISION_COUNT
+                            )
+                            val newBeatCount = d.getIntExtra(
+                                TapSongActivity.kINTENT_DATA_BEAT_COUNT,
+                                ClickDescription.DEFAULT_BEAT_COUNT
+                            )
                             val newCountOff =
                                 d.getBooleanExtra(
                                     TapSongActivity.kINTENT_DATA_COUNT_OFF,
@@ -278,16 +294,25 @@ class PlaylistEditActivity : AbstractActivity() {
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
                             val replaceTempo = newTempo != song.click.bpm
-                            val replaceDivisions = newClickType != song.click.type
+                            val replaceClickType = newClickType != song.click.type
+                            val replaceDivisionCount = newDivisionCount != song.click.divisionCount
+                            val replaceBeatCount = newBeatCount != song.click.beatCount
                             val replaceCountOff = newCountOff != song.click.countOff
                             val replaceTrackPath = newTrackPath != song.click.trackPath
                             val replaceScoreLink = newScoreLink != song.scoreLink
-                            if (replaceName || replaceTempo || replaceDivisions || replaceCountOff || replaceTrackPath || replaceScoreLink) {
+                            if (replaceName || replaceTempo || replaceClickType || replaceDivisionCount || replaceBeatCount || replaceCountOff || replaceTrackPath || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
-                                if (replaceTempo || replaceDivisions || replaceCountOff || replaceTrackPath)
+                                if (replaceTempo || replaceClickType || replaceDivisionCount || replaceBeatCount || replaceCountOff || replaceTrackPath)
                                     song.click =
-                                        ClickDescription(newTempo, newClickType, newCountOff, newTrackPath)
+                                        ClickDescription(
+                                            newTempo,
+                                            newClickType,
+                                            newDivisionCount,
+                                            newBeatCount,
+                                            newCountOff,
+                                            newTrackPath
+                                        )
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -297,12 +322,14 @@ class PlaylistEditActivity : AbstractActivity() {
                     }
                 }
             }
+
             kREQUEST_DOCUMENT_CODE -> fStore.acceptRequestedDocument(data) { id ->
                 fNewPlaylistId = id
                 val ft = supportFragmentManager.beginTransaction()
                 ft.add(fCopyDialog, null)
                 ft.commitAllowingStateLoss()
             }
+
             else -> super.onActivityResult(requestCode, resultCode, data)
         }
     }
@@ -318,24 +345,30 @@ class PlaylistEditActivity : AbstractActivity() {
             R.id.playlistedit_action_renameplaylist -> {
                 fRenamePlaylistDialog.show(supportFragmentManager, "renameplaylist")
             }
+
             R.id.playlistedit_action_copy -> {
                 startActivityForResult(fStore.createDocumentRequest(), kREQUEST_DOCUMENT_CODE)
             }
+
             R.id.playlistedit_action_insertfrom -> {
                 startInsertFrom()
             }
+
             R.id.playlistedit_action_normalmode -> {
                 fEditMode = EditMode.NORMAL
                 reloadSongs()
             }
+
             R.id.playlistedit_action_sendtop -> {
                 fEditMode = EditMode.SEND_TOP
                 reloadSongs()
             }
+
             R.id.playlistedit_action_sendbottom -> {
                 fEditMode = EditMode.SEND_BOTTOM
                 reloadSongs()
             }
+
             else -> {
                 return super.onOptionsItemSelected(item)
             }

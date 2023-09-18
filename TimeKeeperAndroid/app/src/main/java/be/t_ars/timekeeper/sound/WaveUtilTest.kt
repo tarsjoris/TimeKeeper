@@ -12,31 +12,22 @@ package be.t_ars.timekeeper.sound
 
 import java.io.*
 
-typealias OpenFile = (String) -> InputStream
-
 object WaveUtilTest {
     @JvmStatic
     fun main(args: Array<String>) {
         try {
-            val countOff = WaveUtil.generateCountOff(this::openFile, 120)
+            val waveUtil = WaveUtil(this::openFile)
+            val countOff = waveUtil.generateCountOff(120, 4)
             //val click = generateClick(880, 50, 120, 440, 60, 2)
-            val click = WaveUtil.generateShakerLoop(this::openFile, 120)
-            val buffer = ByteArray(countOff.sumOf { b -> b.size } + click.size * 4)
+            //val click = waveUtil.generateShakerLoop(120)
+            val cowbell = waveUtil.generateCowbell(120, 2, 4, 30)
+            val buffer = ByteArray(countOff.size + cowbell.size)
             var offset = 0
-            WaveUtil.copyBytes(countOff[0], buffer, offset)
-            offset += countOff[0].size
-            WaveUtil.copyBytes(countOff[1], buffer, offset)
-            offset += countOff[1].size
-            WaveUtil.copyBytes(countOff[2], buffer, offset)
-            offset += countOff[3].size
-            WaveUtil.copyBytes(countOff[3], buffer, offset)
-            offset += countOff[3].size
-            repeat(4) {
-                WaveUtil.copyBytes(click, buffer, offset)
-                offset += click.size
-            }
+            WaveUtil.copyBytes(countOff, buffer, offset)
+            offset += countOff.size
+            WaveUtil.copyBytes(cowbell, buffer, offset)
             FileOutputStream("click.wav").use { out ->
-                save(out, 2, WaveUtil.kSAMPLES_PER_SECOND, 1, buffer)
+                save(out, 2, SAMPLES_PER_SECOND, 1, buffer)
             }
         } catch (e: IOException) {
             e.printStackTrace()

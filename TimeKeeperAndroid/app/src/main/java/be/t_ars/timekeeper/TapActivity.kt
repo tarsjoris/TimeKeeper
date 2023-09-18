@@ -46,10 +46,14 @@ class TapActivity : AbstractActivity() {
         if (extras != null) {
             val tempo = extras.getInt(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
             val type = EClickType.of(extras.getInt(kINTENT_TYPE, EClickType.DEFAULT.value))
+            val divisionCount = extras.getInt(kINTENT_DIVISION_COUNT, ClickDescription.DEFAULT_DIVISION_COUNT)
+            val beatCount = extras.getInt(kINTENT_BEAT_COUNT, ClickDescription.DEFAULT_BEAT_COUNT)
             val countOff = extras.getBoolean(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_COUNT_OFF)
 
             fTapPartComponent.setTempo(tempo)
             fTapPartComponent.setClickType(type)
+            fTapPartComponent.setDivisionCount(divisionCount)
+            fTapPartComponent.setBeatCount(beatCount)
             fTapPartComponent.setCountOff(countOff)
         }
     }
@@ -58,6 +62,8 @@ class TapActivity : AbstractActivity() {
         val extras = HashMap<String, Serializable>().also {
             it[kINTENT_DATA_TEMPO] = click.bpm
             it[kINTENT_TYPE] = click.type.value
+            it[kINTENT_DIVISION_COUNT] = click.divisionCount
+            it[kINTENT_BEAT_COUNT] = click.beatCount
             it[kINTENT_COUNT_OFF] = click.countOff
         }
         SoundService.startSound(this, null, click, TapActivity::class.java, extras)
@@ -70,6 +76,8 @@ class TapActivity : AbstractActivity() {
     companion object {
         private const val kINTENT_DATA_TEMPO = "tempo"
         private const val kINTENT_TYPE = "type"
+        private const val kINTENT_DIVISION_COUNT = "divisioncount"
+        private const val kINTENT_BEAT_COUNT = "beatcount"
         private const val kINTENT_COUNT_OFF = "countoff"
 
         fun startActivity(context: Context) =

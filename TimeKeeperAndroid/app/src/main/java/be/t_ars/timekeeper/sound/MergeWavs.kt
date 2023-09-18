@@ -11,17 +11,6 @@ import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.math.max
 
-private const val FORMAT_PCM = 1
-private const val FORMAT_FLOAT = 3
-
-private data class WaveHeader(
-    val audioFormat: Int,
-    val numChannels: Int,
-    val sampleRate: Long,
-    val bitsPerSample: Int,
-    val dataSize: Long,
-)
-
 object MergeWavs {
     @JvmStatic
     fun main(args: Array<String>) {
@@ -35,10 +24,10 @@ object MergeWavs {
     private fun merge(clickFile: Path) {
         Files.newInputStream(clickFile).let(::BufferedInputStream)
             .use { clickInput ->
-                val clickHeader = readHeader(clickInput)
+                val clickHeader = WaveUtil.readHeader(clickInput)
                 Files.newInputStream(generateTrackPath(clickFile)).let(::BufferedInputStream)
                     .use { trackInput ->
-                        val trackHeader = readHeader(trackInput)
+                        val trackHeader = WaveUtil.readHeader(trackInput)
                         Files.newOutputStream(generateOutputPath(clickFile))
                             .let(::BufferedOutputStream)
                             .use { output ->
@@ -61,7 +50,7 @@ object MergeWavs {
         )
 
     private fun generateOutputPath(clickFile: Path) =
-        clickFile.parent.resolve(
+        clickFile.parent.parent.resolve("Merged").resolve(
             clickFile.fileName.toString().substringBefore(" click ") + " merged.wav"
         )
 
@@ -132,56 +121,6 @@ object MergeWavs {
             }
         }
     }
-
-    private fun readHeader(input: InputStream): WaveHeader {
-        if (readWord(input) != "RIFF") {
-            throw IllegalArgumentException("Expected 'RIFF'")
-        }
-        input.skip(4) // skip ChunkSize
-        if (readWord(input) != "WAVE") {
-            throw IllegalArgumentException("Expected 'WAVE'")
-        }
-        while (readWord(input) != "fmt ") {
-            val chunkSize = read4ByteNumber(input)
-            input.skip(chunkSize)
-        }
-        if (read4ByteNumber(input) != 16L) {
-            throw IllegalArgumentException("Expected fmt size 16")
-        }
-        val audioFormat = read2ByteNumber(input)
-        val numChannels = read2ByteNumber(input)
-        val sampleRate = read4ByteNumber(input)
-        input.skip(4) // skip ByteRate
-        input.skip(2) // skip BlockAlign
-        val bitsPerSample = read2ByteNumber(input)
-        while (readWord(input) != "data") {
-            val chunkSize = read4ByteNumber(input)
-            input.skip(chunkSize)
-        }
-        val dataSize = read4ByteNumber(input)
-        return WaveHeader(audioFormat, numChannels, sampleRate, bitsPerSample, dataSize)
-    }
-
-    private fun read4ByteNumber(input: InputStream): Long {
-        val b1 = input.read().toLong()
-        val b2 = input.read().toLong()
-        val b3 = input.read().toLong()
-        val b4 = input.read().toLong()
-        return b1 + (b2 shl 8) + (b3 shl 16) + (b4 shl 24)
-    }
-
-    private fun read2ByteNumber(input: InputStream): Int {
-        val b1 = input.read()
-        val b2 = input.read()
-        return b1 + (b2 shl 8)
-    }
-
-    private fun readWord(input: InputStream) =
-        (0..3)
-            .map {
-                input.read().toChar()
-            }
-            .joinToString("")
 
     private fun intToByteArray(data: Long): ByteArray {
         val b = ByteArray(4)

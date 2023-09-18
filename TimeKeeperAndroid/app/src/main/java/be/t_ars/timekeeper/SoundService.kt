@@ -51,7 +51,7 @@ class SoundService : Service() {
     }
 
     override fun onDestroy() {
-        fSoundGenerator.close()
+        fSoundGenerator.stop()
         super.onDestroy()
     }
 
@@ -65,6 +65,8 @@ class SoundService : Service() {
                         val click = ClickDescription(
                             extras.getInt(kINTENT_DATA_BPM),
                             extras.getInt(kINTENT_DATA_CLICK_TYPE).let(EClickType::of),
+                            extras.getInt(kINTENT_DATA_DIVISION_COUNT),
+                            extras.getInt(kINTENT_DATA_BEAT_COUNT),
                             extras.getBoolean(kINTENT_DATA_COUNT_OFF, false),
                             extras.getString(kINTENT_DATA_TRACK_PATH)
                         )
@@ -180,6 +182,8 @@ class SoundService : Service() {
         private const val kINTENT_DATA_LABEL = "label"
         private const val kINTENT_DATA_BPM = "bpm"
         private const val kINTENT_DATA_CLICK_TYPE = "clickType"
+        private const val kINTENT_DATA_DIVISION_COUNT = "divisionCount"
+        private const val kINTENT_DATA_BEAT_COUNT = "beatCount"
         private const val kINTENT_DATA_COUNT_OFF = "countOff"
         private const val kINTENT_DATA_TRACK_PATH = "trackPath"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
@@ -198,6 +202,8 @@ class SoundService : Service() {
                     intent.putExtra(kINTENT_DATA_LABEL, label)
                     intent.putExtra(kINTENT_DATA_BPM, click.bpm)
                     intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
+                    intent.putExtra(kINTENT_DATA_DIVISION_COUNT, click.divisionCount)
+                    intent.putExtra(kINTENT_DATA_BEAT_COUNT, click.beatCount)
                     intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
                     click.trackPath?.let { intent.putExtra(kINTENT_DATA_TRACK_PATH, it) }
                     returnActivityClass?.let {

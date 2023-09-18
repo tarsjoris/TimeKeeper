@@ -17,8 +17,23 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
 
-object WaveUtil {
-    const val kSAMPLES_PER_SECOND = 44100
+data class WaveHeader(
+    val audioFormat: Int,
+    val numChannels: Int,
+    val sampleRate: Long,
+    val bitsPerSample: Int,
+    val dataSize: Long,
+)
+
+const val SAMPLES_PER_SECOND = 44100
+
+private const val FORMAT_PCM_8BIT = 1
+private const val FORMAT_FLOAT = 3
+
+typealias OpenFile = (String) -> InputStream
+
+class WaveUtil(private val openFile: OpenFile) {
+    constructor(context: Context) : this({ name -> context.assets.open(name) })
 
     /*
      WAV File Specification
@@ -96,21 +111,26 @@ a trimmed down version that most wav files adhere to.
         bpm: Int,
         divisionFrequency: Int,
         divisionVolume: Int,
-        divisionCount: Int
+        divisionCount: Int,
+        beatCount: Int,
     ): ByteArray {
-        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(totalSamples * 2) { -128 }
-        writeBeepInBuffer(beepFrequency, beepDurationMillis, 100, buffer, 0)
-        if (divisionCount in 2..7) {
+        val divisionCount = if (divisionCount in 2..7) divisionCount else 1
+        val beatCount = if (beatCount in 1..7) beatCount else 1
+        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(beatCount * samplesPerBeat * 2) { -128 }
+        (0 until beatCount).forEach { beatIndex ->
+            val beatFrequency = if (beatIndex == 0) beepFrequency else divisionFrequency
+            val sampleCountOffset = beatIndex * samplesPerBeat
+            writeBeepInBuffer(beatFrequency, beepDurationMillis, 100, buffer, sampleCountOffset)
             (1 until divisionCount).forEach { subDivisionIndex ->
-                val samplesOffset =
-                    (totalSamples.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
+                val divisionSampleCountOffset = sampleCountOffset +
+                        (samplesPerBeat.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
                 writeBeepInBuffer(
                     divisionFrequency,
                     beepDurationMillis,
                     divisionVolume,
                     buffer,
-                    samplesOffset
+                    divisionSampleCountOffset
                 )
             }
         }
@@ -122,23 +142,23 @@ a trimmed down version that most wav files adhere to.
         beepDurationMillis: Int,
         maxVolume: Int,
         buffer: ByteArray,
-        samplesOffset: Int
+        sampleCountOffset: Int
     ) {
         val maxVolume: Double = if (maxVolume in 1..100) maxVolume.toDouble() / 100.0 else 1.0
         val desiredSampleCount =
-            kSAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
+            SAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
         val samplesBetweenZeroCrossings =
-            kSAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
+            SAMPLES_PER_SECOND.toDouble() / sinesPerSecond.toDouble() / 2.0
         val actualSampleCount =
             floor((desiredSampleCount / samplesBetweenZeroCrossings).roundToLong() * samplesBetweenZeroCrossings).toInt()
         val amplitudeStepPerSample =
-            2.0 * Math.PI * sinesPerSecond.toDouble() / kSAMPLES_PER_SECOND.toDouble()
+            2.0 * Math.PI * sinesPerSecond.toDouble() / SAMPLES_PER_SECOND.toDouble()
         (0 until actualSampleCount).forEach { s ->
             val amplitude: Double = sin(s.toDouble() * amplitudeStepPerSample)
             val volumeAdjustedAmplitude: Double = amplitude * maxVolume
             val value: Double = (volumeAdjustedAmplitude + 1.0) * 255.0 / 2.0
             val byte: Byte = toByte(value.roundToInt())
-            val index: Int = (samplesOffset + s) * 2
+            val index: Int = (sampleCountOffset + s) * 2
             if (index in buffer.indices) {
                 buffer[index] = byte
             }
@@ -148,71 +168,165 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    fun generateShakerLoop(context: Context, bpm: Int) =
-        generateShakerLoop({ name -> context.assets.open(name) }, bpm)
-
-    fun generateShakerLoop(openFile: OpenFile, bpm: Int): ByteArray {
-        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(totalSamples * 2) { -128 }
-        val samples = readSamples(openFile, "shakerloop")
-        copyBytes(samples[0], buffer, 0)
-        copyBytes(samples[1], buffer, (totalSamples.toDouble() / 4.0 * 1.0).roundToInt() * 2)
-        copyBytes(samples[2], buffer, (totalSamples.toDouble() / 4.0 * 2.0).roundToInt() * 2)
-        copyBytes(samples[3], buffer, (totalSamples.toDouble() / 4.0 * 3.0).roundToInt() * 2)
+    fun generateShakerLoop(bpm: Int, divisionCount: Int): ByteArray {
+        val divisionCount = if (divisionCount in 1..4) divisionCount else 4
+        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(samplesPerBeat * 2) { -128 }
+        val samples = readSamples("shakerloop", 4)
+        for (i in 0 until divisionCount) {
+            copyBytes(
+                samples[i],
+                buffer,
+                (samplesPerBeat.toDouble() / divisionCount.toDouble() * i.toDouble()).roundToInt() * 2
+            )
+        }
         return buffer
     }
 
-    fun generateCountOff(context: Context, bpm: Int) =
-        generateCountOff({ name -> context.assets.open(name) }, bpm)
-
-    fun generateCountOff(openFile: OpenFile, bpm: Int): Array<ByteArray> {
-        val totalSamples = kSAMPLES_PER_SECOND * 60 / bpm
-        val buffers = Array(4) { ByteArray(totalSamples * 2) { -128 } }
-        val samples = readSamples(openFile, "countdown")
-        copyBytes(samples[0], buffers[0], 0)
-        copyBytes(samples[1], buffers[1], 0)
-        copyBytes(samples[2], buffers[2], 0)
-        copyBytes(samples[3], buffers[3], 0)
-        return buffers
+    fun generateCowbell(
+        bpm: Int,
+        divisionCount: Int,
+        beatCount: Int,
+        divisionVolume: Int
+    ): ByteArray {
+        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(beatCount * samplesPerBeat * 2) { -128 }
+        val high = readSample("high.wav")
+        val low = readSample("low.wav")
+        val quiet = adjustVolume(low, divisionVolume)
+        copyBytes(high, buffer, 0)
+        for (i in 0 until beatCount) {
+            for (j in 0 until divisionCount) {
+                val sample = if (j == 0)
+                    if (i == 0) high else low
+                else
+                    quiet
+                copyBytes(
+                    sample,
+                    buffer,
+                    ((i.toDouble() + j.toDouble() / divisionCount.toDouble()) * samplesPerBeat.toDouble()).toInt() * 2
+                )
+            }
+        }
+        return buffer
     }
 
-    private fun readSamples(openFile: OpenFile, prefix: String) =
-        arrayOf(
-            readSample(openFile, "${prefix}1.wav"),
-            readSample(openFile, "${prefix}2.wav"),
-            readSample(openFile, "${prefix}3.wav"),
-            readSample(openFile, "${prefix}4.wav")
-        )
+    private fun generateSample(bpm: Int, filename: String): ByteArray {
+        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(samplesPerBeat * 2) { -128 }
+        val sample = readSample(filename)
+        copyBytes(sample, buffer, 0)
+        return buffer
+    }
 
-    private fun readSample(openFile: OpenFile, filename: String): ByteArray {
+    fun generateCountOff(bpm: Int, beats: Int): ByteArray {
+        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
+        val buffer = ByteArray(beats * samplesPerBeat * 2) { -128 }
+        val samples = readSamples("countdown", beats)
+        for (i in 0 until beats) {
+            copyBytes(
+                samples[i],
+                buffer,
+                (samplesPerBeat.toDouble() * i.toDouble()).roundToInt() * 2
+            )
+        }
+        return buffer
+    }
+
+    private fun readSamples(prefix: String, beats: Int) =
+        Array(beats) { readSample("${prefix}${it + 1}.wav") }
+
+    private fun readSample(filename: String): ByteArray {
         openFile(filename).use { input ->
-            input.skip(40)
-            val size = readInt(input)
-            val buffer = ByteArray(size)
+            val header = readHeader(input)
+            if (header.audioFormat != FORMAT_PCM_8BIT) {
+                throw IllegalArgumentException("Only 8bit PCM is supported")
+            }
+            if (header.bitsPerSample != 8) {
+                throw IllegalArgumentException("Only 8bit PCM is supported")
+            }
+            if (header.sampleRate != SAMPLES_PER_SECOND.toLong()) {
+                throw IllegalArgumentException("Only $SAMPLES_PER_SECOND samples per second are supported")
+            }
+            if (header.numChannels != 2) {
+                throw IllegalArgumentException("Only 2 channels are supported")
+            }
+            val buffer = ByteArray(header.dataSize.toInt())
             input.read(buffer)
             return buffer
         }
     }
 
-    fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
-        from.indices.forEach { index ->
-            val targetIndex = bufferOffset + index
-            if (targetIndex in to.indices) {
-                to[targetIndex] = from[index]
+    companion object {
+        fun readHeader(input: InputStream): WaveHeader {
+            if (readWord(input) != "RIFF") {
+                throw IllegalArgumentException("Expected 'RIFF'")
+            }
+            input.skip(4) // skip ChunkSize
+            if (readWord(input) != "WAVE") {
+                throw IllegalArgumentException("Expected 'WAVE'")
+            }
+            while (readWord(input) != "fmt ") {
+                val chunkSize = read4ByteNumber(input)
+                input.skip(chunkSize)
+            }
+            if (read4ByteNumber(input) != 16L) {
+                throw IllegalArgumentException("Expected fmt size 16")
+            }
+            val audioFormat = read2ByteNumber(input)
+            val numChannels = read2ByteNumber(input)
+            val sampleRate = read4ByteNumber(input)
+            input.skip(4) // skip ByteRate
+            input.skip(2) // skip BlockAlign
+            val bitsPerSample = read2ByteNumber(input)
+            while (readWord(input) != "data") {
+                val chunkSize = read4ByteNumber(input)
+                input.skip(chunkSize)
+            }
+            val dataSize = read4ByteNumber(input)
+            return WaveHeader(audioFormat, numChannels, sampleRate, bitsPerSample, dataSize)
+        }
+
+        private fun adjustVolume(input: ByteArray, volumePercentage: Int) =
+            ByteArray(input.size) {
+                val amplitude = input[it].toUByte().toInt() - 128
+                val adjustedAmplitude =
+                    (amplitude.toDouble() * volumePercentage.toDouble() / 100.0).roundToInt()
+                (adjustedAmplitude + 128).toByte()
+            }
+
+        fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
+            from.indices.forEach { index ->
+                val targetIndex = bufferOffset + index
+                if (targetIndex in to.indices) {
+                    to[targetIndex] = from[index]
+                }
             }
         }
-    }
 
-    private fun readInt(input: InputStream): Int {
-        var value = input.read()
-        value += input.read() shl 8
-        value += input.read() shl 16
-        value += input.read() shl 24
-        return value
-    }
+        private fun read4ByteNumber(input: InputStream): Long {
+            val b1 = input.read().toLong()
+            val b2 = input.read().toLong()
+            val b3 = input.read().toLong()
+            val b4 = input.read().toLong()
+            return b1 + (b2 shl 8) + (b3 shl 16) + (b4 shl 24)
+        }
 
-    // convert a short to a byte array
-    private fun toByte(data: Int): Byte {
-        return (data and 0xff).toByte()
+        private fun read2ByteNumber(input: InputStream): Int {
+            val b1 = input.read()
+            val b2 = input.read()
+            return b1 + (b2 shl 8)
+        }
+
+        private fun readWord(input: InputStream) =
+            (0..3)
+                .map {
+                    input.read().toChar()
+                }
+                .joinToString("")
+
+        // convert a short to a byte array
+        private fun toByte(data: Int) =
+            (data and 0xff).toByte()
     }
 }

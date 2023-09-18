@@ -1,7 +1,6 @@
 package be.t_ars.timekeeper
 
 import android.app.Activity
-import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -9,7 +8,6 @@ import android.provider.DocumentsContract
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.data.ClickDescription
@@ -73,6 +71,7 @@ class TapSongActivity : AbstractActivity() {
                 setResult(RESULT_OK, intent)
                 finish()
             }
+
             else -> {
                 return super.onOptionsItemSelected(item)
             }
@@ -86,6 +85,8 @@ class TapSongActivity : AbstractActivity() {
             ClickDescription(
                 fTapPartComponent.getTempo(),
                 fTapPartComponent.getClickType(),
+                fTapPartComponent.getDivisionCount(),
+                fTapPartComponent.getBeatCount(),
                 fTapPartComponent.isCountOff(),
                 trackPath
             ),
@@ -137,12 +138,26 @@ class TapSongActivity : AbstractActivity() {
         val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
         fTapPartComponent.setTempo(newTempo)
 
-        val newClickType =
-            intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DEFAULT.value)
-                .let(EClickType::of)
+        val newClickType = intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DEFAULT.value)
+            .let(EClickType::of)
         fTapPartComponent.setClickType(newClickType)
 
-        val newCountOff = intent.getBooleanExtra(kINTENT_DATA_COUNT_OFF, false)
+        val newDivisionCount = intent.getIntExtra(
+            kINTENT_DATA_DIVISION_COUNT,
+            ClickDescription.DEFAULT_DIVISION_COUNT
+        )
+        fTapPartComponent.setDivisionCount(newDivisionCount)
+
+        val newBeatCount = intent.getIntExtra(
+            kINTENT_DATA_BEAT_COUNT,
+            ClickDescription.DEFAULT_BEAT_COUNT
+        )
+        fTapPartComponent.setBeatCount(newBeatCount)
+
+        val newCountOff = intent.getBooleanExtra(
+            kINTENT_DATA_COUNT_OFF,
+            ClickDescription.DEFAULT_COUNT_OFF
+        )
         fTapPartComponent.setCountOff(newCountOff)
 
         val newTrackPath = intent.getStringExtra(kINTENT_DATA_TRACK_PATH)
@@ -163,6 +178,8 @@ class TapSongActivity : AbstractActivity() {
     companion object {
         const val kINTENT_DATA_TEMPO = "tempo"
         const val kINTENT_DATA_CLICK_TYPE = "click_type"
+        const val kINTENT_DATA_DIVISION_COUNT = "division_count"
+        const val kINTENT_DATA_BEAT_COUNT = "beat_count"
         const val kINTENT_DATA_COUNT_OFF = "count_off"
         const val kINTENT_DATA_NAME = "name"
         const val kINTENT_DATA_TRACK_PATH = "track_path"
@@ -189,6 +206,8 @@ class TapSongActivity : AbstractActivity() {
         ) {
             intent.putExtra(kINTENT_DATA_TEMPO, click.bpm)
             intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
+            intent.putExtra(kINTENT_DATA_DIVISION_COUNT, click.divisionCount)
+            intent.putExtra(kINTENT_DATA_BEAT_COUNT, click.beatCount)
             intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
             if (click.trackPath != null)
                 intent.putExtra(kINTENT_DATA_TRACK_PATH, click.trackPath)

@@ -17,7 +17,7 @@ class SoundGenerator(
     private val fDivisionFrequency: Int,
     private val fDivisionVolume: Int
 ) {
-    private var fPlaying = AtomicBoolean(false)
+    private var fAudioTrack: AudioTrack? = null
     private var fLastClick: ClickDescription? = null
 
     init {
@@ -28,24 +28,26 @@ class SoundGenerator(
         soundPoolBuilder.setMaxStreams(1)
     }
 
-    fun close() {
-        stop()
+    fun stop() {
+        synchronized(this) {
+            fAudioTrack?.pause()
+            fAudioTrack?.flush()
+            fAudioTrack = null
+        }
     }
 
     fun start(click: ClickDescription) {
-        synchronized(fPlaying) {
-            if (fLastClick != click || !fPlaying.get()) {
-                fPlaying.set(false)
+        synchronized(this) {
+            if (fLastClick != click || fAudioTrack == null) {
+                stop()
                 fLastClick = click
-                fPlaying = AtomicBoolean(true)
-                Thread {
-                    generateSound(click, fPlaying)
-                }.start()
+
+                generateSound(click)
             }
         }
     }
 
-    private fun generateSound(click: ClickDescription, playing: AtomicBoolean) {
+    private fun generateSound(click: ClickDescription) {
         val clickBuffer = createClickBuffer(click)
 
         val audioTrack = AudioTrack.Builder()
@@ -58,57 +60,48 @@ class SoundGenerator(
             .setAudioFormat(
                 AudioFormat.Builder()
                     .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
-                    .setSampleRate(WaveUtil.kSAMPLES_PER_SECOND)
+                    .setSampleRate(SAMPLES_PER_SECOND)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
                     .build()
             )
             .setBufferSizeInBytes(clickBuffer.size)
             .build()
-        try {
-            getSettingOutputDevice(context)?.let { audioTrack.setPreferredDevice(it) }
-            audioTrack.play()
 
+        getSettingOutputDevice(context)?.let { audioTrack.setPreferredDevice(it) }
+        audioTrack.play()
+        fAudioTrack = audioTrack
+
+        Thread {
             if (click.countOff) {
-                val countOffBuffers = WaveUtil.generateCountOff(context, click.bpm)
-                countOffBuffers.forEach { countOffBuffer ->
-                    audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
-                    synchronized(playing) {
-                        if (!playing.get()) {
-                            return
-                        }
-                    }
-                }
+                val countOffBuffer = WaveUtil(context).generateCountOff(click.bpm, 4)
+                audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
             }
-
-            while (true) {
+            while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
                 audioTrack.write(clickBuffer, 0, clickBuffer.size)
-                synchronized(playing) {
-                    if (!playing.get()) {
-                        return
-                    }
-                }
             }
-        } finally {
-            audioTrack.stop()
-        }
+        }.start()
     }
 
-    private fun createClickBuffer(click: ClickDescription) =
-        when (click.type) {
-            EClickType.SHAKER -> WaveUtil.generateShakerLoop(context, click.bpm)
-            else -> WaveUtil.generateClick(
+    private fun createClickBuffer(click: ClickDescription): ByteArray {
+        val waveUtil = WaveUtil(context)
+        return when (click.type) {
+            EClickType.SHAKER -> waveUtil.generateShakerLoop(click.bpm, click.divisionCount)
+            EClickType.COWBELL -> waveUtil.generateCowbell(
+                click.bpm,
+                click.divisionCount,
+                click.beatCount,
+                fDivisionVolume
+            )
+
+            else -> waveUtil.generateClick(
                 fBeepFrequency,
                 fBeepDuration,
                 click.bpm,
                 fDivisionFrequency,
                 fDivisionVolume,
-                click.type.value
+                click.divisionCount,
+                click.beatCount
             )
-        }
-
-    fun stop() {
-        synchronized(fPlaying) {
-            fPlaying.set(false)
         }
     }
 }

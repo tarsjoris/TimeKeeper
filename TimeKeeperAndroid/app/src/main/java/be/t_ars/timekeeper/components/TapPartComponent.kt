@@ -12,16 +12,41 @@ class TapPartComponent(
 ) {
     private val clickTypeSelection: ToggleGroup<EClickType> = ToggleGroup(
         arrayOf(
-            ToggleEntry(EClickType.DIVISIONS_1, tapPart.clicktype1),
-            ToggleEntry(EClickType.DIVISIONS_2, tapPart.clicktype2),
-            ToggleEntry(EClickType.DIVISIONS_3, tapPart.clicktype3),
-            ToggleEntry(EClickType.DIVISIONS_4, tapPart.clicktype4),
-            ToggleEntry(EClickType.DIVISIONS_5, tapPart.clicktype5),
-            ToggleEntry(EClickType.DIVISIONS_7, tapPart.clicktype7),
+            ToggleEntry(EClickType.COWBELL, tapPart.clicktypeCowbell),
+            ToggleEntry(EClickType.SINE, tapPart.clicktypeSine),
             ToggleEntry(EClickType.SHAKER, tapPart.clicktypeShaker),
         )
-    ) { type ->
-        clickType = type
+    ) {
+        clickType = it
+        if (playing) {
+            startSound()
+        }
+    }
+    private val divisionsSelection: ToggleGroup<Int> = ToggleGroup(
+        arrayOf(
+            ToggleEntry(1, tapPart.divisions1),
+            ToggleEntry(2, tapPart.divisions2),
+            ToggleEntry(3, tapPart.divisions3),
+            ToggleEntry(4, tapPart.divisions4),
+        )
+    ) {
+        divisionCount = it
+        if (playing) {
+            startSound()
+        }
+    }
+    private val beatsSelection: ToggleGroup<Int> = ToggleGroup(
+        arrayOf(
+            ToggleEntry(1, tapPart.beats1),
+            ToggleEntry(2, tapPart.beats2),
+            ToggleEntry(3, tapPart.beats3),
+            ToggleEntry(4, tapPart.beats4),
+            ToggleEntry(5, tapPart.beats5),
+            ToggleEntry(6, tapPart.beats6),
+            ToggleEntry(7, tapPart.beats7),
+        )
+    ) {
+        beatCount = it
         if (playing) {
             startSound()
         }
@@ -34,6 +59,8 @@ class TapPartComponent(
 
     private var tempo = ClickDescription.DEFAULT_TEMPO
     private var clickType = EClickType.DEFAULT
+    private var divisionCount = 1
+    private var beatCount = 1
     private var countOff = ClickDescription.DEFAULT_COUNT_OFF
 
     private inner class DelayedUpdate : Runnable {
@@ -104,6 +131,24 @@ class TapPartComponent(
         }
     }
 
+    fun setDivisionCount(divisions: Int) {
+        if (divisionsSelection.setValue(divisions)) {
+            divisionCount = divisions
+            if (playing) {
+                startSound()
+            }
+        }
+    }
+
+    fun setBeatCount(beats: Int) {
+        if (beatsSelection.setValue(beats)) {
+            beatCount = beats
+            if (playing) {
+                startSound()
+            }
+        }
+    }
+
     fun setCountOff(countOff: Boolean) {
         tapPart.checkboxCountOff.isChecked = countOff
         this.countOff = countOff
@@ -114,6 +159,12 @@ class TapPartComponent(
 
     fun getClickType() =
         clickType
+
+    fun getDivisionCount() =
+        divisionCount
+
+    fun getBeatCount() =
+        beatCount
 
     fun isCountOff() =
         countOff
@@ -150,6 +201,6 @@ class TapPartComponent(
     }
 
     private fun startSound() {
-        startSoundCallback(ClickDescription(tempo, clickType, countOff))
+        startSoundCallback(ClickDescription(tempo, clickType, divisionCount, beatCount, countOff))
     }
 }

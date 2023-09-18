@@ -18,7 +18,7 @@
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="text_tempo">
-        <item name="android:textAlignment">center</item>
+        <item name="android:gravity">center</item>
         <item name="android:background">@color/tempoBackground</item>
     </style>
 
