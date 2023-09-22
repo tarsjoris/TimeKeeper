@@ -3,6 +3,7 @@ package be.t_ars.timekeeper
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.view.Menu
@@ -11,7 +12,6 @@ import android.view.View
 import androidx.fragment.app.FragmentActivity
 import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.data.ClickDescription
-import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapSongBinding
 
 class TapSongActivity : AbstractActivity() {
@@ -28,7 +28,7 @@ class TapSongActivity : AbstractActivity() {
         fTapPartComponent = TapPartComponent(fBinding.tapPart, this::startSound, this::stopSound)
 
         fBinding.selectTrackButton.setOnClickListener {
-            startActivityForResult(createSelectTrackRequest(), TapSongActivity.kREQUEST_TRACK_CODE)
+            startActivityForResult(createSelectTrackRequest(), kREQUEST_TRACK_CODE)
         }
 
         fBinding.clearTrackButton.setOnClickListener {
@@ -88,6 +88,7 @@ class TapSongActivity : AbstractActivity() {
                 fTapPartComponent.getDivisionCount(),
                 fTapPartComponent.getBeatCount(),
                 fTapPartComponent.isCountOff(),
+                emptyList(), // TODO
                 trackPath
             ),
             fBinding.name.text.toString(),
@@ -135,33 +136,19 @@ class TapSongActivity : AbstractActivity() {
     private fun loadIntent() {
         fBinding.name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
 
-        val newTempo = intent.getIntExtra(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
-        fTapPartComponent.setTempo(newTempo)
-
-        val newClickType = intent.getIntExtra(kINTENT_DATA_CLICK_TYPE, EClickType.DEFAULT.value)
-            .let(EClickType::of)
-        fTapPartComponent.setClickType(newClickType)
-
-        val newDivisionCount = intent.getIntExtra(
-            kINTENT_DATA_DIVISION_COUNT,
-            ClickDescription.DEFAULT_DIVISION_COUNT
-        )
-        fTapPartComponent.setDivisionCount(newDivisionCount)
-
-        val newBeatCount = intent.getIntExtra(
-            kINTENT_DATA_BEAT_COUNT,
-            ClickDescription.DEFAULT_BEAT_COUNT
-        )
-        fTapPartComponent.setBeatCount(newBeatCount)
-
-        val newCountOff = intent.getBooleanExtra(
-            kINTENT_DATA_COUNT_OFF,
-            ClickDescription.DEFAULT_COUNT_OFF
-        )
-        fTapPartComponent.setCountOff(newCountOff)
-
-        val newTrackPath = intent.getStringExtra(kINTENT_DATA_TRACK_PATH)
-        setTrack(newTrackPath)
+        val newClick = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+            intent.getSerializableExtra(kINTENT_DATA_CLICK, ClickDescription::class.java)
+        else
+            intent.getSerializableExtra(kINTENT_DATA_CLICK) as ClickDescription
+        if (newClick != null) {
+            fTapPartComponent.setTempo(newClick.bpm)
+            fTapPartComponent.setClickType(newClick.type)
+            fTapPartComponent.setDivisionCount(newClick.divisionCount)
+            fTapPartComponent.setBeatCount(newClick.beatCount)
+            fTapPartComponent.setCountOff(newClick.countOff)
+            // TODO sections
+            setTrack(newClick.trackPath)
+        }
 
         fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
@@ -176,13 +163,8 @@ class TapSongActivity : AbstractActivity() {
 
 
     companion object {
-        const val kINTENT_DATA_TEMPO = "tempo"
-        const val kINTENT_DATA_CLICK_TYPE = "click_type"
-        const val kINTENT_DATA_DIVISION_COUNT = "division_count"
-        const val kINTENT_DATA_BEAT_COUNT = "beat_count"
-        const val kINTENT_DATA_COUNT_OFF = "count_off"
         const val kINTENT_DATA_NAME = "name"
-        const val kINTENT_DATA_TRACK_PATH = "track_path"
+        const val kINTENT_DATA_CLICK = "click"
         const val kINTENT_DATA_SCORE_LINK = "score_link"
 
         private const val kREQUEST_TRACK_CODE = 4
@@ -204,14 +186,8 @@ class TapSongActivity : AbstractActivity() {
             name: String,
             scoreLink: String?
         ) {
-            intent.putExtra(kINTENT_DATA_TEMPO, click.bpm)
-            intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
-            intent.putExtra(kINTENT_DATA_DIVISION_COUNT, click.divisionCount)
-            intent.putExtra(kINTENT_DATA_BEAT_COUNT, click.beatCount)
-            intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
-            if (click.trackPath != null)
-                intent.putExtra(kINTENT_DATA_TRACK_PATH, click.trackPath)
             intent.putExtra(kINTENT_DATA_NAME, name)
+            intent.putExtra(kINTENT_DATA_CLICK, click)
             if (scoreLink != null)
                 intent.putExtra(kINTENT_DATA_SCORE_LINK, scoreLink)
         }

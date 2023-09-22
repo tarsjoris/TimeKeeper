@@ -2,6 +2,7 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.ActionMode
@@ -262,57 +263,27 @@ class PlaylistEditActivity : AbstractActivity() {
                     fPlaylist?.let { playlist ->
                         if (fPosition in 0 until playlist.songs.size) {
                             val newName = d.getStringExtra(TapSongActivity.kINTENT_DATA_NAME)
-                            val newTempo = d.getIntExtra(
-                                TapSongActivity.kINTENT_DATA_TEMPO,
-                                ClickDescription.DEFAULT_TEMPO
-                            )
-                            val newClickType = EClickType.of(
-                                d.getIntExtra(
-                                    TapSongActivity.kINTENT_DATA_CLICK_TYPE,
-                                    EClickType.DEFAULT.value
-                                )
-                            )
-                            val newDivisionCount = d.getIntExtra(
-                                TapSongActivity.kINTENT_DATA_DIVISION_COUNT,
-                                ClickDescription.DEFAULT_DIVISION_COUNT
-                            )
-                            val newBeatCount = d.getIntExtra(
-                                TapSongActivity.kINTENT_DATA_BEAT_COUNT,
-                                ClickDescription.DEFAULT_BEAT_COUNT
-                            )
-                            val newCountOff =
-                                d.getBooleanExtra(
-                                    TapSongActivity.kINTENT_DATA_COUNT_OFF,
-                                    ClickDescription.DEFAULT_COUNT_OFF
-                                )
-                            val newTrackPath =
-                                d.getStringExtra(TapSongActivity.kINTENT_DATA_TRACK_PATH)
+                            val newClick =
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                                    d.getSerializableExtra(
+                                        TapSongActivity.kINTENT_DATA_CLICK,
+                                        ClickDescription::class.java
+                                    )
+                                else
+                                    d.getSerializableExtra(TapSongActivity.kINTENT_DATA_CLICK) as ClickDescription
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { it.ifBlank { null } }
 
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
-                            val replaceTempo = newTempo != song.click.bpm
-                            val replaceClickType = newClickType != song.click.type
-                            val replaceDivisionCount = newDivisionCount != song.click.divisionCount
-                            val replaceBeatCount = newBeatCount != song.click.beatCount
-                            val replaceCountOff = newCountOff != song.click.countOff
-                            val replaceTrackPath = newTrackPath != song.click.trackPath
+                            val replaceClick = newClick != song.click
                             val replaceScoreLink = newScoreLink != song.scoreLink
-                            if (replaceName || replaceTempo || replaceClickType || replaceDivisionCount || replaceBeatCount || replaceCountOff || replaceTrackPath || replaceScoreLink) {
+                            if (replaceName || replaceClick || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
-                                if (replaceTempo || replaceClickType || replaceDivisionCount || replaceBeatCount || replaceCountOff || replaceTrackPath)
-                                    song.click =
-                                        ClickDescription(
-                                            newTempo,
-                                            newClickType,
-                                            newDivisionCount,
-                                            newBeatCount,
-                                            newCountOff,
-                                            newTrackPath
-                                        )
+                                if (replaceClick && newClick != null)
+                                    song.click = newClick
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)

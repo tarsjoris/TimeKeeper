@@ -13,6 +13,8 @@ package be.t_ars.timekeeper.sound
 import android.content.Context
 import java.io.*
 import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
@@ -30,10 +32,19 @@ const val SAMPLES_PER_SECOND = 44100
 private const val FORMAT_PCM_8BIT = 1
 private const val FORMAT_FLOAT = 3
 
-typealias OpenFile = (String) -> InputStream
+typealias OpenFile = (String) -> InputStream?
 
 class WaveUtil(private val openFile: OpenFile) {
-    constructor(context: Context) : this({ name -> context.assets.open(name) })
+    constructor(context: Context) : this({ name ->
+        try
+        {
+            context.assets.open(name)
+        }
+        catch (e: FileNotFoundException)
+        {
+            null
+        }
+    })
 
     /*
      WAV File Specification
@@ -211,33 +222,28 @@ a trimmed down version that most wav files adhere to.
         return buffer
     }
 
-    private fun generateSample(bpm: Int, filename: String): ByteArray {
+    fun mixCountOff(click: ByteArray, bpm: Int, beats: Int): ByteArray {
+        val clickCopy = click.clone()
         val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(samplesPerBeat * 2) { -128 }
-        val sample = readSample(filename)
-        copyBytes(sample, buffer, 0)
-        return buffer
-    }
-
-    fun generateCountOff(bpm: Int, beats: Int): ByteArray {
-        val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
-        val buffer = ByteArray(beats * samplesPerBeat * 2) { -128 }
-        val samples = readSamples("countdown", beats)
+        val samples = readSamples("countdown", min(beats, 4))
         for (i in 0 until beats) {
-            copyBytes(
-                samples[i],
-                buffer,
+            mixIn(
+                clickCopy,
+                samples[i.mod(samples.size)],
                 (samplesPerBeat.toDouble() * i.toDouble()).roundToInt() * 2
             )
         }
-        return buffer
+        return clickCopy
     }
+
+    fun mixCue(click: ByteArray, cueFilename: String) =
+        mixCopy(click, readSample("cue-$cueFilename.wav"), 0)
 
     private fun readSamples(prefix: String, beats: Int) =
         Array(beats) { readSample("${prefix}${it + 1}.wav") }
 
-    private fun readSample(filename: String): ByteArray {
-        openFile(filename).use { input ->
+    private fun readSample(filename: String): ByteArray? =
+        openFile(filename)?.use { input ->
             val header = readHeader(input)
             if (header.audioFormat != FORMAT_PCM_8BIT) {
                 throw IllegalArgumentException("Only 8bit PCM is supported")
@@ -255,7 +261,6 @@ a trimmed down version that most wav files adhere to.
             input.read(buffer)
             return buffer
         }
-    }
 
     companion object {
         fun readHeader(input: InputStream): WaveHeader {
@@ -287,20 +292,53 @@ a trimmed down version that most wav files adhere to.
             return WaveHeader(audioFormat, numChannels, sampleRate, bitsPerSample, dataSize)
         }
 
-        private fun adjustVolume(input: ByteArray, volumePercentage: Int) =
-            ByteArray(input.size) {
-                val amplitude = input[it].toUByte().toInt() - 128
-                val adjustedAmplitude =
-                    (amplitude.toDouble() * volumePercentage.toDouble() / 100.0).roundToInt()
-                (adjustedAmplitude + 128).toByte()
-            }
+        private fun adjustVolume(input: ByteArray?, volumePercentage: Int) =
+            if (input == null)
+                null
+            else
+                ByteArray(input.size) {
+                    val amplitude = input[it].toUByte().toInt() - 128
+                    val adjustedAmplitude =
+                        (amplitude.toDouble() * volumePercentage.toDouble() / 100.0).roundToInt()
+                    (adjustedAmplitude + 128).toByte()
+                }
 
-        fun copyBytes(from: ByteArray, to: ByteArray, bufferOffset: Int) {
-            from.indices.forEach { index ->
+        fun copyBytes(from: ByteArray?, to: ByteArray, bufferOffset: Int) {
+            from?.indices?.forEach { index ->
                 val targetIndex = bufferOffset + index
                 if (targetIndex in to.indices) {
                     to[targetIndex] = from[index]
                 }
+            }
+        }
+
+        private fun mixCopy(click: ByteArray, sample: ByteArray?, offset: Int) =
+            if (sample == null)
+                click
+            else
+                ByteArray(click.size) { index ->
+                    if (index in offset until (offset + sample.size)) {
+                        val a = click[index].toUByte().toInt() - 128
+                        val b = sample[index - offset].toUByte().toInt() - 128
+                        val c = a + b
+                        val clipped = max(min(c, 127), -128)
+                        (clipped + 128).toByte()
+                    } else {
+                        click[index]
+                    }
+                }
+
+        private fun mixIn(click: ByteArray, sample: ByteArray?, offset: Int) {
+            if (sample == null || offset !in click.indices) {
+                return
+            }
+            val upperExclusive = min(click.size, offset + sample.size)
+            for (i in offset until upperExclusive) {
+                val a = click[i].toUByte().toInt() - 128
+                val b = sample[i - offset].toUByte().toInt() - 128
+                val c = a + b
+                val clipped = max(min(c, 127), -128)
+                click[i] = (clipped + 128).toByte()
             }
         }
 

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -62,19 +63,17 @@ class SoundService : Service() {
                 when (extras.getString(kINTENT_DATA_ACTION)) {
                     "start" -> {
                         val label = extras.getString(kINTENT_DATA_LABEL)
-                        val click = ClickDescription(
-                            extras.getInt(kINTENT_DATA_BPM),
-                            extras.getInt(kINTENT_DATA_CLICK_TYPE).let(EClickType::of),
-                            extras.getInt(kINTENT_DATA_DIVISION_COUNT),
-                            extras.getInt(kINTENT_DATA_BEAT_COUNT),
-                            extras.getBoolean(kINTENT_DATA_COUNT_OFF, false),
-                            extras.getString(kINTENT_DATA_TRACK_PATH)
-                        )
+                        val click = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                            extras.getSerializable(kINTENT_DATA_CLICK, ClickDescription::class.java)
+                        else
+                            extras.getSerializable(kINTENT_DATA_CLICK) as ClickDescription
                         val returnActivityClass = extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
                             ?.let { if (it is Class<*>) it else null }
                         val returnActivityExtras = extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
                             ?.let { if (it is HashMap<*, *>) it else null }
-                        doStart(label, click, returnActivityClass, returnActivityExtras)
+                        if (click != null) {
+                            doStart(label, click, returnActivityClass, returnActivityExtras)
+                        }
                     }
                     "stop" -> doStop()
                 }
@@ -180,12 +179,7 @@ class SoundService : Service() {
     companion object {
         private const val kINTENT_DATA_ACTION = "action"
         private const val kINTENT_DATA_LABEL = "label"
-        private const val kINTENT_DATA_BPM = "bpm"
-        private const val kINTENT_DATA_CLICK_TYPE = "clickType"
-        private const val kINTENT_DATA_DIVISION_COUNT = "divisionCount"
-        private const val kINTENT_DATA_BEAT_COUNT = "beatCount"
-        private const val kINTENT_DATA_COUNT_OFF = "countOff"
-        private const val kINTENT_DATA_TRACK_PATH = "trackPath"
+        private const val kINTENT_DATA_CLICK = "click"
         private const val kINTENT_DATA_RETURN_ACTIVITY_CLASS = "returnActivityClass"
         private const val kINTENT_DATA_RETURN_ACTIVITY_EXTRAS = "returnActivityExtras"
 
@@ -200,12 +194,7 @@ class SoundService : Service() {
                 .also { intent ->
                     intent.putExtra(kINTENT_DATA_ACTION, "start")
                     intent.putExtra(kINTENT_DATA_LABEL, label)
-                    intent.putExtra(kINTENT_DATA_BPM, click.bpm)
-                    intent.putExtra(kINTENT_DATA_CLICK_TYPE, click.type.value)
-                    intent.putExtra(kINTENT_DATA_DIVISION_COUNT, click.divisionCount)
-                    intent.putExtra(kINTENT_DATA_BEAT_COUNT, click.beatCount)
-                    intent.putExtra(kINTENT_DATA_COUNT_OFF, click.countOff)
-                    click.trackPath?.let { intent.putExtra(kINTENT_DATA_TRACK_PATH, it) }
+                    intent.putExtra(kINTENT_DATA_CLICK, click)
                     returnActivityClass?.let {
                         intent.putExtra(
                             kINTENT_DATA_RETURN_ACTIVITY_CLASS,

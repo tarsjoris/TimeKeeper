@@ -7,6 +7,7 @@ import android.media.AudioTrack
 import android.media.SoundPool
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
+import be.t_ars.timekeeper.data.Section
 import be.t_ars.timekeeper.getSettingOutputDevice
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -71,13 +72,51 @@ class SoundGenerator(
         audioTrack.play()
         fAudioTrack = audioTrack
 
-        Thread {
-            if (click.countOff) {
-                val countOffBuffer = WaveUtil(context).generateCountOff(click.bpm, 4)
-                audioTrack.write(countOffBuffer, 0, countOffBuffer.size)
-            }
-            while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                audioTrack.write(clickBuffer, 0, clickBuffer.size)
+        val waveUtil = WaveUtil(context)
+        Thread clickLoop@{
+            val sections = click.sections
+            if (sections.isNotEmpty()) {
+                audioTrack.write(
+                    waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
+                    0,
+                    clickBuffer.size
+                )
+                for (i in sections.indices) {
+                    repeat(sections[i].barCount - 1) {
+                        if (audioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) {
+                            return@clickLoop
+                        }
+                        audioTrack.write(clickBuffer, 0, clickBuffer.size)
+                    }
+                    if (audioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) {
+                        return@clickLoop
+                    }
+                    if ((i + 1) in sections.indices) {
+                        val nextCue = sections[i + 1].cue
+                        if (nextCue != null) {
+                            audioTrack.write(
+                                waveUtil.mixCue(clickBuffer, nextCue.id),
+                                0,
+                                clickBuffer.size
+                            )
+                        } else {
+                            audioTrack.write(clickBuffer, 0, clickBuffer.size)
+                        }
+                    } else {
+                        audioTrack.write(clickBuffer, 0, clickBuffer.size)
+                    }
+                }
+            } else {
+                if (click.countOff) {
+                    audioTrack.write(
+                        waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
+                        0,
+                        clickBuffer.size
+                    )
+                }
+                while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    audioTrack.write(clickBuffer, 0, clickBuffer.size)
+                }
             }
         }.start()
     }

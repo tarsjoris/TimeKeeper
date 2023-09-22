@@ -17,14 +17,17 @@ object WaveUtilTest {
     fun main(args: Array<String>) {
         try {
             val waveUtil = WaveUtil(this::openFile)
-            val countOff = waveUtil.generateCountOff(120, 4)
             //val click = generateClick(880, 50, 120, 440, 60, 2)
             //val click = waveUtil.generateShakerLoop(120)
             val cowbell = waveUtil.generateCowbell(120, 2, 4, 30)
-            val buffer = ByteArray(countOff.size + cowbell.size)
+            val buffer = ByteArray(cowbell.size * 4)
             var offset = 0
-            WaveUtil.copyBytes(countOff, buffer, offset)
-            offset += countOff.size
+            WaveUtil.copyBytes(waveUtil.mixCountOff(cowbell, 120, 4), buffer, offset)
+            offset += cowbell.size
+            WaveUtil.copyBytes(cowbell, buffer, offset)
+            offset += cowbell.size
+            WaveUtil.copyBytes(waveUtil.mixCue(cowbell, "chorus"), buffer, offset)
+            offset += cowbell.size
             WaveUtil.copyBytes(cowbell, buffer, offset)
             FileOutputStream("click.wav").use { out ->
                 save(out, 2, SAMPLES_PER_SECOND, 1, buffer)

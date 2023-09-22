@@ -13,6 +13,7 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
 import java.util.*
 import java.util.regex.Pattern
 
@@ -50,70 +51,116 @@ class PlaylistStore(private val fContext: Context) {
 
     fun readPlaylist(id: Long): Playlist? {
         try {
-            var playlist: Playlist? = null
-            fContext.contentResolver.openInputStream(getPlaylistUri(id))?.use { inputStream ->
-                val parser = Xml.newPullParser()
-                parser.setInput(inputStream, "UTF-8")
-                while (true) {
-                    when (parser.next()) {
-                        XmlPullParser.START_TAG -> {
-                            if (kTAG_PLAYLIST == parser.name) {
-                                val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val weight =
-                                    Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
-                                playlist = Playlist(id, name, weight)
-                            } else if (kTAG_SONG == parser.name) {
-                                val name = parser.getAttributeValue(null, kATTR_NAME)
-                                val tempo = parser.getAttributeValue(null, kATTR_TEMPO)?.toInt()
-                                    ?: ClickDescription.DEFAULT_TEMPO
-                                val clickType = parser.getAttributeValue(null, kATTR_CLICK_TYPE)
-                                    ?.let(Integer::parseInt)
-                                    ?.let(EClickType::of)
-                                    ?: EClickType.DEFAULT
-                                val divisionCount =
-                                    parser.getAttributeValue(null, kATTR_DIVISION_COUNT)?.toInt()
-                                        ?: ClickDescription.DEFAULT_DIVISION_COUNT
-                                val beatCount =
-                                    parser.getAttributeValue(null, kATTR_BEAT_COUNT)?.toInt()
-                                        ?: ClickDescription.DEFAULT_BEAT_COUNT
-                                val countOff = parser.getAttributeValue(null, kATTR_COUNT_OFF)
-                                    ?.let { it.toBoolean() }
-                                    ?: false
-                                val trackPath = parser.getAttributeValue(null, kATTR_TRACK_PATH)
-                                val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
-                                playlist?.addSong(
-                                    Song(
-                                        name,
-                                        ClickDescription(
-                                            tempo,
-                                            clickType,
-                                            divisionCount,
-                                            beatCount,
-                                            countOff,
-                                            trackPath
-                                        ),
-                                        scoreLink
-                                    )
-                                )
-                            }
-                        }
-
-                        XmlPullParser.END_DOCUMENT -> {
-                            return playlist
-                        }
-
-                        else -> {
-                        }
-                    }
-                }
-            }
+            return fContext.contentResolver.openInputStream(getPlaylistUri(id))
+                ?.use { inputStream -> readPlaylist(id, inputStream) }
         } catch (e: XmlPullParserException) {
             Log.e("TimeKeeper", "Could not read playlist: " + e.message, e)
         } catch (e: IOException) {
             Log.e("TimeKeeper", "Could not read playlist: " + e.message, e)
         }
-
         return null
+    }
+
+    private fun readPlaylist(id: Long, inputStream: InputStream): Playlist? {
+        var playlist: Playlist? = null
+        var song: Song? = null
+        var sections: MutableList<Section>? = null
+        val parser = Xml.newPullParser()
+        parser.setInput(inputStream, "UTF-8")
+        while (true) {
+            when (parser.next()) {
+                XmlPullParser.START_TAG -> {
+                    when (parser.name) {
+                        kTAG_PLAYLIST -> {
+                            val name = parser.getAttributeValue(null, kATTR_NAME)
+                            val weight =
+                                Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
+                            playlist = Playlist(id, name, weight)
+                        }
+
+                        kTAG_SONG -> {
+                            val name = parser.getAttributeValue(null, kATTR_NAME)
+                            val tempo = parser.getAttributeValue(null, kATTR_TEMPO)?.toInt()
+                                ?: ClickDescription.DEFAULT_TEMPO
+                            val clickType = parser.getAttributeValue(null, kATTR_CLICK_TYPE)
+                                ?.let(Integer::parseInt)
+                                ?.let(EClickType::of)
+                                ?: EClickType.DEFAULT
+                            val divisionCount =
+                                parser.getAttributeValue(null, kATTR_DIVISION_COUNT)?.toInt()
+                                    ?: ClickDescription.DEFAULT_DIVISION_COUNT
+                            val beatCount =
+                                parser.getAttributeValue(null, kATTR_BEAT_COUNT)?.toInt()
+                                    ?: ClickDescription.DEFAULT_BEAT_COUNT
+                            val countOff = parser.getAttributeValue(null, kATTR_COUNT_OFF)
+                                ?.let { it.toBoolean() }
+                                ?: false
+                            val trackPath = parser.getAttributeValue(null, kATTR_TRACK_PATH)
+                            val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
+                            song = Song(
+                                name,
+                                ClickDescription(
+                                    tempo,
+                                    clickType,
+                                    divisionCount,
+                                    beatCount,
+                                    countOff,
+                                    emptyList(),
+                                    trackPath
+                                ),
+                                scoreLink
+                            )
+                            /*
+                            sections = MutableList(ECue.values().size + 1) {
+                                Section(1, if (it > 0) ECue.values()[it - 1] else null)
+                            }
+                             */
+                            sections = ArrayList()
+                        }
+
+                        kTAG_SECTION -> {
+                            if (sections != null) {
+                                val barCount =
+                                    parser.getAttributeValue(null, kATTR_BAR_COUNT)?.toInt() ?: 4
+                                val cue = parser.getAttributeValue(null, kATTR_CUE)
+                                    ?.let(ECue::of)
+                                sections.add(Section(barCount, cue))
+                            }
+                        }
+                    }
+                }
+
+                XmlPullParser.END_TAG -> {
+                    when (parser.name) {
+                        kTAG_SONG -> {
+                            if (playlist != null && song != null && sections != null) {
+                                playlist.addSong(
+                                    Song(
+                                        song.name,
+                                        ClickDescription(
+                                            song.click.bpm,
+                                            song.click.type,
+                                            song.click.divisionCount,
+                                            song.click.beatCount,
+                                            song.click.countOff,
+                                            sections,
+                                            song.click.trackPath
+                                        ),
+                                        song.scoreLink
+                                    )
+                                )
+                            }
+                            song = null
+                            sections = null
+                        }
+                    }
+                }
+
+                XmlPullParser.END_DOCUMENT -> {
+                    return playlist
+                }
+            }
+        }
     }
 
     fun addPlaylist(playlist: Playlist) {
@@ -258,6 +305,19 @@ class PlaylistStore(private val fContext: Context) {
                             serializer.attribute(null, kATTR_TRACK_PATH, song.click.trackPath)
                         if (song.scoreLink != null)
                             serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
+
+                        for (section in song.click.sections) {
+                            serializer.startTag(null, kTAG_SECTION)
+                            if (section.cue != null) {
+                                serializer.attribute(
+                                    null,
+                                    kATTR_CUE,
+                                    section.cue.id.toString()
+                                )
+                            }
+                            serializer.attribute(null, kATTR_BAR_COUNT, section.barCount.toString())
+                            serializer.endTag(null, kTAG_SECTION)
+                        }
                         serializer.endTag(null, kTAG_SONG)
                     }
                     serializer.endTag(null, kTAG_PLAYLIST)
@@ -311,6 +371,7 @@ class PlaylistStore(private val fContext: Context) {
     companion object {
         private const val kTAG_PLAYLIST = "playlist"
         private const val kTAG_SONG = "song"
+        private const val kTAG_SECTION = "section"
         private const val kATTR_NAME = "name"
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
@@ -320,6 +381,8 @@ class PlaylistStore(private val fContext: Context) {
         private const val kATTR_COUNT_OFF = "count_off"
         private const val kATTR_TRACK_PATH = "track_path"
         private const val kATTR_SCORE_LINK = "score_link"
+        private const val kATTR_CUE = "cue"
+        private const val kATTR_BAR_COUNT = "bar_count"
 
         private val kPLAYLIST_COMPARATOR = PlaylistComparator()
         private val kFILENAME_PATTERN = Pattern.compile("([0-9]+)\\.xml")

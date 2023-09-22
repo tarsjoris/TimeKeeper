@@ -1,12 +1,18 @@
 package be.t_ars.timekeeper.data
 
+import java.io.Serializable
+
+data class Section(val barCount: Int, val cue: ECue?) : Serializable
+
 data class ClickDescription(
     val bpm: Int,
     val type: EClickType,
     val divisionCount: Int,
     val beatCount: Int,
     val countOff: Boolean,
-    val trackPath: String? = null) {
+    val sections: List<Section> = emptyList(),
+    val trackPath: String? = null
+) : Serializable {
     companion object {
         const val DEFAULT_TEMPO = 120
         const val DEFAULT_DIVISION_COUNT = 1
