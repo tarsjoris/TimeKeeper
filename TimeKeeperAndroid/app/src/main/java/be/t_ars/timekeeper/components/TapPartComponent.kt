@@ -7,8 +7,7 @@ import be.t_ars.timekeeper.databinding.TapPartBinding
 
 class TapPartComponent(
     private val tapPart: TapPartBinding,
-    private val startSoundCallback: (ClickDescription) -> Unit,
-    private val stopSound: () -> Unit
+    private val clickChanged: () -> Unit
 ) {
     private val clickTypeSelection: ToggleGroup<EClickType> = ToggleGroup(
         arrayOf(
@@ -18,9 +17,7 @@ class TapPartComponent(
         )
     ) {
         clickType = it
-        if (playing) {
-            startSound()
-        }
+        clickChanged()
     }
     private val divisionsSelection: ToggleGroup<Int> = ToggleGroup(
         arrayOf(
@@ -31,9 +28,7 @@ class TapPartComponent(
         )
     ) {
         divisionCount = it
-        if (playing) {
-            startSound()
-        }
+        clickChanged()
     }
     private val beatsSelection: ToggleGroup<Int> = ToggleGroup(
         arrayOf(
@@ -47,15 +42,12 @@ class TapPartComponent(
         )
     ) {
         beatCount = it
-        if (playing) {
-            startSound()
-        }
+        clickChanged()
     }
     private val delayedUpdate = DelayedUpdate()
     private val timestamps = LongArray(17) { 0 }
     private var size = 0
     private var index = 0
-    private var playing = false
 
     private var tempo = ClickDescription.DEFAULT_TEMPO
     private var clickType = EClickType.DEFAULT
@@ -77,7 +69,7 @@ class TapPartComponent(
 
         override fun run() {
             synchronized(this) {
-                startSound()
+                clickChanged()
                 hasRun = true
             }
         }
@@ -94,80 +86,40 @@ class TapPartComponent(
 
         tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
             tempo = newValue
-            if (playing) {
-                delayedUpdate.update()
-            }
+            delayedUpdate.update()
         }
         tapPart.checkboxCountOff.setOnCheckedChangeListener { _, newValue ->
             countOff = newValue
         }
-        tapPart.buttonStart.setOnClickListener {
-            playing = true
-            tempo = tapPart.tempoSpinner.value
-            startSound()
-        }
-        tapPart.buttonStop.setOnClickListener {
-            playing = false
-            stopSound()
-        }
     }
 
-    fun setTempo(newTempo: Int) {
-        if (newTempo >= tapPart.tempoSpinner.minValue && newTempo <= tapPart.tempoSpinner.maxValue) {
-            tapPart.tempoSpinner.value = newTempo
-            tempo = newTempo
-            if (playing) {
-                startSound()
-            }
+    fun setClick(newClick: ClickDescription) {
+        var changed = false
+        if (newClick.bpm >= tapPart.tempoSpinner.minValue && newClick.bpm <= tapPart.tempoSpinner.maxValue) {
+            tapPart.tempoSpinner.value = newClick.bpm
+            tempo = newClick.bpm
+            changed = true
         }
-    }
+        if (clickTypeSelection.setValue(newClick.type)) {
+            clickType = newClick.type
+            changed = true
+        }
+        if (divisionsSelection.setValue(newClick.divisionCount)) {
+            divisionCount = newClick.divisionCount
+            changed = true
+        }
+        if (beatsSelection.setValue(newClick.beatCount)) {
+            beatCount = newClick.beatCount
+            changed = true
+        }
 
-    fun setClickType(type: EClickType) {
-        if (clickTypeSelection.setValue(type)) {
-            clickType = type
-            if (playing) {
-                startSound()
-            }
+        if (changed) {
+            clickChanged()
         }
     }
 
-    fun setDivisionCount(divisions: Int) {
-        if (divisionsSelection.setValue(divisions)) {
-            divisionCount = divisions
-            if (playing) {
-                startSound()
-            }
-        }
-    }
-
-    fun setBeatCount(beats: Int) {
-        if (beatsSelection.setValue(beats)) {
-            beatCount = beats
-            if (playing) {
-                startSound()
-            }
-        }
-    }
-
-    fun setCountOff(countOff: Boolean) {
-        tapPart.checkboxCountOff.isChecked = countOff
-        this.countOff = countOff
-    }
-
-    fun getTempo() =
-        tempo
-
-    fun getClickType() =
-        clickType
-
-    fun getDivisionCount() =
-        divisionCount
-
-    fun getBeatCount() =
-        beatCount
-
-    fun isCountOff() =
-        countOff
+    fun getClick() =
+        ClickDescription(tempo, clickType, divisionCount, beatCount, countOff)
 
     private fun doTap() {
         index = (index + 1) % timestamps.size
@@ -187,7 +139,8 @@ class TapPartComponent(
         }
         calculateBPM(16)?.let { tempo ->
             tapPart.tempo16.text = "$tempo"
-            setTempo(tempo)
+            tapPart.tempoSpinner.value = tempo
+            this.tempo = tempo
         }
     }
 
@@ -198,9 +151,5 @@ class TapPartComponent(
             return (60000 * granularity / diff).toInt()
         }
         return null
-    }
-
-    private fun startSound() {
-        startSoundCallback(ClickDescription(tempo, clickType, divisionCount, beatCount, countOff))
     }
 }

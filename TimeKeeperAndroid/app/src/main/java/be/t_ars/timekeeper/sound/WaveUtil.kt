@@ -225,7 +225,7 @@ a trimmed down version that most wav files adhere to.
     fun mixCountOff(click: ByteArray, bpm: Int, beats: Int): ByteArray {
         val clickCopy = click.clone()
         val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
-        val samples = readSamples("countdown", min(beats, 4))
+        val samples = readSamples("countdown", min(beats, 8))
         for (i in 0 until beats) {
             mixIn(
                 clickCopy,

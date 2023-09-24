@@ -5,4 +5,5 @@
     <color name="colorAccent">#009688</color>
     <color name="actionModeBackground">#A00000</color>
     <color name="tempoBackground">#CCCCCC</color>
+    <color name="panelBackground">#CCCCCC</color>
 </resources>

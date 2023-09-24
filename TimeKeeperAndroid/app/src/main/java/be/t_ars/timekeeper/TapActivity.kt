@@ -2,17 +2,18 @@ package be.t_ars.timekeeper
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.data.ClickDescription
-import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapBinding
 import java.io.Serializable
 
 class TapActivity : AbstractActivity() {
     private lateinit var fBinding: TapBinding
     private lateinit var fTapPartComponent: TapPartComponent
+    private var playing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,7 +21,16 @@ class TapActivity : AbstractActivity() {
         setContentView(fBinding.root)
         setSupportActionBar(fBinding.toolbar)
 
-        fTapPartComponent = TapPartComponent(fBinding.tapPart, this::startSound, this::stopSound)
+        fTapPartComponent = TapPartComponent(fBinding.tapPart, this::clickChanged)
+
+        fBinding.buttonStart.setOnClickListener {
+            playing = true
+            startSound()
+        }
+        fBinding.buttonStop.setOnClickListener {
+            playing = false
+            stopSound()
+        }
     }
 
     override fun onResume() {
@@ -44,27 +54,26 @@ class TapActivity : AbstractActivity() {
     private fun loadIntent() {
         val extras = intent.extras
         if (extras != null) {
-            val tempo = extras.getInt(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_TEMPO)
-            val type = EClickType.of(extras.getInt(kINTENT_TYPE, EClickType.DEFAULT.value))
-            val divisionCount = extras.getInt(kINTENT_DIVISION_COUNT, ClickDescription.DEFAULT_DIVISION_COUNT)
-            val beatCount = extras.getInt(kINTENT_BEAT_COUNT, ClickDescription.DEFAULT_BEAT_COUNT)
-            val countOff = extras.getBoolean(kINTENT_DATA_TEMPO, ClickDescription.DEFAULT_COUNT_OFF)
-
-            fTapPartComponent.setTempo(tempo)
-            fTapPartComponent.setClickType(type)
-            fTapPartComponent.setDivisionCount(divisionCount)
-            fTapPartComponent.setBeatCount(beatCount)
-            fTapPartComponent.setCountOff(countOff)
+            val click = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                extras.getSerializable(kINTENT_DATA_CLICK, ClickDescription::class.java)
+            else
+                extras.getSerializable(TapSongActivity.kINTENT_DATA_CLICK) as ClickDescription
+            if (click != null) {
+                fTapPartComponent.setClick(click)
+            }
         }
     }
 
-    private fun startSound(click: ClickDescription) {
+    private fun clickChanged() {
+        if (playing) {
+            startSound()
+        }
+    }
+
+    private fun startSound() {
+        val click = fTapPartComponent.getClick()
         val extras = HashMap<String, Serializable>().also {
-            it[kINTENT_DATA_TEMPO] = click.bpm
-            it[kINTENT_TYPE] = click.type.value
-            it[kINTENT_DIVISION_COUNT] = click.divisionCount
-            it[kINTENT_BEAT_COUNT] = click.beatCount
-            it[kINTENT_COUNT_OFF] = click.countOff
+            it[kINTENT_DATA_CLICK] = click
         }
         SoundService.startSound(this, null, click, TapActivity::class.java, extras)
     }
@@ -74,11 +83,7 @@ class TapActivity : AbstractActivity() {
     }
 
     companion object {
-        private const val kINTENT_DATA_TEMPO = "tempo"
-        private const val kINTENT_TYPE = "type"
-        private const val kINTENT_DIVISION_COUNT = "divisioncount"
-        private const val kINTENT_BEAT_COUNT = "beatcount"
-        private const val kINTENT_COUNT_OFF = "countoff"
+        private const val kINTENT_DATA_CLICK = "click"
 
         fun startActivity(context: Context) =
             Intent(context, TapActivity::class.java)

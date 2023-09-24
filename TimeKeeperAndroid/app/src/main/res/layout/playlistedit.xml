@@ -64,7 +64,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="4"
-                    android:background="@color/tempoBackground"
+                    android:background="@drawable/panel_background"
                     android:orientation="vertical"
                     android:padding="5dp">
 
@@ -72,15 +72,15 @@
                         android:id="@+id/playlistedit_selectfrom_list"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
-                        android:layout_weight="6"
+                        android:layout_weight="1"
                         android:choiceMode="singleChoice"/>
 
                     <android.widget.Button
                         android:id="@+id/playlistedit_selectfrom_close"
                         style="@style/button"
                         android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
                         android:text="@string/close" />
 
                 </android.widget.LinearLayout>

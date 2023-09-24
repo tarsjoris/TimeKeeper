@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto">
-	<item android:id="@+id/playlistedit_action_up"
+	<item android:id="@+id/sections_action_up"
           android:icon="@drawable/ic_arrow_up"
           android:title="@string/action_up"
           app:showAsAction="always" />
-	<item android:id="@+id/playlistedit_action_down"
+	<item android:id="@+id/sections_action_down"
           android:icon="@drawable/ic_arrow_down"
           android:title="@string/action_down"
           app:showAsAction="always" />
-    <item android:id="@+id/playlistedit_action_delete"
+    <item android:id="@+id/sections_action_delete"
           android:icon="@drawable/ic_delete"
           android:title="@string/action_delete"
 		app:showAsAction="ifRoom" />
-	<item android:id="@+id/playlistedit_action_delete_and_above"
-		android:icon="@drawable/delete_sweep"
-		android:title="@string/playlistedit_action_delete_and_above"
-		app:showAsAction="never" />
 </menu>

@@ -89,8 +89,8 @@ class PlaylistEditActivity : AbstractActivity() {
             R.string.playlistedit_action_addsong,
             R.drawable.ic_plus_dark,
             R.layout.playlistedit_song,
-            R.string.playlistedit_addsong_add,
-            R.string.playlistedit_addsong_cancel
+            R.string.add,
+            R.string.cancel
         )
         fRenamePlaylistDialog.setOptions(
             { view ->

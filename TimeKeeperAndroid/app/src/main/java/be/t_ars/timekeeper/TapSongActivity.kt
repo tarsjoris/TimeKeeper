@@ -10,12 +10,14 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.fragment.app.FragmentActivity
+import be.t_ars.timekeeper.components.SectionsPartComponent
 import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.databinding.TapSongBinding
 
 class TapSongActivity : AbstractActivity() {
     private lateinit var fBinding: TapSongBinding
+    private lateinit var fSectionsPartComponent: SectionsPartComponent
     private lateinit var fTapPartComponent: TapPartComponent
     private var fTrackPath: String? = null
 
@@ -25,7 +27,12 @@ class TapSongActivity : AbstractActivity() {
         setContentView(fBinding.root)
         setSupportActionBar(fBinding.toolbar)
 
-        fTapPartComponent = TapPartComponent(fBinding.tapPart, this::startSound, this::stopSound)
+        fSectionsPartComponent = SectionsPartComponent(this, fBinding.sectionsPart)
+        fTapPartComponent = TapPartComponent(fBinding.tapPart) {}
+
+        fBinding.sectionsButton.setOnClickListener {
+            fSectionsPartComponent.show()
+        }
 
         fBinding.selectTrackButton.setOnClickListener {
             startActivityForResult(createSelectTrackRequest(), kREQUEST_TRACK_CODE)
@@ -80,15 +87,16 @@ class TapSongActivity : AbstractActivity() {
     }
 
     private fun updateIntent(intent: Intent, trackPath: String?) {
+        val click = fTapPartComponent.getClick()
         fillIntent(
             intent,
             ClickDescription(
-                fTapPartComponent.getTempo(),
-                fTapPartComponent.getClickType(),
-                fTapPartComponent.getDivisionCount(),
-                fTapPartComponent.getBeatCount(),
-                fTapPartComponent.isCountOff(),
-                emptyList(), // TODO
+                click.bpm,
+                click.type,
+                click.divisionCount,
+                click.beatCount,
+                click.countOff,
+                fSectionsPartComponent.getSections(),
                 trackPath
             ),
             fBinding.name.text.toString(),
@@ -141,26 +149,13 @@ class TapSongActivity : AbstractActivity() {
         else
             intent.getSerializableExtra(kINTENT_DATA_CLICK) as ClickDescription
         if (newClick != null) {
-            fTapPartComponent.setTempo(newClick.bpm)
-            fTapPartComponent.setClickType(newClick.type)
-            fTapPartComponent.setDivisionCount(newClick.divisionCount)
-            fTapPartComponent.setBeatCount(newClick.beatCount)
-            fTapPartComponent.setCountOff(newClick.countOff)
-            // TODO sections
+            fSectionsPartComponent.setSections(newClick.sections)
+            fTapPartComponent.setClick(newClick)
             setTrack(newClick.trackPath)
         }
 
         fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
     }
-
-    private fun startSound(click: ClickDescription) {
-        SoundService.startSound(this, null, click)
-    }
-
-    private fun stopSound() {
-        SoundService.stopSound(this)
-    }
-
 
     companion object {
         const val kINTENT_DATA_NAME = "name"

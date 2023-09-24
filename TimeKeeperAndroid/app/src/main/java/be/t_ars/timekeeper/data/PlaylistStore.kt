@@ -110,11 +110,6 @@ class PlaylistStore(private val fContext: Context) {
                                 ),
                                 scoreLink
                             )
-                            /*
-                            sections = MutableList(ECue.values().size + 1) {
-                                Section(1, if (it > 0) ECue.values()[it - 1] else null)
-                            }
-                             */
                             sections = ArrayList()
                         }
 

@@ -13,11 +13,11 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            app:contentInsetStartWithNavigation="0dp"
-            app:navigationIcon="@drawable/ic_gesture_tap"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
+            app:contentInsetStartWithNavigation="0dp"
+            app:navigationIcon="@drawable/ic_gesture_tap"
             app:popupTheme="@style/AppTheme.PopupOverlay" />
 
     </com.google.android.material.appbar.AppBarLayout>
@@ -41,17 +41,29 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
+                    android:layout_weight="0"
                     android:text="@string/playlistedit_song_name" />
 
                 <android.widget.EditText
                     android:id="@+id/name"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_margin="5dp" />
+                    android:layout_margin="5dp"
+                    android:layout_weight="5" />
+
+                <android.widget.Button
+                    android:id="@+id/sections_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="0"
+                    android:text="@string/playlistedit_sections" />
 
             </android.widget.LinearLayout>
 
-            <include layout="@layout/tap_part" android:id="@+id/tap_part" />
+            <include
+                android:id="@+id/tap_part"
+                layout="@layout/tap_part" />
 
             <android.widget.LinearLayout
                 android:layout_width="match_parent"
@@ -70,15 +82,15 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:visibility="invisible"
-                    android:text="@string/playlistedit_clear_track" />
+                    android:text="@string/playlistedit_clear_track"
+                    android:visibility="invisible" />
 
                 <android.widget.TextView
                     android:id="@+id/track_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:inputType="textUri"/>
+                    android:inputType="textUri" />
 
             </android.widget.LinearLayout>
 
@@ -98,11 +110,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:inputType="textUri"/>
+                    android:inputType="textUri" />
 
             </android.widget.LinearLayout>
 
         </android.widget.LinearLayout>
+
+        <include
+            android:id="@+id/sections_part"
+            layout="@layout/sections_part" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
