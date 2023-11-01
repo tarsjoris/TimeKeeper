@@ -96,11 +96,19 @@ class TapPartComponent(
 
     fun setClick(newClick: ClickDescription) {
         var changed = false
-        if (newClick.bpm >= tapPart.tempoSpinner.minValue && newClick.bpm <= tapPart.tempoSpinner.maxValue) {
+        if (newClick.bpm >= tapPart.tempoSpinner.minValue &&
+            newClick.bpm <= tapPart.tempoSpinner.maxValue &&
+            newClick.bpm != tapPart.tempoSpinner.value
+        ) {
             tapPart.tempoSpinner.value = newClick.bpm
             tempo = newClick.bpm
             changed = true
         }
+        if (newClick.countOff != tapPart.checkboxCountOff.isChecked) {
+            tapPart.checkboxCountOff.isChecked = newClick.countOff
+            countOff = newClick.countOff
+            changed = true
+    }
         if (clickTypeSelection.setValue(newClick.type)) {
             clickType = newClick.type
             changed = true
