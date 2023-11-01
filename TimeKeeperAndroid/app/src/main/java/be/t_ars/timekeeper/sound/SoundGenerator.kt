@@ -76,11 +76,7 @@ class SoundGenerator(
         Thread clickLoop@{
             val sections = click.sections
             if (sections.isNotEmpty()) {
-                audioTrack.write(
-                    waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
-                    0,
-                    clickBuffer.size
-                )
+                generateCountOff(audioTrack, waveUtil, clickBuffer, click)
                 for (i in sections.indices) {
                     repeat(sections[i].barCount - 1) {
                         if (audioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) {
@@ -108,17 +104,28 @@ class SoundGenerator(
                 }
             } else {
                 if (click.countOff) {
-                    audioTrack.write(
-                        waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
-                        0,
-                        clickBuffer.size
-                    )
+                    generateCountOff(audioTrack, waveUtil, clickBuffer, click)
                 }
                 while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
                     audioTrack.write(clickBuffer, 0, clickBuffer.size)
                 }
             }
         }.start()
+    }
+
+    private fun generateCountOff(audioTrack: AudioTrack, waveUtil: WaveUtil, clickBuffer: ByteArray, click: ClickDescription) {
+        if (click.beatCount == 4) {
+            audioTrack.write(
+                waveUtil.mixCountOff(clickBuffer, click.bpm / 2, 2),
+                0,
+                clickBuffer.size
+            )
+        }
+        audioTrack.write(
+            waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
+            0,
+            clickBuffer.size
+        )
     }
 
     private fun createClickBuffer(click: ClickDescription): ByteArray {
