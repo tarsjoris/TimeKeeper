@@ -4,6 +4,7 @@ import android.os.Handler
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapPartBinding
+import kotlin.math.roundToInt
 
 class TapPartComponent(
     private val tapPart: TapPartBinding,
@@ -148,7 +149,7 @@ class TapPartComponent(
         if (size > granularity) {
             val index2 = (index + (timestamps.size - granularity)) % timestamps.size
             val diff = timestamps[index] - timestamps[index2]
-            return (60000 * granularity / diff).toInt()
+            return (60000.toDouble() * granularity.toDouble() / diff.toDouble()).roundToInt()
         }
         return null
     }
