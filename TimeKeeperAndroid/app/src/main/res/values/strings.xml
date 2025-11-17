@@ -30,6 +30,7 @@
     <string name="playlistedit_action_renameplaylist">Rename playlist</string>
     <string name="playlistedit_action_copy">Copy playlist</string>
     <string name="playlistedit_action_insertfrom">Insert from ...</string>
+    <string name="playlistedit_action_sort">Sort</string>
     <string name="playlistedit_action_normalmode">Normal mode</string>
     <string name="playlistedit_action_sendtop">Send to top</string>
     <string name="playlistedit_action_sendbottom">Send to bottom</string>

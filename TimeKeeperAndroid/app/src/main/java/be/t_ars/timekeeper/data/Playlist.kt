@@ -57,6 +57,11 @@ class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, w
         store.savePlaylist(this)
     }
 
+    fun sort(store: PlaylistStore) {
+        songs.sortBy { it.name }
+        store.savePlaylist(this)
+    }
+
     override fun hashCode() =
         id.toInt()
 

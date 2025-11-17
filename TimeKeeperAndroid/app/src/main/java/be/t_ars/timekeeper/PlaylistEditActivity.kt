@@ -157,8 +157,8 @@ class PlaylistEditActivity : AbstractActivity() {
         )
         fBinding.playlistedit.onItemClickListener =
             AdapterView.OnItemClickListener { _, _, position, _ ->
-                if (fPlaylist != null && position >= 0 && position < (fPlaylist?.songs?.size
-                        ?: 0)
+                if (fPlaylist != null && position >= 0 && position <
+                        (fPlaylist?.songs?.size ?: 0)
                 ) {
                     when (fEditMode) {
                         EditMode.NORMAL -> {
@@ -325,6 +325,10 @@ class PlaylistEditActivity : AbstractActivity() {
                 startInsertFrom()
             }
 
+            R.id.playlistedit_action_sort -> {
+                sort();
+            }
+
             R.id.playlistedit_action_normalmode -> {
                 fEditMode = EditMode.NORMAL
                 reloadSongs()
@@ -489,6 +493,11 @@ class PlaylistEditActivity : AbstractActivity() {
                     }
                 }
         }
+    }
+
+    private fun sort() {
+        fPlaylist?.sort(fStore)
+        reloadSongs()
     }
 
     companion object {
