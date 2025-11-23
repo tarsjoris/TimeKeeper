@@ -1,0 +1,74 @@
+package be.t_ars.timekeeper.xr18
+
+interface IOSCListener {
+    enum class ESoloSource(val id: Int) {
+        OFF(0),
+        LR(1),
+        LRPFL(2),
+        LRAFL(3),
+        AUX(4),
+        U1718(5),
+        BUS1(6),
+        BUS2(7),
+        BUS3(8),
+        BUS4(9),
+        BUS5(10),
+        BUS6(11),
+        BUS12(12),
+        BUS34(13),
+        BUS56(14);
+
+        companion object {
+            fun getSoloSource(id: Int?): ESoloSource {
+                for (v in ESoloSource.values()) {
+                    if (v.id == id) {
+                        return v
+                    }
+                }
+                return OFF
+            }
+        }
+    }
+
+    enum class EBusLink(val id: String) {
+        BUS12("1-2"),
+        BUS34("3-4"),
+        BUS56("5-6");
+
+        companion object {
+            fun getBusLink(id: String?): EBusLink? {
+                for (v in EBusLink.values()) {
+                    if (v.id == id) {
+                        return v
+                    }
+                }
+                return null
+            }
+        }
+    }
+
+    suspend fun channelMixOn(channel: Int, on: Boolean) {}
+    suspend fun channelLevel(channel: Int, level: Float) {}
+    suspend fun channelBusLevel(channel: Int, bus: Int, level: Float) {}
+    suspend fun channelName(channel: Int, name: String) {}
+    suspend fun channelColor(channel: Int, color: Int) {}
+    suspend fun busMixOn(bus: Int, on: Boolean) {}
+    suspend fun busLevel(bus: Int, level: Float) {}
+    suspend fun busName(bus: Int, name: String) {}
+    suspend fun busColor(bus: Int, color: Int) {}
+    suspend fun returnMixOn(returnChannel: Int, on: Boolean) {}
+    suspend fun returnLevel(returnChannel: Int, level: Float) {}
+    suspend fun returnName(returnChannel: Int, name: String) {}
+    suspend fun returnColor(returnChannel: Int, color: Int) {}
+    suspend fun fxSendMixOn(fxSend: Int, on: Boolean) {}
+    suspend fun fxSendLevel(fxSend: Int, level: Float) {}
+    suspend fun fxSendName(fxSend: Int, name: String) {}
+    suspend fun fxSendColor(fxSend: Int, color: Int) {}
+    suspend fun lrMixOn(on: Boolean) {}
+    suspend fun lrLevel(level: Float) {}
+    suspend fun lrName(name: String) {}
+    suspend fun lrColor(color: Int) {}
+    suspend fun soloSource(source: ESoloSource) {}
+    suspend fun busLink(busLink: EBusLink, on: Boolean) {}
+    suspend fun p16RoutingSource(routing: Int, source: Int) {}
+}

@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.provider.DocumentsContract
+import androidx.core.net.toUri
+import androidx.core.content.edit
 
 
 private const val kFREQUENCY = "frequency"
@@ -19,6 +21,7 @@ private const val kDIVISION_VOLUME = "divisionvolume"
 private const val kSCREEN_ORIENTATION = "screenorientation"
 private const val kFOLDER = "folder"
 private const val kAUTOPLAY = "autoplay"
+private const val kSHOW_ULTRANET_ROUTING ="showultranetrouting"
 private const val kOUTPUT_DEVICE = "outputdevice"
 private const val kCURRENT_PLAYLIST_ID = "currentplaylistid"
 private const val kCURRENT_SONG_INDEX = "currentsongindex"
@@ -47,7 +50,7 @@ fun resolveFileUri(context: Context, filename: String): Uri {
 }
 
 fun getStorageFolder(context: Context) =
-    Uri.parse(getSettingFolder(context))
+    getSettingFolder(context)?.toUri()
 
 fun getSettingFolder(context: Context) =
     getStringPreference(
@@ -61,6 +64,9 @@ fun setSettingFolder(context: Context, uri: String) =
 
 fun getSettingAutoplay(context: Context) =
     getBoolPreference(context, kAUTOPLAY, true)
+
+fun getSettingShowUltranetRouting(context: Context) =
+    getBoolPreference(context, kSHOW_ULTRANET_ROUTING, false)
 
 fun getSettingOutputDeviceString(context: Context) =
     getStringPreference(context, kOUTPUT_DEVICE)
@@ -123,9 +129,9 @@ private fun getStringPreference(
 
 private fun setStringPreference(context: Context, key: String, value: String) {
     PreferenceManager.getDefaultSharedPreferences(context)
-        .edit()
-        .putString(key, value)
-        .apply()
+        .edit {
+            putString(key, value)
+        }
 }
 
 class SettingsActivity : Activity() {

@@ -89,6 +89,8 @@
     </string-array>
     <string name="pref_title_autoplay">Autoplay</string>
     <string name="pref_summary_autoplay">Start metronome when selecting song or pressing next.</string>
+    <string name="pref_title_showultranetrouting">Show Ultranet routing</string>
+    <string name="pref_summary_showultranetrouting">Show scribble strips of P16 Ultranet channels on playlist</string>
     <string name="pref_title_outputdevice">Output device</string>
     <string name="pref_summary_outputdevice">Select the preferred output device.</string>
     <string-array name="pref_entryvalues_outputdevice" />

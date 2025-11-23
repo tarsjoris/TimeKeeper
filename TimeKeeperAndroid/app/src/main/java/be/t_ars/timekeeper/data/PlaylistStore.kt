@@ -26,15 +26,15 @@ class PlaylistStore(private val fContext: Context) {
 
     fun readAllPlaylists(): List<PlaylistHeader> {
         val playlists = ArrayList<PlaylistHeader>()
-        DocumentFile.fromTreeUri(fContext, getFolder())
-            ?.listFiles()!!
-            .forEach { file ->
+        getFolder()
+            ?.let { DocumentFile.fromTreeUri(fContext, it) }
+            ?.listFiles()
+            ?.forEach { file ->
                 val matcher = kFILENAME_PATTERN.matcher(file.name!!)
                 if (matcher.matches()) {
-                    matcher.group(1)?.let { id ->
-                        readPlaylistHeader(file.uri, id)
-                            ?.let { playlists.add(it) }
-                    }
+                    matcher.group(1)
+                        ?.let { id -> readPlaylistHeader(file.uri, id) }
+                        ?.let { playlists.add(it) }
                 }
             }
         Collections.sort(playlists, kPLAYLIST_COMPARATOR)

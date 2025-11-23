@@ -43,6 +43,12 @@
 		android:summary="@string/pref_summary_autoplay"
 		android:defaultValue="true"
 		/>
+    <CheckBoxPreference
+        android:key="showultranetrouting"
+        android:title="@string/pref_title_showultranetrouting"
+        android:summary="@string/pref_summary_showultranetrouting"
+        android:defaultValue="false"
+        />
 	<ListPreference
 		android:key="outputdevice"
 		android:title="@string/pref_title_outputdevice"

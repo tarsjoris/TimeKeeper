@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical">
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/channelName"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/scribble_background_red_inv"
+        android:gravity="center_vertical"
+        android:text="Channel\nText"
+        android:textAlignment="center"
+        android:layout_margin="10dp"
+        android:textColor="@color/scribble_red" />
+
+    <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/channelNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp"
+        android:textColor="@color/scribble_white"
+        android:text="1"
+        android:textAlignment="center" />
+
+</android.widget.LinearLayout>

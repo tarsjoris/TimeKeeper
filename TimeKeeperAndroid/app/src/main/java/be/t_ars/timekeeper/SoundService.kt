@@ -12,7 +12,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import be.t_ars.timekeeper.data.ClickDescription
-import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.sound.SoundGenerator
 import be.t_ars.timekeeper.sound.TrackPlayer
 import java.io.Serializable
@@ -75,6 +74,7 @@ class SoundService : Service() {
                             doStart(label, click, returnActivityClass, returnActivityExtras)
                         }
                     }
+
                     "stop" -> doStop()
                 }
             }

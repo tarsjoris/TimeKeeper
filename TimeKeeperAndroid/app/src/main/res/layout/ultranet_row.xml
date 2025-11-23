@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:orientation="horizontal"
+    android:background="@color/scribble_background"
+    android:layout_marginTop="10dp"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp">
+
+    <include
+        android:id="@+id/ultranet_entry1"
+        layout="@layout/ultranet_entry" />
+
+    <include
+        android:id="@+id/ultranet_entry2"
+        layout="@layout/ultranet_entry" />
+
+    <include
+        android:id="@+id/ultranet_entry3"
+        layout="@layout/ultranet_entry" />
+
+    <include
+        android:id="@+id/ultranet_entry4"
+        layout="@layout/ultranet_entry" />
+
+</android.widget.LinearLayout>

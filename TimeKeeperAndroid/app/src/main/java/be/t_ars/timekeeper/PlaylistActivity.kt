@@ -7,10 +7,13 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.WindowManager
 import android.widget.AdapterView
+import android.widget.LinearLayout
 import android.widget.SimpleAdapter
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import be.t_ars.timekeeper.components.showUltranetRouting
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistStore
 import be.t_ars.timekeeper.databinding.PlaylistBinding
@@ -68,6 +71,13 @@ class PlaylistActivity : AbstractActivity() {
             fBroadcastReceiver,
             IntentFilter(TimeKeeperApplication.kBROADCAST_EVENT_SONG_CHANGED)
         )
+
+        if (getSettingShowUltranetRouting(this)) {
+            fBinding.ultranetPart.ultranetContainer.visibility = View.VISIBLE
+            fBinding.playlist.layoutParams =
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 2f)
+            showUltranetRouting(resources, fBinding.ultranetPart)
+        }
     }
 
     override fun onDestroy() {
@@ -98,12 +108,15 @@ class PlaylistActivity : AbstractActivity() {
             R.id.playlist_open_score -> {
                 openScore()
             }
+
             R.id.playlist_action_edit -> {
                 fCurrentPlaylist?.let { PlaylistEditActivity.startActivity(this, it.id) }
             }
+
             android.R.id.home -> {
                 OverviewActivity.startActivity(this)
             }
+
             else -> {
                 return super.onOptionsItemSelected(item)
             }
@@ -196,13 +209,14 @@ class PlaylistActivity : AbstractActivity() {
     }
 
     private fun trigger(selection: Int) {
-        sendBroadcast(Intent(TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG)
-            .also {
-                it.putExtra(
-                    TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG_EXTRA_SELECTION,
-                    selection
-                )
-            })
+        sendBroadcast(
+            Intent(TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG)
+                .also {
+                    it.putExtra(
+                        TimeKeeperApplication.kBROADCAST_ACTION_SELECT_SONG_EXTRA_SELECTION,
+                        selection
+                    )
+                })
     }
 
     private fun shouldOpenScoreOnNext() =

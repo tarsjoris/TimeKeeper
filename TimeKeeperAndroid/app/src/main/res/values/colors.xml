@@ -6,4 +6,13 @@
     <color name="actionModeBackground">#A00000</color>
     <color name="tempoBackground">#CCCCCC</color>
     <color name="panelBackground">#CCCCCC</color>
+    <color name="scribble_background">#222222</color>
+    <color name="scribble_black">#000000</color>
+    <color name="scribble_white">#FFFFFF</color>
+    <color name="scribble_red">#FF0000</color>
+    <color name="scribble_green">#00FF00</color>
+    <color name="scribble_yellow">#FFFF00</color>
+    <color name="scribble_blue">#0000FF</color>
+    <color name="scribble_magenta">#FF00FF</color>
+    <color name="scribble_cyan">#00FFFF</color>
 </resources>
