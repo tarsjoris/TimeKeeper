@@ -1,34 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
     <EditTextPreference
-		android:key="frequency"
-		android:title="@string/pref_title_frequency"
-		android:summary="@string/pref_summary_frequency"
-		android:inputType="number"
-		android:defaultValue="880"
-		 />
+        android:key="frequency"
+        android:title="@string/pref_title_frequency"
+        android:summary="@string/pref_summary_frequency"
+        android:inputType="number"
+        android:defaultValue="880"
+         />
     <EditTextPreference
-		android:key="duration"
-		android:title="@string/pref_title_duration"
-		android:summary="@string/pref_summary_duration"
-		android:inputType="number"
-		android:defaultValue="20"
-		/>
-	<EditTextPreference
-		android:key="divisionfrequency"
-		android:title="@string/pref_title_divisionfrequency"
-		android:summary="@string/pref_summary_divisionfrequency"
-		android:inputType="number"
-		android:defaultValue="880"
-		/>
-	<SeekBarPreference
-		android:key="divisionvolume"
-		android:title="@string/pref_title_divisionvolume"
-		android:summary="@string/pref_summary_divisionvolume"
-		android:min="1"
-		android:max="100"
-		android:defaultValue="60"
-		/>
+        android:key="duration"
+        android:title="@string/pref_title_duration"
+        android:summary="@string/pref_summary_duration"
+        android:inputType="number"
+        android:defaultValue="20"
+        />
+    <SeekBarPreference
+        android:key="mainvolume"
+        android:title="@string/pref_title_mainvolume"
+        android:summary="@string/pref_summary_mainvolume"
+        android:min="1"
+        android:max="100"
+        android:defaultValue="100"
+        />
+    <EditTextPreference
+        android:key="divisionfrequency"
+        android:title="@string/pref_title_divisionfrequency"
+        android:summary="@string/pref_summary_divisionfrequency"
+        android:inputType="number"
+        android:defaultValue="440"
+        />
+    <SeekBarPreference
+        android:key="divisionvolume"
+        android:title="@string/pref_title_divisionvolume"
+        android:summary="@string/pref_summary_divisionvolume"
+        android:min="1"
+        android:max="100"
+        android:defaultValue="60"
+        />
     <ListPreference
         android:key="screenorientation"
         android:title="@string/pref_title_screenorientation"
@@ -37,23 +45,23 @@
         android:entryValues="@array/pref_entryvalues_screenorientation"
         android:defaultValue="10"
         />
-	<CheckBoxPreference
-		android:key="autoplay"
-		android:title="@string/pref_title_autoplay"
-		android:summary="@string/pref_summary_autoplay"
-		android:defaultValue="true"
-		/>
+    <CheckBoxPreference
+        android:key="autoplay"
+        android:title="@string/pref_title_autoplay"
+        android:summary="@string/pref_summary_autoplay"
+        android:defaultValue="true"
+        />
     <CheckBoxPreference
         android:key="showultranetrouting"
         android:title="@string/pref_title_showultranetrouting"
         android:summary="@string/pref_summary_showultranetrouting"
         android:defaultValue="false"
         />
-	<ListPreference
-		android:key="outputdevice"
-		android:title="@string/pref_title_outputdevice"
-		android:summary="@string/pref_summary_outputdevice"
-		android:entries="@array/pref_entryvalues_outputdevice"
-		android:entryValues="@array/pref_entries_outputdevice"
-		/>
+    <ListPreference
+        android:key="outputdevice"
+        android:title="@string/pref_title_outputdevice"
+        android:summary="@string/pref_summary_outputdevice"
+        android:entries="@array/pref_entryvalues_outputdevice"
+        android:entryValues="@array/pref_entries_outputdevice"
+        />
 </PreferenceScreen>

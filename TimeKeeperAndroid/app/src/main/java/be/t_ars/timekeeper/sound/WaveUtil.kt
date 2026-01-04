@@ -40,7 +40,7 @@ class WaveUtil(private val openFile: OpenFile) {
         {
             context.assets.open(name)
         }
-        catch (e: FileNotFoundException)
+        catch (_: FileNotFoundException)
         {
             null
         }
@@ -120,10 +120,11 @@ a trimmed down version that most wav files adhere to.
         beepFrequency: Int,
         beepDurationMillis: Int,
         bpm: Int,
-        divisionFrequency: Int,
-        divisionVolume: Int,
         divisionCount: Int,
         beatCount: Int,
+        mainVolume: Int,
+        divisionFrequency: Int,
+        divisionVolume: Int,
         stereo: Boolean
     ): ByteArray {
         val divisionCount = if (divisionCount in 2..7) divisionCount else 1
@@ -133,14 +134,14 @@ a trimmed down version that most wav files adhere to.
         (0 until beatCount).forEach { beatIndex ->
             val beatFrequency = if (beatIndex == 0) beepFrequency else divisionFrequency
             val sampleCountOffset = beatIndex * samplesPerBeat
-            writeBeepInBuffer(beatFrequency, beepDurationMillis, 100, buffer, sampleCountOffset, stereo)
+            writeBeepInBuffer(beatFrequency, beepDurationMillis, mainVolume, buffer, sampleCountOffset, stereo)
             (1 until divisionCount).forEach { subDivisionIndex ->
                 val divisionSampleCountOffset = sampleCountOffset +
                         (samplesPerBeat.toDouble() / divisionCount.toDouble() * subDivisionIndex.toDouble()).roundToInt()
                 writeBeepInBuffer(
                     divisionFrequency,
                     beepDurationMillis,
-                    divisionVolume,
+                    mainVolume * divisionVolume / 100,
                     buffer,
                     divisionSampleCountOffset,
                     stereo
@@ -153,12 +154,12 @@ a trimmed down version that most wav files adhere to.
     private fun writeBeepInBuffer(
         sinesPerSecond: Int,
         beepDurationMillis: Int,
-        maxVolume: Int,
+        volume: Int,
         buffer: ByteArray,
         sampleCountOffset: Int,
         stereo: Boolean
     ) {
-        val maxVolume: Double = if (maxVolume in 1..100) maxVolume.toDouble() / 100.0 else 1.0
+        val maxVolume: Double = if (volume in 1..100) volume.toDouble() / 100.0 else 1.0
         val desiredSampleCount =
             SAMPLES_PER_SECOND.toDouble() * beepDurationMillis.toDouble() / 1000.0
         val samplesBetweenZeroCrossings =
@@ -182,11 +183,11 @@ a trimmed down version that most wav files adhere to.
         }
     }
 
-    fun generateShakerLoop(bpm: Int, divisionCount: Int, beatCount: Int, stereo: Boolean): ByteArray {
+    fun generateShakerLoop(bpm: Int, divisionCount: Int, beatCount: Int, volume: Int, stereo: Boolean): ByteArray {
         val divisionCount = if (divisionCount in 1..4) divisionCount else 4
         val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(beatCount * samplesPerBeat * 2) { -128 }
-        val samples = readSamples("shakerloop", 4)
+        val samples = readSamples("shakerloop", 4, volume)
         for (i in 0 until beatCount) {
             for (j in 0 until divisionCount) {
                 copyBytes(
@@ -204,21 +205,22 @@ a trimmed down version that most wav files adhere to.
         bpm: Int,
         divisionCount: Int,
         beatCount: Int,
+        mainVolume: Int,
         divisionVolume: Int,
         stereo: Boolean
     ): ByteArray {
         val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
         val buffer = ByteArray(beatCount * samplesPerBeat * 2) { -128 }
-        val high = readSample("high.wav")
-        val low = readSample("low.wav")
-        val softer = adjustVolume(low, divisionVolume)
+        val high = readSample("high.wav", mainVolume)
+        val low = readSample("low.wav", mainVolume)
+        val softerLow = low?.clone()?.also { adjustVolume(it, divisionVolume) }
         copyBytes(high, buffer, 0, stereo)
         for (i in 0 until beatCount) {
             for (j in 0 until divisionCount) {
                 val sample = if (j == 0)
                     if (i == 0) high else low
                 else
-                    softer
+                    softerLow
                 copyBytes(
                     sample,
                     buffer,
@@ -229,10 +231,10 @@ a trimmed down version that most wav files adhere to.
         return buffer
     }
 
-    fun mixCountOff(click: ByteArray, bpm: Int, beats: Int, stereo: Boolean): ByteArray {
+    fun mixCountOff(click: ByteArray, bpm: Int, beats: Int, volume: Int, stereo: Boolean): ByteArray {
         val clickCopy = click.clone()
         val samplesPerBeat = SAMPLES_PER_SECOND * 60 / bpm
-        val samples = readSamples("countdown", min(beats, 8))
+        val samples = readSamples("countdown", min(beats, 8), volume)
         for (i in 0 until beats) {
             mixIn(
                 clickCopy,
@@ -244,13 +246,16 @@ a trimmed down version that most wav files adhere to.
         return clickCopy
     }
 
-    fun mixCue(click: ByteArray, cueFilename: String) =
-        mixCopy(click, readSample("cue-$cueFilename.wav"), 0)
+    fun mixCue(click: ByteArray, cueFilename: String, volume: Int, stereo: Boolean): ByteArray {
+        val clickCopy = click.clone()
+        mixIn(clickCopy, readSample("cue-$cueFilename.wav", volume), 0, stereo)
+        return clickCopy
+    }
 
-    private fun readSamples(prefix: String, beats: Int) =
-        Array(beats) { readSample("${prefix}${it + 1}.wav") }
+    private fun readSamples(prefix: String, beats: Int, volume: Int) =
+        Array(beats) { readSample("${prefix}${it + 1}.wav", volume) }
 
-    private fun readSample(filename: String): ByteArray? =
+    private fun readSample(filename: String, volume: Int): ByteArray? =
         openFile(filename)?.use { input ->
             val header = readHeader(input)
             if (header.audioFormat != FORMAT_PCM_8BIT) {
@@ -267,6 +272,7 @@ a trimmed down version that most wav files adhere to.
             }
             val buffer = ByteArray(header.dataSize.toInt())
             input.read(buffer)
+            adjustVolume(buffer, volume)
             return buffer
         }
 
@@ -300,16 +306,16 @@ a trimmed down version that most wav files adhere to.
             return WaveHeader(audioFormat, numChannels, sampleRate, bitsPerSample, dataSize)
         }
 
-        private fun adjustVolume(input: ByteArray?, volumePercentage: Int) =
-            if (input == null)
-                null
-            else
-                ByteArray(input.size) {
-                    val amplitude = input[it].toUByte().toInt() - 128
+        private fun adjustVolume(input: ByteArray?, volumePercentage: Int) {
+            if (input != null && volumePercentage < 100) {
+                for (i in input.indices) {
+                    val amplitude = input[i].toUByte().toInt() - 128
                     val adjustedAmplitude =
                         (amplitude.toDouble() * volumePercentage.toDouble() / 100.0).roundToInt()
-                    (adjustedAmplitude + 128).toByte()
+                    input[i] = (adjustedAmplitude + 128).toByte()
                 }
+            }
+        }
 
         fun copyBytes(from: ByteArray?, to: ByteArray, bufferOffset: Int, stereo: Boolean) {
             if (from == null) return
@@ -324,22 +330,6 @@ a trimmed down version that most wav files adhere to.
                 }
             }
         }
-
-        private fun mixCopy(click: ByteArray, sample: ByteArray?, offset: Int) =
-            if (sample == null)
-                click
-            else
-                ByteArray(click.size) { index ->
-                    if (index in offset until (offset + sample.size)) {
-                        val a = click[index].toUByte().toInt() - 128
-                        val b = sample[index - offset].toUByte().toInt() - 128
-                        val c = a + b
-                        val clipped = max(min(c, 127), -128)
-                        (clipped + 128).toByte()
-                    } else {
-                        click[index]
-                    }
-                }
 
         private fun mixIn(click: ByteArray, sample: ByteArray?, offset: Int, stereo: Boolean) {
             if (sample == null || offset !in click.indices) {

@@ -19,14 +19,14 @@ object WaveUtilTest {
             val waveUtil = WaveUtil(this::openFile)
             //val click = generateClick(880, 50, 120, 440, 60, 2)
             //val click = waveUtil.generateShakerLoop(120)
-            val cowbell = waveUtil.generateCowbell(120, 2, 4, 30, false)
+            val cowbell = waveUtil.generateCowbell(120, 2, 4, 100, 30, true)
             val buffer = ByteArray(cowbell.size * 4)
             var offset = 0
-            WaveUtil.copyBytes(waveUtil.mixCountOff(cowbell, 120, 4, false), buffer, offset, false)
+            WaveUtil.copyBytes(waveUtil.mixCountOff(cowbell, 120, 4, 100, true), buffer, offset, false)
             offset += cowbell.size
             WaveUtil.copyBytes(cowbell, buffer, offset, false)
             offset += cowbell.size
-            WaveUtil.copyBytes(waveUtil.mixCue(cowbell, "chorus"), buffer, offset, false)
+            WaveUtil.copyBytes(waveUtil.mixCue(cowbell, "chorus", 100, true), buffer, offset, false)
             offset += cowbell.size
             WaveUtil.copyBytes(cowbell, buffer, offset, false)
             FileOutputStream("click.wav").use { out ->

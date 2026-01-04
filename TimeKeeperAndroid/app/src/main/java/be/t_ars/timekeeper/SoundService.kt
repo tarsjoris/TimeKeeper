@@ -38,12 +38,14 @@ class SoundService : Service() {
         super.onCreate()
         val frequency = getSettingFrequency(this)
         val duration = getSettingDuration(this)
+        val mainVolume = getSettingMainVolume(this)
         val divisionFrequency = getSettingDivisionFrequency(this)
         val divisionVolume = getSettingDivisionVolume(this)
         fSoundGenerator = SoundGenerator(
             this,
             frequency,
             duration,
+            mainVolume,
             divisionFrequency,
             divisionVolume
         )

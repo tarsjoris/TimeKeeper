@@ -70,6 +70,8 @@
     <string name="pref_summary_frequency">The frequency of the beep in Hz</string>
     <string name="pref_title_duration">Duration</string>
     <string name="pref_summary_duration">The duration of the beep in ms</string>
+    <string name="pref_title_mainvolume">Main volume</string>
+    <string name="pref_summary_mainvolume">Volume of metronome</string>
     <string name="pref_title_divisionfrequency">Division frequency</string>
     <string name="pref_summary_divisionfrequency">The frequency of subdivisions in Hz</string>
     <string name="pref_title_divisionvolume">Subdivision volume</string>

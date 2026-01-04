@@ -16,6 +16,7 @@ class SoundGenerator(
     private val context: Context,
     private val fBeepFrequency: Int,
     private val fBeepDuration: Int,
+    private val fMainVolume: Int,
     private val fDivisionFrequency: Int,
     private val fDivisionVolume: Int,
 ) {
@@ -50,7 +51,8 @@ class SoundGenerator(
     }
 
     private fun generateSound(click: ClickDetails) {
-        val clickBuffer = createClickBuffer(click)
+        val waveUtil = WaveUtil(context)
+        val clickBuffer = createClickBuffer(waveUtil, click)
 
         val audioTrack = AudioTrack.Builder()
             .setAudioAttributes(
@@ -73,7 +75,6 @@ class SoundGenerator(
         audioTrack.play()
         fAudioTrack = audioTrack
 
-        val waveUtil = WaveUtil(context)
         Thread clickLoop@{
             val sections = click.clickDescription.sections
             if (sections.isNotEmpty()) {
@@ -92,7 +93,7 @@ class SoundGenerator(
                         val nextCue = sections[i + 1].cue
                         if (nextCue != null) {
                             audioTrack.write(
-                                waveUtil.mixCue(clickBuffer, nextCue.id),
+                                waveUtil.mixCue(clickBuffer, nextCue.id, fMainVolume, click.stereo),
                                 0,
                                 clickBuffer.size
                             )
@@ -117,26 +118,32 @@ class SoundGenerator(
     private fun generateCountOff(audioTrack: AudioTrack, waveUtil: WaveUtil, clickBuffer: ByteArray, click: ClickDetails) {
         if (click.clickDescription.beatCount == 4) {
             audioTrack.write(
-                waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm / 2, 2, click.stereo),
+                waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm / 2, 2, fMainVolume, click.stereo),
                 0,
                 clickBuffer.size
             )
         }
         audioTrack.write(
-            waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm, click.clickDescription.beatCount, click.stereo),
+            waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm, click.clickDescription.beatCount, fMainVolume, click.stereo),
             0,
             clickBuffer.size
         )
     }
 
-    private fun createClickBuffer(click: ClickDetails): ByteArray {
-        val waveUtil = WaveUtil(context)
+    private fun createClickBuffer(waveUtil: WaveUtil, click: ClickDetails): ByteArray {
         return when (click.clickDescription.type) {
-            EClickType.SHAKER -> waveUtil.generateShakerLoop(click.clickDescription.bpm, click.clickDescription.divisionCount, click.clickDescription.beatCount, click.stereo)
+            EClickType.SHAKER -> waveUtil.generateShakerLoop(
+                click.clickDescription.bpm,
+                click.clickDescription.divisionCount,
+                click.clickDescription.beatCount,
+                fMainVolume,
+                click.stereo
+            )
             EClickType.COWBELL -> waveUtil.generateCowbell(
                 click.clickDescription.bpm,
                 click.clickDescription.divisionCount,
                 click.clickDescription.beatCount,
+                fMainVolume,
                 fDivisionVolume,
                 click.stereo
             )
@@ -145,10 +152,11 @@ class SoundGenerator(
                 fBeepFrequency,
                 fBeepDuration,
                 click.clickDescription.bpm,
-                fDivisionFrequency,
-                fDivisionVolume,
                 click.clickDescription.divisionCount,
                 click.clickDescription.beatCount,
+                fMainVolume,
+                fDivisionFrequency,
+                fDivisionVolume,
                 click.stereo
             )
         }

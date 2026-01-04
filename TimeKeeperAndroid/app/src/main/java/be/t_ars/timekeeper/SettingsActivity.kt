@@ -16,6 +16,7 @@ import androidx.core.content.edit
 
 private const val kFREQUENCY = "frequency"
 private const val kDURATION = "duration"
+private const val kMAIN_VOLUME = "mainvolume"
 private const val kDIVISION_FREQUENCY = "divisionfrequency"
 private const val kDIVISION_VOLUME = "divisionvolume"
 private const val kSCREEN_ORIENTATION = "screenorientation"
@@ -31,6 +32,9 @@ fun getSettingFrequency(context: Context) =
 
 fun getSettingDuration(context: Context) =
     getIntPreference(context, kDURATION, 20)
+
+fun getSettingMainVolume(context: Context) =
+    PreferenceManager.getDefaultSharedPreferences(context).getInt(kMAIN_VOLUME, 100)
 
 fun getSettingDivisionFrequency(context: Context) =
     getIntPreference(context, kDIVISION_FREQUENCY, 440)
