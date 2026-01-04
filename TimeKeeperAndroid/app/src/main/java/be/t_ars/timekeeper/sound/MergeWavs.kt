@@ -3,7 +3,6 @@ package be.t_ars.timekeeper.sound
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -18,17 +17,20 @@ object MergeWavs {
             .filter { path -> path.isRegularFile() }
             .filter { path -> path.extension == "wav" }
             .filter { path -> path.fileName.toString().indexOf(" click ") != -1 }
-            .forEach(MergeWavs::merge)
+            .forEach { path ->
+                merge4Channels(path, false)
+                merge4Channels(path, true)
+            }
     }
 
-    private fun merge(clickFile: Path) {
+    private fun merge4Channels(clickFile: Path, mono: Boolean) {
         Files.newInputStream(clickFile).let(::BufferedInputStream)
             .use { clickInput ->
                 val clickHeader = WaveUtil.readHeader(clickInput)
                 Files.newInputStream(generateTrackPath(clickFile)).let(::BufferedInputStream)
                     .use { trackInput ->
                         val trackHeader = WaveUtil.readHeader(trackInput)
-                        Files.newOutputStream(generateOutputPath(clickFile))
+                        Files.newOutputStream(generateOutputPath(clickFile, mono))
                             .let(::BufferedOutputStream)
                             .use { output ->
                                 println("Merging $clickFile")
@@ -37,7 +39,8 @@ object MergeWavs {
                                     clickHeader,
                                     trackInput,
                                     trackHeader,
-                                    DataOutputStream(output)
+                                    DataOutputStream(output),
+                                    mono
                                 )
                             }
                     }
@@ -49,9 +52,12 @@ object MergeWavs {
             clickFile.fileName.toString().substringBefore(" click ") + "AR_ph.wav"
         )
 
-    private fun generateOutputPath(clickFile: Path) =
+    private fun generateOutputPath(clickFile: Path, mono: Boolean) =
         clickFile.parent.parent.resolve("Merged").resolve(
-            clickFile.fileName.toString().substringBefore(" click ") + " merged.wav"
+            clickFile.fileName.toString().substringBefore(" click ")
+                    + " merged"
+                    + (if (mono) " mono" else "")
+                    + ".wav"
         )
 
     private fun merge(
@@ -59,7 +65,8 @@ object MergeWavs {
         clickHeader: WaveHeader,
         trackInput: BufferedInputStream,
         trackHeader: WaveHeader,
-        output: DataOutputStream
+        output: DataOutputStream,
+        mono: Boolean
     ) {
         if (clickHeader.audioFormat != trackHeader.audioFormat) {
             throw IllegalArgumentException("Mismatching audio formats ${clickHeader.audioFormat} and ${trackHeader.audioFormat}")
@@ -71,8 +78,8 @@ object MergeWavs {
             throw IllegalArgumentException("Mismatching bites per sample rates ${clickHeader.bitsPerSample} and ${trackHeader.bitsPerSample}")
         }
         val maxDataSize = max(clickHeader.dataSize, trackHeader.dataSize)
-        val mergedDataSize = maxDataSize * 2
-        val numChannels = clickHeader.numChannels + trackHeader.numChannels
+        val mergedDataSize = if (mono) maxDataSize else  maxDataSize * 2
+        val numChannels = if (mono) 2 else clickHeader.numChannels + trackHeader.numChannels
         val sampleRate = clickHeader.sampleRate
         val bytesPerChannel = clickHeader.bitsPerSample / 8
 
@@ -104,20 +111,38 @@ object MergeWavs {
         // 40 - how big is this data chunk
         output.write(intToByteArray(mergedDataSize))
         // 44 - the actual data itself - just a long string of numbers
-        val silenceBuffer = ByteArray(bytesPerChannel * 2) { 0 }
+        val silenceBuffer = ByteArray(bytesPerChannel) { 0 }
         val sampleBuffer = ByteArray(bytesPerChannel * 2)
         (0 until maxDataSize step sampleBuffer.size.toLong()).forEach {
             if (it < clickHeader.dataSize) {
                 clickInput.read(sampleBuffer)
-                output.write(sampleBuffer)
+                if (mono) {
+                    output.write(sampleBuffer, 0, bytesPerChannel)
+                } else {
+                    output.write(sampleBuffer)
+                }
             } else {
-                output.write(silenceBuffer)
+                if (mono) {
+                    output.write(silenceBuffer) // mono
+                } else {
+                    output.write(silenceBuffer) // left
+                    output.write(silenceBuffer) // right
+                }
             }
             if (it < trackHeader.dataSize) {
                 trackInput.read(sampleBuffer)
-                output.write(sampleBuffer)
+                if (mono) {
+                    output.write(sampleBuffer, 0, bytesPerChannel)
+                } else {
+                    output.write(sampleBuffer)
+                }
             } else {
-                output.write(silenceBuffer)
+                if (mono) {
+                    output.write(silenceBuffer) // mono
+                } else {
+                    output.write(silenceBuffer) // left
+                    output.write(silenceBuffer) // right
+                }
             }
         }
     }

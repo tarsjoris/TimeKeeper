@@ -1,6 +1,7 @@
 package be.t_ars.timekeeper
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -19,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
 import be.t_ars.timekeeper.components.PlaylistList
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.data.PlaylistHeader
 import be.t_ars.timekeeper.data.PlaylistStore
@@ -42,6 +44,7 @@ class OverviewActivity : AbstractActivity() {
     private var fActionMode: ActionMode? = null
     private var fNewPlaylistId: Long? = null
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fBinding = OverviewBinding.inflate(layoutInflater)
@@ -133,6 +136,7 @@ class OverviewActivity : AbstractActivity() {
         }
     }
 
+    @SuppressLint("UseKtx")
     private fun canReadFolder(): Boolean {
         val folder = getSettingFolder(this)
         if (folder != null) {
@@ -143,6 +147,7 @@ class OverviewActivity : AbstractActivity() {
         return false
     }
 
+    @Suppress("DEPRECATION")
     private fun requestSelectFolder() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
         getSettingFolder(this)?.let {
@@ -154,7 +159,7 @@ class OverviewActivity : AbstractActivity() {
     private fun addPlaylist(name: String) {
         fNewPlaylistId?.let { id ->
             val weight = if (fPlaylists.isEmpty()) 0 else fPlaylists[fPlaylists.size - 1].weight + 1
-            val playlist = Playlist(id, name, weight)
+            val playlist = Playlist(id, name, ClickDetails.DEFAULT_STEREO, weight)
             fStore.addPlaylist(playlist)
             openPlaylist(playlist)
         }

@@ -6,6 +6,7 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 import android.media.SoundPool
 import be.t_ars.timekeeper.data.ClickDescription
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.data.Section
 import be.t_ars.timekeeper.getSettingOutputDevice
@@ -16,10 +17,10 @@ class SoundGenerator(
     private val fBeepFrequency: Int,
     private val fBeepDuration: Int,
     private val fDivisionFrequency: Int,
-    private val fDivisionVolume: Int
+    private val fDivisionVolume: Int,
 ) {
     private var fAudioTrack: AudioTrack? = null
-    private var fLastClick: ClickDescription? = null
+    private var fLastClick: ClickDetails? = null
 
     init {
         val audioAttributesBuilder = AudioAttributes.Builder()
@@ -37,7 +38,7 @@ class SoundGenerator(
         }
     }
 
-    fun start(click: ClickDescription) {
+    fun start(click: ClickDetails) {
         synchronized(this) {
             if (fLastClick != click || fAudioTrack == null) {
                 stop()
@@ -48,7 +49,7 @@ class SoundGenerator(
         }
     }
 
-    private fun generateSound(click: ClickDescription) {
+    private fun generateSound(click: ClickDetails) {
         val clickBuffer = createClickBuffer(click)
 
         val audioTrack = AudioTrack.Builder()
@@ -74,7 +75,7 @@ class SoundGenerator(
 
         val waveUtil = WaveUtil(context)
         Thread clickLoop@{
-            val sections = click.sections
+            val sections = click.clickDescription.sections
             if (sections.isNotEmpty()) {
                 generateCountOff(audioTrack, waveUtil, clickBuffer, click)
                 for (i in sections.indices) {
@@ -103,7 +104,7 @@ class SoundGenerator(
                     }
                 }
             } else {
-                if (click.countOff) {
+                if (click.clickDescription.countOff) {
                     generateCountOff(audioTrack, waveUtil, clickBuffer, click)
                 }
                 while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
@@ -113,40 +114,42 @@ class SoundGenerator(
         }.start()
     }
 
-    private fun generateCountOff(audioTrack: AudioTrack, waveUtil: WaveUtil, clickBuffer: ByteArray, click: ClickDescription) {
-        if (click.beatCount == 4) {
+    private fun generateCountOff(audioTrack: AudioTrack, waveUtil: WaveUtil, clickBuffer: ByteArray, click: ClickDetails) {
+        if (click.clickDescription.beatCount == 4) {
             audioTrack.write(
-                waveUtil.mixCountOff(clickBuffer, click.bpm / 2, 2),
+                waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm / 2, 2, click.stereo),
                 0,
                 clickBuffer.size
             )
         }
         audioTrack.write(
-            waveUtil.mixCountOff(clickBuffer, click.bpm, click.beatCount),
+            waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm, click.clickDescription.beatCount, click.stereo),
             0,
             clickBuffer.size
         )
     }
 
-    private fun createClickBuffer(click: ClickDescription): ByteArray {
+    private fun createClickBuffer(click: ClickDetails): ByteArray {
         val waveUtil = WaveUtil(context)
-        return when (click.type) {
-            EClickType.SHAKER -> waveUtil.generateShakerLoop(click.bpm, click.divisionCount)
+        return when (click.clickDescription.type) {
+            EClickType.SHAKER -> waveUtil.generateShakerLoop(click.clickDescription.bpm, click.clickDescription.divisionCount, click.clickDescription.beatCount, click.stereo)
             EClickType.COWBELL -> waveUtil.generateCowbell(
-                click.bpm,
-                click.divisionCount,
-                click.beatCount,
-                fDivisionVolume
+                click.clickDescription.bpm,
+                click.clickDescription.divisionCount,
+                click.clickDescription.beatCount,
+                fDivisionVolume,
+                click.stereo
             )
 
             else -> waveUtil.generateClick(
                 fBeepFrequency,
                 fBeepDuration,
-                click.bpm,
+                click.clickDescription.bpm,
                 fDivisionFrequency,
                 fDivisionVolume,
-                click.divisionCount,
-                click.beatCount
+                click.clickDescription.divisionCount,
+                click.clickDescription.beatCount,
+                click.stereo
             )
         }
     }

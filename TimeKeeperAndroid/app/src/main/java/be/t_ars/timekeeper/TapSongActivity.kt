@@ -1,5 +1,6 @@
 package be.t_ars.timekeeper
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -9,18 +10,23 @@ import android.provider.DocumentsContract
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import be.t_ars.timekeeper.components.SectionsPartComponent
 import be.t_ars.timekeeper.components.TapPartComponent
 import be.t_ars.timekeeper.data.ClickDescription
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.databinding.TapSongBinding
 
 class TapSongActivity : AbstractActivity() {
     private lateinit var fBinding: TapSongBinding
     private lateinit var fSectionsPartComponent: SectionsPartComponent
     private lateinit var fTapPartComponent: TapPartComponent
-    private var fTrackPath: String? = null
+    private var fStereoTrackPath: String? = null
+    private var fMonoTrackPath: String? = null
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fBinding = TapSongBinding.inflate(layoutInflater)
@@ -28,26 +34,40 @@ class TapSongActivity : AbstractActivity() {
         setSupportActionBar(fBinding.toolbar)
 
         fSectionsPartComponent = SectionsPartComponent(this, fBinding.sectionsPart)
-        fTapPartComponent = TapPartComponent(fBinding.tapPart) {}
+        fTapPartComponent = TapPartComponent(this, fBinding.tapPart) { _ -> null }
 
         fBinding.sectionsButton.setOnClickListener {
             fSectionsPartComponent.show()
         }
 
-        fBinding.selectTrackButton.setOnClickListener {
-            startActivityForResult(createSelectTrackRequest(), kREQUEST_TRACK_CODE)
+        fBinding.selectStereoTrackButton.setOnClickListener {
+            startActivityForResult(createSelectStereoTrackRequest(), kREQUEST_STEREO_TRACK_CODE)
         }
 
-        fBinding.clearTrackButton.setOnClickListener {
-            setTrack(null)
+        fBinding.clearStereoTrackButton.setOnClickListener {
+            setStereoTrack(null)
+        }
+
+        fBinding.selectMonoTrackButton.setOnClickListener {
+            startActivityForResult(createSelectMonoTrackRequest(), kREQUEST_MONO_TRACK_CODE)
+        }
+
+        fBinding.clearMonoTrackButton.setOnClickListener {
+            setMonoTrack(null)
         }
     }
 
-    private fun createSelectTrackRequest() =
+    private fun createSelectStereoTrackRequest() =
+        createSelectTrackRequest(fStereoTrackPath)
+
+    private fun createSelectMonoTrackRequest() =
+        createSelectTrackRequest(fMonoTrackPath)
+
+    private fun createSelectTrackRequest(trackPath: String?) =
         Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             type = "audio/*"
             addCategory(Intent.CATEGORY_OPENABLE)
-            fTrackPath?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
+            trackPath?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
         }
 
 
@@ -73,7 +93,7 @@ class TapSongActivity : AbstractActivity() {
                 fBinding.tapPart.tempoSpinner.clearFocus()
 
                 val intent = Intent().also {
-                    updateIntent(it, fTrackPath)
+                    updateIntent(it)
                 }
                 setResult(RESULT_OK, intent)
                 finish()
@@ -86,18 +106,22 @@ class TapSongActivity : AbstractActivity() {
         return true
     }
 
-    private fun updateIntent(intent: Intent, trackPath: String?) {
+    private fun updateIntent(intent: Intent) {
         val click = fTapPartComponent.getClick()
         fillIntent(
             intent,
-            ClickDescription(
-                click.bpm,
-                click.type,
-                click.divisionCount,
-                click.beatCount,
-                click.countOff,
-                fSectionsPartComponent.getSections(),
-                trackPath
+            ClickDetails(
+                ClickDescription(
+                    click.clickDescription.bpm,
+                    click.clickDescription.type,
+                    click.clickDescription.divisionCount,
+                    click.clickDescription.beatCount,
+                    click.clickDescription.countOff,
+                    fSectionsPartComponent.getSections(),
+                    fStereoTrackPath,
+                    fMonoTrackPath
+                ),
+                click.stereo
             ),
             fBinding.name.text.toString(),
             fBinding.scoreLink.text.toString()
@@ -107,27 +131,43 @@ class TapSongActivity : AbstractActivity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
+        if (resultCode == RESULT_OK) {
             when (requestCode) {
-                kREQUEST_TRACK_CODE -> acceptTrack(data)
+                kREQUEST_STEREO_TRACK_CODE -> acceptStereoTrack(data)
+                kREQUEST_MONO_TRACK_CODE -> acceptMonoTrack(data)
             }
         }
     }
 
-    private fun acceptTrack(data: Intent?) {
+    private fun acceptStereoTrack(data: Intent?) =
+        acceptTrack(data, ::setStereoTrack)
+
+    private fun acceptMonoTrack(data: Intent?) =
+        acceptTrack(data, ::setMonoTrack)
+
+    private fun acceptTrack(data: Intent?, setTrack: (String) -> Unit) {
         data?.data?.let { uri ->
             contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             val trackPath = uri.toString()
-            updateIntent(intent, trackPath)
             setTrack(trackPath)
+            updateIntent(intent)
         }
     }
 
-    private fun setTrack(trackPath: String?) {
-        println(trackPath)
-        fTrackPath = trackPath
-        fBinding.clearTrackButton.visibility =
+    private fun setStereoTrack(trackPath: String?) {
+        fStereoTrackPath = trackPath
+        updateTrackUI(trackPath, fBinding.clearStereoTrackButton, fBinding.stereoTrackText)
+    }
+
+    private fun setMonoTrack(trackPath: String?) {
+        fMonoTrackPath = trackPath
+        updateTrackUI(trackPath, fBinding.clearMonoTrackButton, fBinding.monoTrackText)
+    }
+
+    private fun updateTrackUI(trackPath: String?, clearTrackButton: Button, trackText: TextView) {
+        clearTrackButton.visibility =
             if (trackPath != null) View.VISIBLE else View.INVISIBLE
+        @SuppressLint("UseKtx")
         val filename = trackPath
             ?.let { Uri.parse(it).path }
             ?.let {
@@ -137,21 +177,22 @@ class TapSongActivity : AbstractActivity() {
                 else
                     it
             } ?: "-"
-        println(filename)
-        fBinding.trackText.text = filename
+        trackText.text = filename
     }
 
+    @Suppress("DEPRECATION")
     private fun loadIntent() {
         fBinding.name.setText(intent.getStringExtra(kINTENT_DATA_NAME))
 
         val newClick = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-            intent.getSerializableExtra(kINTENT_DATA_CLICK, ClickDescription::class.java)
+            intent.getSerializableExtra(kINTENT_DATA_CLICK, ClickDetails::class.java)
         else
-            intent.getSerializableExtra(kINTENT_DATA_CLICK) as ClickDescription
+            intent.getSerializableExtra(kINTENT_DATA_CLICK) as ClickDetails?
         if (newClick != null) {
-            fSectionsPartComponent.setSections(newClick.sections)
+            fSectionsPartComponent.setSections(newClick.clickDescription.sections)
             fTapPartComponent.setClick(newClick)
-            setTrack(newClick.trackPath)
+            setStereoTrack(newClick.clickDescription.stereoTrackPath)
+            setMonoTrack(newClick.clickDescription.monoTrackPath)
         }
 
         fBinding.scoreLink.setText(intent.getStringExtra(kINTENT_DATA_SCORE_LINK) ?: "")
@@ -162,11 +203,13 @@ class TapSongActivity : AbstractActivity() {
         const val kINTENT_DATA_CLICK = "click"
         const val kINTENT_DATA_SCORE_LINK = "score_link"
 
-        private const val kREQUEST_TRACK_CODE = 4
+        private const val kREQUEST_STEREO_TRACK_CODE = 4
+        private const val kREQUEST_MONO_TRACK_CODE = 5
 
+        @Suppress("DEPRECATION")
         fun startActivityForResult(
             context: FragmentActivity,
-            click: ClickDescription,
+            click: ClickDetails,
             name: String,
             scoreLink: String?,
             requestCode: Int
@@ -177,7 +220,7 @@ class TapSongActivity : AbstractActivity() {
 
         private fun fillIntent(
             intent: Intent,
-            click: ClickDescription,
+            click: ClickDetails,
             name: String,
             scoreLink: String?
         ) {

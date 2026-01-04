@@ -11,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AbsListView
 import android.widget.AdapterView
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.SimpleAdapter
 import be.t_ars.timekeeper.components.PlaylistList
@@ -44,7 +45,7 @@ class PlaylistEditActivity : AbstractActivity() {
     private lateinit var fBinding: PlaylisteditBinding
     private val fData: MutableList<Map<String, String>> = ArrayList()
     private val fAddSongDialog: InputDialog = InputDialog()
-    private val fRenamePlaylistDialog: InputDialog = InputDialog()
+    private val fDetailsDialog: InputDialog = InputDialog()
     private val fCopyDialog: InputDialog = InputDialog()
     private val fDeleteDialog: ConfirmationDialog = ConfirmationDialog()
     private val fDeleteAndAboveDialog: ConfirmationDialog = ConfirmationDialog()
@@ -92,25 +93,29 @@ class PlaylistEditActivity : AbstractActivity() {
             R.string.add,
             R.string.cancel
         )
-        fRenamePlaylistDialog.setOptions(
+        fDetailsDialog.setOptions(
             { view ->
-                view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name)
+                view.findViewById<EditText>(R.id.playlistedit_details_name)
                     .setText(fPlaylist?.name ?: "")
+                view.findViewById<CheckBox>(R.id.playlistedit_details_stereo)
+                    .isChecked = fPlaylist?.stereo ?: true
             },
             { view ->
-                val name = view.findViewById<EditText>(R.id.playlistedit_renameplaylist_name).text
+                val name = view.findViewById<EditText>(R.id.playlistedit_details_name).text
+                val stereo = view.findViewById<CheckBox>(R.id.playlistedit_details_stereo).isChecked
                 fPlaylist?.let {
                     it.name = name.toString()
+                    it.stereo = stereo
                     fStore.storePlaylistHeader(it)
                     reloadName()
                 }
             },
             layoutInflater,
-            R.string.playlistedit_action_renameplaylist,
+            R.string.playlistedit_action_details,
             R.drawable.ic_pencil,
-            R.layout.playlistedit_renameplaylist,
-            R.string.playlistedit_renameplaylist_save,
-            R.string.playlistedit_renameplaylist_cancel
+            R.layout.playlistedit_details,
+            R.string.playlistedit_details_save,
+            R.string.playlistedit_details_cancel
         )
         fCopyDialog.setOptions(
             { view ->
@@ -252,6 +257,7 @@ class PlaylistEditActivity : AbstractActivity() {
         loadIntent()
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode) {
@@ -267,23 +273,23 @@ class PlaylistEditActivity : AbstractActivity() {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                                     d.getSerializableExtra(
                                         TapSongActivity.kINTENT_DATA_CLICK,
-                                        ClickDescription::class.java
+                                        ClickDetails::class.java
                                     )
                                 else
-                                    d.getSerializableExtra(TapSongActivity.kINTENT_DATA_CLICK) as ClickDescription
+                                    d.getSerializableExtra(TapSongActivity.kINTENT_DATA_CLICK) as ClickDetails
                             val newScoreLink =
                                 d.getStringExtra(TapSongActivity.kINTENT_DATA_SCORE_LINK)
                                     ?.let { it.ifBlank { null } }
 
                             val song = playlist.songs[fPosition]
                             val replaceName = newName != null && newName != song.name
-                            val replaceClick = newClick != song.click
+                            val replaceClick = newClick != null && newClick.clickDescription != song.click
                             val replaceScoreLink = newScoreLink != song.scoreLink
                             if (replaceName || replaceClick || replaceScoreLink) {
                                 if (replaceName && newName != null)
                                     song.name = newName
                                 if (replaceClick && newClick != null)
-                                    song.click = newClick
+                                    song.click = newClick.clickDescription
                                 if (replaceScoreLink)
                                     song.scoreLink = newScoreLink
                                 fStore.savePlaylist(playlist)
@@ -310,11 +316,12 @@ class PlaylistEditActivity : AbstractActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
+    @Suppress("DEPRECATION")
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Handle presses on the action bar items
         when (item.itemId) {
-            R.id.playlistedit_action_renameplaylist -> {
-                fRenamePlaylistDialog.show(supportFragmentManager, "renameplaylist")
+            R.id.playlistedit_action_details -> {
+                fDetailsDialog.show(supportFragmentManager, "details")
             }
 
             R.id.playlistedit_action_copy -> {
@@ -377,7 +384,7 @@ class PlaylistEditActivity : AbstractActivity() {
             val song = playlist.songs[fPosition]
             TapSongActivity.startActivityForResult(
                 this,
-                song.click,
+                ClickDetails(song.click, playlist.stereo),
                 song.name,
                 song.scoreLink,
                 kREQUEST_TEMPO
@@ -394,7 +401,7 @@ class PlaylistEditActivity : AbstractActivity() {
         fPlaylist?.let { playlist ->
             fData.addAll(
                 playlist.songs.map { song ->
-                    var name = song.displayName()
+                    var name = song.displayName(playlist.stereo)
                     when (fEditMode) {
                         EditMode.SEND_TOP -> name = "\u2912 $name"
                         EditMode.SEND_BOTTOM -> name = "\u2913 $name"

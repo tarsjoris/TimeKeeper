@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import be.t_ars.timekeeper.data.ClickDescription
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.sound.SoundGenerator
 import be.t_ars.timekeeper.sound.TrackPlayer
 import java.io.Serializable
@@ -55,6 +56,7 @@ class SoundService : Service() {
         super.onDestroy()
     }
 
+    @Suppress("DEPRECATION")
     private fun loadIntent(intent: Intent?) {
         if (intent != null) {
             val extras = intent.extras
@@ -63,13 +65,13 @@ class SoundService : Service() {
                     "start" -> {
                         val label = extras.getString(kINTENT_DATA_LABEL)
                         val click = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                            extras.getSerializable(kINTENT_DATA_CLICK, ClickDescription::class.java)
+                            extras.getSerializable(kINTENT_DATA_CLICK, ClickDetails::class.java)
                         else
-                            extras.getSerializable(kINTENT_DATA_CLICK) as ClickDescription
+                            extras.getSerializable(kINTENT_DATA_CLICK) as ClickDetails
                         val returnActivityClass = extras.get(kINTENT_DATA_RETURN_ACTIVITY_CLASS)
-                            ?.let { if (it is Class<*>) it else null }
+                            ?.let { it as? Class<*> }
                         val returnActivityExtras = extras.get(kINTENT_DATA_RETURN_ACTIVITY_EXTRAS)
-                            ?.let { if (it is HashMap<*, *>) it else null }
+                            ?.let { it as? HashMap<*, *> }
                         if (click != null) {
                             doStart(label, click, returnActivityClass, returnActivityExtras)
                         }
@@ -83,14 +85,14 @@ class SoundService : Service() {
 
     private fun doStart(
         label: String?,
-        click: ClickDescription,
+        click: ClickDetails,
         returnActivityClass: Class<out Any>?,
         returnActivityExtras: HashMap<out Any, out Any>?
     ) {
-        Log.i("SoundService", "Starting ${click.bpm}")
-        showNotification(label, click.bpm, returnActivityClass, returnActivityExtras)
-        if (click.trackPath != null) {
-            fTrackPlayer.playTrack(this, click.trackPath)
+        showNotification(label, click.clickDescription.bpm, returnActivityClass, returnActivityExtras)
+        val trackPath = click.trackPath()
+        if (trackPath != null) {
+            fTrackPlayer.playTrack(this, trackPath)
         } else {
             fSoundGenerator.start(click)
         }
@@ -186,7 +188,7 @@ class SoundService : Service() {
         fun startSound(
             context: Context,
             label: String?,
-            click: ClickDescription,
+            click: ClickDetails,
             returnActivityClass: Class<out Any>? = null,
             returnActivityExtras: HashMap<String, Serializable>? = null
         ) {

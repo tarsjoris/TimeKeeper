@@ -1,5 +1,6 @@
 package be.t_ars.timekeeper
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.PlaylistStore
 
 class TimeKeeperApplication : Application() {
@@ -81,13 +83,13 @@ class TimeKeeperApplication : Application() {
     }
 
     private fun startMetronome() {
-        fStore.withCurrentSong { _, song, _ ->
-                SoundService.startSound(
-                    this,
-                    song.name,
-                    song.click,
-                    PlaylistActivity::class.java
-                )
+        fStore.withCurrentSong { playlist, song, _ ->
+            SoundService.startSound(
+                this,
+                song.name,
+                ClickDetails(song.click, playlist.stereo),
+                PlaylistActivity::class.java
+            )
         }
     }
 
@@ -101,6 +103,7 @@ class TimeKeeperApplication : Application() {
         }
     }
 
+    @SuppressLint("UseKtx")
     private fun openLink(link: String) {
         val openURL = Intent(Intent.ACTION_VIEW)
             .apply {

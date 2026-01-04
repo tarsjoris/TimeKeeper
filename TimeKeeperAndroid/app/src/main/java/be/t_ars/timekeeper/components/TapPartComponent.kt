@@ -1,14 +1,20 @@
 package be.t_ars.timekeeper.components
 
+import android.content.Context
 import android.os.Handler
+import be.t_ars.timekeeper.SoundService
+import be.t_ars.timekeeper.TapActivity
 import be.t_ars.timekeeper.data.ClickDescription
+import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.EClickType
 import be.t_ars.timekeeper.databinding.TapPartBinding
+import java.io.Serializable
 import kotlin.math.roundToInt
 
 class TapPartComponent(
+    private val context: Context,
     private val tapPart: TapPartBinding,
-    private val clickChanged: () -> Unit
+    private val getReturnActivityExtras: (ClickDetails) -> HashMap<String, Serializable>?
 ) {
     private val clickTypeSelection: ToggleGroup<EClickType> = ToggleGroup(
         arrayOf(
@@ -55,10 +61,13 @@ class TapPartComponent(
     private var divisionCount = 1
     private var beatCount = 1
     private var countOff = ClickDescription.DEFAULT_COUNT_OFF
+    private var stereo = ClickDetails.DEFAULT_STEREO
+    private var playing = false
 
     private inner class DelayedUpdate : Runnable {
         private var hasRun = true
 
+        @Suppress("DEPRECATION")
         fun update() {
             synchronized(this) {
                 if (hasRun) {
@@ -92,33 +101,46 @@ class TapPartComponent(
         tapPart.checkboxCountOff.setOnCheckedChangeListener { _, newValue ->
             countOff = newValue
         }
+
+        tapPart.buttonStart.setOnClickListener {
+            playing = true
+            startSound()
+        }
+        tapPart.buttonStop.setOnClickListener {
+            playing = false
+            stopSound()
+        }
     }
 
-    fun setClick(newClick: ClickDescription) {
+    fun setClick(newClick: ClickDetails) {
         var changed = false
-        if (newClick.bpm >= tapPart.tempoSpinner.minValue &&
-            newClick.bpm <= tapPart.tempoSpinner.maxValue &&
-            newClick.bpm != tapPart.tempoSpinner.value
+        if (newClick.clickDescription.bpm >= tapPart.tempoSpinner.minValue &&
+            newClick.clickDescription.bpm <= tapPart.tempoSpinner.maxValue &&
+            newClick.clickDescription.bpm != tapPart.tempoSpinner.value
         ) {
-            tapPart.tempoSpinner.value = newClick.bpm
-            tempo = newClick.bpm
+            tapPart.tempoSpinner.value = newClick.clickDescription.bpm
+            tempo = newClick.clickDescription.bpm
             changed = true
         }
-        if (newClick.countOff != tapPart.checkboxCountOff.isChecked) {
-            tapPart.checkboxCountOff.isChecked = newClick.countOff
-            countOff = newClick.countOff
-            changed = true
-    }
-        if (clickTypeSelection.setValue(newClick.type)) {
-            clickType = newClick.type
+        if (newClick.clickDescription.countOff != tapPart.checkboxCountOff.isChecked) {
+            tapPart.checkboxCountOff.isChecked = newClick.clickDescription.countOff
+            countOff = newClick.clickDescription.countOff
             changed = true
         }
-        if (divisionsSelection.setValue(newClick.divisionCount)) {
-            divisionCount = newClick.divisionCount
+        if (newClick.stereo != stereo) {
+            stereo = newClick.stereo
             changed = true
         }
-        if (beatsSelection.setValue(newClick.beatCount)) {
-            beatCount = newClick.beatCount
+        if (clickTypeSelection.setValue(newClick.clickDescription.type)) {
+            clickType = newClick.clickDescription.type
+            changed = true
+        }
+        if (divisionsSelection.setValue(newClick.clickDescription.divisionCount)) {
+            divisionCount = newClick.clickDescription.divisionCount
+            changed = true
+        }
+        if (beatsSelection.setValue(newClick.clickDescription.beatCount)) {
+            beatCount = newClick.clickDescription.beatCount
             changed = true
         }
 
@@ -128,7 +150,7 @@ class TapPartComponent(
     }
 
     fun getClick() =
-        ClickDescription(tempo, clickType, divisionCount, beatCount, countOff)
+        ClickDetails(ClickDescription(tempo, clickType, divisionCount, beatCount, countOff), stereo)
 
     private fun doTap() {
         index = (index + 1) % timestamps.size
@@ -160,5 +182,22 @@ class TapPartComponent(
             return (60000.toDouble() * granularity.toDouble() / diff.toDouble()).roundToInt()
         }
         return null
+    }
+
+    private fun clickChanged() {
+        if (playing) {
+            startSound()
+        }
+    }
+
+    private fun startSound() {
+        val click = getClick()
+        val returnActivityExtras = getReturnActivityExtras(click)
+        val returnActivityClass = if (returnActivityExtras != null) context.javaClass else null
+        SoundService.startSound(context, null, click, returnActivityClass, returnActivityExtras)
+    }
+
+    private fun stopSound() {
+        SoundService.stopSound(context)
     }
 }

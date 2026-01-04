@@ -6,7 +6,9 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.widget.Toast
+import be.t_ars.timekeeper.getSettingOutputDevice
 import be.t_ars.timekeeper.resolveFileUri
+import androidx.core.net.toUri
 
 class TrackPlayer {
     private var mediaPlayer: MediaPlayer? = null
@@ -16,7 +18,7 @@ class TrackPlayer {
         stop()
         try {
             parcelFileDescriptor =
-                context.contentResolver.openFileDescriptor(Uri.parse(trackFilename), "r")
+                context.contentResolver.openFileDescriptor(trackFilename.toUri(), "r")
             parcelFileDescriptor?.let { localParcelFileDescriptor ->
                 val player = MediaPlayer()
                 player.setAudioAttributes(
@@ -25,6 +27,7 @@ class TrackPlayer {
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
+                getSettingOutputDevice(context)?.let { player.setPreferredDevice(it) }
                 player.setDataSource(localParcelFileDescriptor.fileDescriptor)
                 player.prepare()
                 player.start()

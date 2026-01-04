@@ -44,6 +44,7 @@ class PlaylistStore(private val fContext: Context) {
     fun storePlaylistHeader(playlist: PlaylistHeader) {
         readPlaylist(playlist.id)?.let { completePlaylist ->
             completePlaylist.name = playlist.name
+            completePlaylist.stereo = playlist.stereo
             completePlaylist.weight = playlist.weight
             savePlaylist(completePlaylist)
         }
@@ -72,10 +73,8 @@ class PlaylistStore(private val fContext: Context) {
                 XmlPullParser.START_TAG -> {
                     when (parser.name) {
                         kTAG_PLAYLIST -> {
-                            val name = parser.getAttributeValue(null, kATTR_NAME)
-                            val weight =
-                                Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
-                            playlist = Playlist(id, name, weight)
+                            val header = readPlaylistHeaderAttributes(parser, id)
+                            playlist = Playlist(header)
                         }
 
                         kTAG_SONG -> {
@@ -93,9 +92,10 @@ class PlaylistStore(private val fContext: Context) {
                                 parser.getAttributeValue(null, kATTR_BEAT_COUNT)?.toInt()
                                     ?: ClickDescription.DEFAULT_BEAT_COUNT
                             val countOff = parser.getAttributeValue(null, kATTR_COUNT_OFF)
-                                ?.let { it.toBoolean() }
+                                ?.toBoolean()
                                 ?: false
-                            val trackPath = parser.getAttributeValue(null, kATTR_TRACK_PATH)
+                            val stereoTrackPath = parser.getAttributeValue(null, kATTR_STEREO_TRACK_PATH)
+                            val monoTrackPath = parser.getAttributeValue(null, kATTR_MONO_TRACK_PATH)
                             val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
                             song = Song(
                                 name,
@@ -106,7 +106,8 @@ class PlaylistStore(private val fContext: Context) {
                                     beatCount,
                                     countOff,
                                     emptyList(),
-                                    trackPath
+                                    stereoTrackPath,
+                                    monoTrackPath
                                 ),
                                 scoreLink
                             )
@@ -139,7 +140,8 @@ class PlaylistStore(private val fContext: Context) {
                                             song.click.beatCount,
                                             song.click.countOff,
                                             sections,
-                                            song.click.trackPath
+                                            song.click.stereoTrackPath,
+                                            song.click.monoTrackPath
                                         ),
                                         song.scoreLink
                                     )
@@ -199,7 +201,7 @@ class PlaylistStore(private val fContext: Context) {
                         val filename = path.substring(lastSlash + 1, path.length - 4)
                         try {
                             documentIdConsumer(filename.toLong())
-                        } catch (e: NumberFormatException) {
+                        } catch (_: NumberFormatException) {
                             deleteFile(uri)
                             Toast.makeText(fContext, "Invalid id '$filename'", Toast.LENGTH_LONG)
                                 .show()
@@ -235,10 +237,7 @@ class PlaylistStore(private val fContext: Context) {
                     when (parser.next()) {
                         XmlPullParser.START_TAG -> {
                             parser.require(XmlPullParser.START_TAG, null, kTAG_PLAYLIST)
-                            val name = parser.getAttributeValue(null, kATTR_NAME)
-                            val weight =
-                                Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
-                            return PlaylistHeader(id, name, weight)
+                            return readPlaylistHeaderAttributes(parser, id)
                         }
 
                         XmlPullParser.END_DOCUMENT -> {
@@ -259,6 +258,14 @@ class PlaylistStore(private val fContext: Context) {
         return null
     }
 
+    private fun readPlaylistHeaderAttributes(parser: XmlPullParser, id: Long) : PlaylistHeader {
+        val name = parser.getAttributeValue(null, kATTR_NAME)
+        val stereo = parser.getAttributeValue(null, kATTR_STEREO)?.let { it == "true" } ?: true
+        val weight =
+            Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
+        return PlaylistHeader(id, name, stereo, weight)
+    }
+
     fun savePlaylist(playlist: Playlist) {
         try {
             val uri = getPlaylistUri(playlist.id)
@@ -272,6 +279,7 @@ class PlaylistStore(private val fContext: Context) {
                     serializer.startDocument("UTF-8", null)
                     serializer.startTag(null, kTAG_PLAYLIST)
                     serializer.attribute(null, kATTR_NAME, playlist.name)
+                    serializer.attribute(null, kATTR_STEREO, playlist.stereo.toString())
                     serializer.attribute(null, kATTR_WEIGHT, playlist.weight.toString())
                     for (song in playlist.songs) {
                         serializer.startTag(null, kTAG_SONG)
@@ -296,8 +304,10 @@ class PlaylistStore(private val fContext: Context) {
                                 song.click.beatCount.toString()
                             )
                         serializer.attribute(null, kATTR_COUNT_OFF, song.click.countOff.toString())
-                        if (song.click.trackPath != null)
-                            serializer.attribute(null, kATTR_TRACK_PATH, song.click.trackPath)
+                        if (song.click.stereoTrackPath != null)
+                            serializer.attribute(null, kATTR_STEREO_TRACK_PATH, song.click.stereoTrackPath)
+                        if (song.click.monoTrackPath != null)
+                            serializer.attribute(null, kATTR_MONO_TRACK_PATH, song.click.monoTrackPath)
                         if (song.scoreLink != null)
                             serializer.attribute(null, kATTR_SCORE_LINK, song.scoreLink)
 
@@ -368,13 +378,15 @@ class PlaylistStore(private val fContext: Context) {
         private const val kTAG_SONG = "song"
         private const val kTAG_SECTION = "section"
         private const val kATTR_NAME = "name"
+        private const val kATTR_STEREO = "stereo"
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
         private const val kATTR_CLICK_TYPE = "click_type"
         private const val kATTR_DIVISION_COUNT = "division_count"
         private const val kATTR_BEAT_COUNT = "beat_count"
         private const val kATTR_COUNT_OFF = "count_off"
-        private const val kATTR_TRACK_PATH = "track_path"
+        private const val kATTR_STEREO_TRACK_PATH = "stereo_track_path"
+        private const val kATTR_MONO_TRACK_PATH = "mono_track_path"
         private const val kATTR_SCORE_LINK = "score_link"
         private const val kATTR_CUE = "cue"
         private const val kATTR_BAR_COUNT = "bar_count"

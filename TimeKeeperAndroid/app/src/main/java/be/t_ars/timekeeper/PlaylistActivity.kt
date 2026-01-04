@@ -147,7 +147,7 @@ class PlaylistActivity : AbstractActivity() {
         val data = ArrayList<Map<String, String>>()
         if (isInPictureInPictureMode) {
             playlist.songs.forEach { song ->
-                val name = song.displayName()
+                val name = song.displayName(playlist.stereo)
                 data.add(mapOf(kKEY_NAME to name))
             }
 
@@ -160,7 +160,7 @@ class PlaylistActivity : AbstractActivity() {
             )
         } else {
             playlist.songs.forEach { song ->
-                val name = song.displayName()
+                val name = song.displayName(playlist.stereo)
                 val tempo = "${song.click.bpm}"
                 data.add(mapOf(kKEY_NAME to name, kKEY_TEMPO to tempo))
             }

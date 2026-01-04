@@ -1,11 +1,13 @@
 package be.t_ars.timekeeper.data
 
-class Playlist(id: Long, name: String, weight: Int) : PlaylistHeader(id, name, weight) {
+class Playlist(id: Long, name: String, stereo: Boolean, weight: Int) : PlaylistHeader(id, name, stereo, weight) {
     val songs: MutableList<Song> = ArrayList()
 
-    constructor(other: Playlist, id: Long, name: String, weight: Int) : this(id, name, weight) {
+    constructor(other: Playlist, id: Long, name: String, weight: Int) : this(id, name, other.stereo, weight) {
         songs.addAll(other.songs.map { Song(it) })
     }
+
+    constructor(header: PlaylistHeader) : this(header.id, header.name, header.stereo, header.weight)
 
     fun addSong(store: PlaylistStore, song: Song) {
         addSong(song)

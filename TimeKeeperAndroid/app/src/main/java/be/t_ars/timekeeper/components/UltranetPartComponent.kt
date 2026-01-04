@@ -13,41 +13,105 @@ import kotlinx.coroutines.launch
 import java.net.InetAddress
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import kotlin.div
+import kotlin.text.get
 
 fun showUltranetRouting(resources: Resources, ultranetPart: UltranetPartBinding) {
     GlobalScope.launch { updateChannels(resources, ultranetPart) }
 }
-
-private data class RoutingInfo(
-    val routingSources: IntArray,
-    val routingSourceNames: Array<String>,
-    val routingSourceColors: IntArray
-)
 
 private fun updateChannels(resources: Resources, ultranetPart: UltranetPartBinding) {
     Log.i("TimeKeeper", "Searching for XR18")
     val address = searchXR18()
     if (address != null) {
         Log.i("TimeKeeper", "Found at $address")
-        val (routingSources, routingSourceNames, routingSourceColors) = loadParameters(address)
+        loadParameters(address, resources, ultranetPart)
+    }
+}
 
-        routingSources.forEachIndexed { index, routingSource ->
+private fun loadParameters(
+    address: InetAddress,
+    resources: Resources,
+    ultranetPart: UltranetPartBinding
+) {
+    val routingSources = IntArray(16) { -1 }
+    val routingSourceNames = Array(XR18OSCAPI.ROUTING_SOURCE_COUNT) {
+        when (it) {
+            in XR18OSCAPI.ROUTING_SOURCE_CHANNEL1..XR18OSCAPI.ROUTING_SOURCE_CHANNEL16
+                -> "CH ${it - XR18OSCAPI.ROUTING_SOURCE_CHANNEL1 + 1}"
+
+            XR18OSCAPI.ROUTING_SOURCE_AUX_L
+                -> "AUX L"
+
+            XR18OSCAPI.ROUTING_SOURCE_AUX_R
+                -> "AUX R"
+
+            in XR18OSCAPI.ROUTING_SOURCE_RTN1_L..XR18OSCAPI.ROUTING_SOURCE_RTN4_R
+                -> "Rtn ${(it - XR18OSCAPI.ROUTING_SOURCE_RTN1_L).div(2) + 1} ${
+                if ((it - XR18OSCAPI.ROUTING_SOURCE_RTN1_L).mod(
+                        2
+                    ) == 0
+                ) "0" else "1"
+            }"
+
+            in XR18OSCAPI.ROUTING_SOURCE_BUS1..XR18OSCAPI.ROUTING_SOURCE_BUS6
+                -> "Bus ${it - XR18OSCAPI.ROUTING_SOURCE_BUS1 + 1}"
+
+            in XR18OSCAPI.ROUTING_SOURCE_SEND1..XR18OSCAPI.ROUTING_SOURCE_SEND4
+                -> "FxSnd ${it - XR18OSCAPI.ROUTING_SOURCE_SEND1 + 1}"
+
+            XR18OSCAPI.ROUTING_SOURCE_LR_L
+                -> "LR L"
+
+            XR18OSCAPI.ROUTING_SOURCE_LR_R
+                -> "LR R"
+
+            in XR18OSCAPI.ROUTING_SOURCE_DCA1..XR18OSCAPI.ROUTING_SOURCE_DCA4
+                -> "DCA ${it - XR18OSCAPI.ROUTING_SOURCE_DCA1 + 1}"
+
+            in XR18OSCAPI.ROUTING_SOURCE_USB1..XR18OSCAPI.ROUTING_SOURCE_USB14
+                -> "USB ${it - XR18OSCAPI.ROUTING_SOURCE_USB1 + 1}"
+
+            else
+                -> ""
+        }
+    }
+    val routingSourceColors = IntArray(XR18OSCAPI.ROUTING_SOURCE_COUNT)
+
+    repeat(routingSources.size) { routingIndex ->
+        val row = when (routingIndex.div(4)) {
+            0 -> ultranetPart.ultranetRow1
+            1 -> ultranetPart.ultranetRow2
+            2 -> ultranetPart.ultranetRow3
+            else -> ultranetPart.ultranetRow4
+        }
+        val cell = when (routingIndex.mod(4)) {
+            0 -> row.ultranetEntry1
+            1 -> row.ultranetEntry2
+            2 -> row.ultranetEntry3
+            else -> row.ultranetEntry4
+        }
+        val channelNumber = routingIndex + 1
+        cell.channelNumber.text = "$channelNumber"
+    }
+
+    fun updateRouting(routingIndex: Int) {
+        val routingSource = routingSources[routingIndex]
+        if (routingSource != -1) {
             val name = routingSourceNames[routingSource]
             val color = routingSourceColors[routingSource]
-            val row = when (index.div(4)) {
+            val row = when (routingIndex.div(4)) {
                 0 -> ultranetPart.ultranetRow1
                 1 -> ultranetPart.ultranetRow2
                 2 -> ultranetPart.ultranetRow3
                 else -> ultranetPart.ultranetRow4
             }
-            val cell = when (index.mod(4)) {
+            val cell = when (routingIndex.mod(4)) {
                 0 -> row.ultranetEntry1
                 1 -> row.ultranetEntry2
                 2 -> row.ultranetEntry3
                 else -> row.ultranetEntry4
             }
-            val channelNumber = index + 1
-            cell.channelNumber.text = "$channelNumber"
             cell.channelName.text = name
             cell.channelName.setBackgroundResource(
                 when (color) {
@@ -93,89 +157,95 @@ private fun updateChannels(resources: Resources, ultranetPart: UltranetPartBindi
             )
         }
     }
-}
 
-private fun loadParameters(address: InetAddress): RoutingInfo {
-    val routingSources = IntArray(16)
-    val routingSourceNames = Array<String>(XR18OSCAPI.ROUTING_SOURCE_COUNT) { "" }
-    (XR18OSCAPI.ROUTING_SOURCE_USB1..XR18OSCAPI.ROUTING_SOURCE_USB18).forEach {
-        routingSourceNames[it] = "USB ${it - XR18OSCAPI.ROUTING_SOURCE_USB1 + 1}"
+    fun updateSource(sourceIndex: Int) {
+        routingSources.indexOf(sourceIndex).let { if (it != -1) updateRouting(it) }
     }
-    val routingSourceColors = IntArray(XR18OSCAPI.ROUTING_SOURCE_COUNT)
+
+    fun setName(sourceIndex: Int, name: String) {
+        routingSourceNames[sourceIndex] = name
+        updateSource(sourceIndex)
+    }
+
+    fun setColor(sourceIndex: Int, color: Int) {
+        routingSourceColors[sourceIndex] = color
+        updateSource(sourceIndex)
+    }
 
     val xR18OSCAPI = XR18OSCAPI(address)
     try {
         val semaphore = Semaphore(0)
         val listener: IOSCListener = object : IOSCListener {
             override suspend fun p16RoutingSource(routing: Int, source: Int) {
-                routingSources[routing - 1] = source
+                val routingIndex = routing - 1
+                routingSources[routingIndex] = source
                 semaphore.release()
+                updateRouting(routingIndex)
             }
 
             override suspend fun channelName(channel: Int, name: String) {
                 if (channel == 17) {
-                    routingSourceNames[XR18OSCAPI.ROUTING_SOURCE_AUX_L] = "$name L"
-                    routingSourceNames[XR18OSCAPI.ROUTING_SOURCE_AUX_R] = "$name R"
+                    setName(XR18OSCAPI.ROUTING_SOURCE_AUX_L, "$name L")
+                    setName(XR18OSCAPI.ROUTING_SOURCE_AUX_R, "$name R")
                 } else {
-                    routingSourceNames[channel - 1 + XR18OSCAPI.ROUTING_SOURCE_CHANNEL1] = name
+                    setName(channel - 1 + XR18OSCAPI.ROUTING_SOURCE_CHANNEL1, name)
                 }
                 semaphore.release()
             }
 
             override suspend fun channelColor(channel: Int, color: Int) {
                 if (channel == 17) {
-                    routingSourceColors[XR18OSCAPI.ROUTING_SOURCE_AUX_L] = color
-                    routingSourceColors[XR18OSCAPI.ROUTING_SOURCE_AUX_R] = color
+                    setColor(XR18OSCAPI.ROUTING_SOURCE_AUX_L, color)
+                    setColor(XR18OSCAPI.ROUTING_SOURCE_AUX_R, color)
                 } else {
-                    routingSourceColors[channel - 1 + XR18OSCAPI.ROUTING_SOURCE_CHANNEL1] =
-                        color
+                    setColor(channel - 1 + XR18OSCAPI.ROUTING_SOURCE_CHANNEL1, color)
                 }
                 semaphore.release()
             }
 
             override suspend fun returnName(returnChannel: Int, name: String) {
-                val leftIndex = (returnChannel - 1) * 2 + XR18OSCAPI.ROUTING_SOURCE_FX1_L
-                routingSourceNames[leftIndex] = "$name L"
-                routingSourceNames[leftIndex + 1] = "$name R"
+                val leftIndex = (returnChannel - 1) * 2 + XR18OSCAPI.ROUTING_SOURCE_RTN1_L
+                setName(leftIndex, "$name L")
+                setName(leftIndex + 1, "$name R")
                 semaphore.release()
             }
 
             override suspend fun returnColor(returnChannel: Int, color: Int) {
-                val leftIndex = (returnChannel - 1) * 2 + XR18OSCAPI.ROUTING_SOURCE_FX1_L
-                routingSourceColors[leftIndex] = color
-                routingSourceColors[leftIndex + 1] = color
+                val leftIndex = (returnChannel - 1) * 2 + XR18OSCAPI.ROUTING_SOURCE_RTN1_L
+                setColor(leftIndex, color)
+                setColor(leftIndex + 1, color)
                 semaphore.release()
             }
 
             override suspend fun busName(bus: Int, name: String) {
-                routingSourceNames[bus - 1 + XR18OSCAPI.ROUTING_SOURCE_BUS1] = name
+                setName(bus - 1 + XR18OSCAPI.ROUTING_SOURCE_BUS1, name)
                 semaphore.release()
             }
 
             override suspend fun busColor(bus: Int, color: Int) {
-                routingSourceColors[bus - 1 + XR18OSCAPI.ROUTING_SOURCE_BUS1] = color
+                setColor(bus - 1 + XR18OSCAPI.ROUTING_SOURCE_BUS1, color)
                 semaphore.release()
             }
 
             override suspend fun fxSendName(fxSend: Int, name: String) {
-                routingSourceNames[fxSend - 1 + XR18OSCAPI.ROUTING_SOURCE_SEND1] = name
+                setName(fxSend - 1 + XR18OSCAPI.ROUTING_SOURCE_SEND1, name)
                 semaphore.release()
             }
 
             override suspend fun fxSendColor(fxSend: Int, color: Int) {
-                routingSourceColors[fxSend - 1 + XR18OSCAPI.ROUTING_SOURCE_SEND1] = color
+                setColor(fxSend - 1 + XR18OSCAPI.ROUTING_SOURCE_SEND1, color)
                 semaphore.release()
             }
 
             override suspend fun lrName(name: String) {
-                routingSourceNames[XR18OSCAPI.ROUTING_SOURCE_L] = "$name L"
-                routingSourceNames[XR18OSCAPI.ROUTING_SOURCE_R] = "$name R"
+                setName(XR18OSCAPI.ROUTING_SOURCE_LR_L, "$name L")
+                setName(XR18OSCAPI.ROUTING_SOURCE_LR_R, "$name R")
                 semaphore.release()
             }
 
             override suspend fun lrColor(color: Int) {
-                routingSourceColors[XR18OSCAPI.ROUTING_SOURCE_L] = color
-                routingSourceColors[XR18OSCAPI.ROUTING_SOURCE_R] = color
+                setColor(XR18OSCAPI.ROUTING_SOURCE_LR_L, color)
+                setColor(XR18OSCAPI.ROUTING_SOURCE_LR_R, color)
                 semaphore.release()
             }
         }
@@ -207,8 +277,6 @@ private fun loadParameters(address: InetAddress): RoutingInfo {
     } finally {
         xR18OSCAPI.stop()
     }
-
-    return RoutingInfo(routingSources, routingSourceNames, routingSourceColors)
 }
 
 private fun requestParameter(semaphore: Semaphore, request: () -> Unit) {

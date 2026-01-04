@@ -26,18 +26,20 @@ class XR18OSCAPI(private var host: InetAddress) {
         const val ROUTING_SOURCE_CHANNEL16 = 15
         const val ROUTING_SOURCE_AUX_L = 16
         const val ROUTING_SOURCE_AUX_R = 17
-        const val ROUTING_SOURCE_FX1_L = 18
-        const val ROUTING_SOURCE_FX4_R = 25
+        const val ROUTING_SOURCE_RTN1_L = 18
+        const val ROUTING_SOURCE_RTN4_R = 25
         const val ROUTING_SOURCE_BUS1 = 26
         const val ROUTING_SOURCE_BUS6 = 31
         const val ROUTING_SOURCE_SEND1 = 32
         const val ROUTING_SOURCE_SEND4 = 35
-        const val ROUTING_SOURCE_L = 36
-        const val ROUTING_SOURCE_R = 37
-        const val ROUTING_SOURCE_USB1 = 38
-        const val ROUTING_SOURCE_USB18 = 55
+        const val ROUTING_SOURCE_LR_L = 36
+        const val ROUTING_SOURCE_LR_R = 37
+        const val ROUTING_SOURCE_DCA1 = 38
+        const val ROUTING_SOURCE_DCA4 = 41
+        const val ROUTING_SOURCE_USB1 = 42
+        const val ROUTING_SOURCE_USB14 = 55
 
-        const val ROUTING_SOURCE_COUNT = ROUTING_SOURCE_USB18 + 1
+        const val ROUTING_SOURCE_COUNT = ROUTING_SOURCE_USB14 + 1
 
         private const val DEBUG = false
     }

@@ -10,34 +10,5 @@
         <option name="ASSETS_FOLDER_RELATIVE_PATH" value="/src/main/assets" />
       </configuration>
     </facet>
-    <facet type="kotlin-language" name="Kotlin">
-      <configuration version="4" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
-        <additionalVisibleModuleNames>:app:main</additionalVisibleModuleNames>
-        <compilerSettings />
-        <compilerArguments>
-          <option name="destination" value="$MODULE_DIR$/../../../app/build/tmp/kotlin-classes/debugUnitTest" />
-          <option name="noStdlib" value="true" />
-          <option name="noReflect" value="true" />
-          <option name="moduleName" value="app_debug" />
-          <option name="jvmTarget" value="17" />
-          <option name="friendPaths">
-            <array>
-              <option value="$MODULE_DIR$/../../../app/build/tmp/kotlin-classes/debug" />
-              <option value="$MODULE_DIR$/../../../app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes" />
-              <option value="$MODULE_DIR$/../../../app/build/intermediates/compile_app_classes_jar/debug/bundleDebugClassesToCompileJar/classes.jar" />
-            </array>
-          </option>
-          <option name="allowNoSourceFiles" value="true" />
-          <option name="languageVersion" value="1.8" />
-          <option name="apiVersion" value="1.8" />
-          <option name="pluginClasspaths">
-            <array />
-          </option>
-          <option name="pluginOptions">
-            <array />
-          </option>
-        </compilerArguments>
-      </configuration>
-    </facet>
   </component>
 </module>
