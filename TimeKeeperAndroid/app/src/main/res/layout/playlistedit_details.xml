@@ -19,4 +19,11 @@
         android:hint="@string/playlistedit_details_stereo"
         />
 
+    <android.widget.CheckBox
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/playlistedit_details_announce_title"
+        android:hint="@string/playlistedit_details_announce_title"
+        />
+
 </android.widget.LinearLayout>

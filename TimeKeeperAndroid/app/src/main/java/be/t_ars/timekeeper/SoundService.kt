@@ -8,10 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.sound.SoundGenerator
 import be.t_ars.timekeeper.sound.TrackPlayer

@@ -48,6 +48,7 @@
     <string name="playlistedit_song_tempo">Tempo</string>
     <string name="playlistedit_details_name">Name</string>
     <string name="playlistedit_details_stereo">Stereo</string>
+    <string name="playlistedit_details_announce_title">Announce song titles</string>
     <string name="playlistedit_details_save">Save</string>
     <string name="playlistedit_details_cancel">Cancel</string>
     <string name="playlistedit_copy_name">Name</string>
@@ -61,6 +62,7 @@
     <string name="playlistedit_delete_no">Cancel</string>
     <string name="tap">Tap</string>
     <string name="tap_count_off">Count off</string>
+    <string name="tap_two_bar_count_off">Two bars</string>
     <string name="settings">Settings</string>
     <string name="service_description">TimeKeeper metronome</string>
     <string name="start">Start</string>

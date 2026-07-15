@@ -471,7 +471,7 @@ class XR18OSCAPI(private var host: InetAddress) {
 
     fun requestReturnColor(returnChannel: Int) {
         validateReturn(returnChannel)
-        requestColor("/bus/$returnChannel")
+        requestColor("/rtn/$returnChannel")
     }
 
     fun requestFXSendName(fxSend: Int) {

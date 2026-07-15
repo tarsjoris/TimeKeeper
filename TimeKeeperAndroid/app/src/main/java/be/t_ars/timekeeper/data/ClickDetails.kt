@@ -4,12 +4,9 @@ import java.io.Serializable
 
 data class ClickDetails(
     val clickDescription: ClickDescription,
-    val stereo: Boolean
+    val stereo: Boolean,
+    val announceTitle: Boolean
 ) : Serializable {
     fun trackPath() =
         clickDescription.trackPath(stereo)
-
-    companion object {
-        const val DEFAULT_STEREO = true
-    }
 }

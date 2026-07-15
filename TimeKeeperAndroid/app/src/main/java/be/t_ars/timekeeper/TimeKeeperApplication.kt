@@ -87,7 +87,7 @@ class TimeKeeperApplication : Application() {
             SoundService.startSound(
                 this,
                 song.name,
-                ClickDetails(song.click, playlist.stereo),
+                ClickDetails(song.click, playlist.stereo, playlist.announceTitle),
                 PlaylistActivity::class.java
             )
         }

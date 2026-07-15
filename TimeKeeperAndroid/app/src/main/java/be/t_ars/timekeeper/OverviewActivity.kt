@@ -159,7 +159,7 @@ class OverviewActivity : AbstractActivity() {
     private fun addPlaylist(name: String) {
         fNewPlaylistId?.let { id ->
             val weight = if (fPlaylists.isEmpty()) 0 else fPlaylists[fPlaylists.size - 1].weight + 1
-            val playlist = Playlist(id, name, ClickDetails.DEFAULT_STEREO, weight)
+            val playlist = Playlist(id, name, Playlist.DEFAULT_STEREO, Playlist.DEFAULT_ANNOUNCE_TITLE, weight)
             fStore.addPlaylist(playlist)
             openPlaylist(playlist)
         }

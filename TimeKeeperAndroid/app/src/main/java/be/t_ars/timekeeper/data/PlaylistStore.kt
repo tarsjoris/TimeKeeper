@@ -45,6 +45,7 @@ class PlaylistStore(private val fContext: Context) {
         readPlaylist(playlist.id)?.let { completePlaylist ->
             completePlaylist.name = playlist.name
             completePlaylist.stereo = playlist.stereo
+            completePlaylist.announceTitle = playlist.announceTitle
             completePlaylist.weight = playlist.weight
             savePlaylist(completePlaylist)
         }
@@ -93,21 +94,25 @@ class PlaylistStore(private val fContext: Context) {
                                     ?: ClickDescription.DEFAULT_BEAT_COUNT
                             val countOff = parser.getAttributeValue(null, kATTR_COUNT_OFF)
                                 ?.toBoolean()
-                                ?: false
+                                ?: ClickDescription.DEFAULT_COUNT_OFF
+                            val twoBarCountOff = parser.getAttributeValue(null, kATTR_TWO_BAR_COUNT_OFF)
+                                ?.toBoolean()
+                                ?: ClickDescription.DEFAULT_TWO_BAR_COUNT_OFF
                             val stereoTrackPath = parser.getAttributeValue(null, kATTR_STEREO_TRACK_PATH)
                             val monoTrackPath = parser.getAttributeValue(null, kATTR_MONO_TRACK_PATH)
                             val scoreLink = parser.getAttributeValue(null, kATTR_SCORE_LINK)
                             song = Song(
                                 name,
                                 ClickDescription(
-                                    tempo,
-                                    clickType,
-                                    divisionCount,
-                                    beatCount,
-                                    countOff,
-                                    emptyList(),
-                                    stereoTrackPath,
-                                    monoTrackPath
+                                    bpm = tempo,
+                                    type = clickType,
+                                    divisionCount = divisionCount,
+                                    beatCount = beatCount,
+                                    countOff = countOff,
+                                    twoBarCountOff = twoBarCountOff,
+                                    sections = emptyList(),
+                                    stereoTrackPath = stereoTrackPath,
+                                    monoTrackPath = monoTrackPath
                                 ),
                                 scoreLink
                             )
@@ -139,6 +144,7 @@ class PlaylistStore(private val fContext: Context) {
                                             song.click.divisionCount,
                                             song.click.beatCount,
                                             song.click.countOff,
+                                            song.click.twoBarCountOff,
                                             sections,
                                             song.click.stereoTrackPath,
                                             song.click.monoTrackPath
@@ -260,10 +266,11 @@ class PlaylistStore(private val fContext: Context) {
 
     private fun readPlaylistHeaderAttributes(parser: XmlPullParser, id: Long) : PlaylistHeader {
         val name = parser.getAttributeValue(null, kATTR_NAME)
-        val stereo = parser.getAttributeValue(null, kATTR_STEREO)?.let { it == "true" } ?: true
+        val stereo = parser.getAttributeValue(null, kATTR_STEREO)?.let { it == "true" } ?: Playlist.DEFAULT_STEREO
+        val announceTitle = parser.getAttributeValue(null, kATTR_ANNOUNCE_TITLE)?.let { it == "true" } ?: Playlist.DEFAULT_ANNOUNCE_TITLE
         val weight =
             Integer.parseInt(parser.getAttributeValue(null, kATTR_WEIGHT))
-        return PlaylistHeader(id, name, stereo, weight)
+        return PlaylistHeader(id, name, stereo, announceTitle, weight)
     }
 
     fun savePlaylist(playlist: Playlist) {
@@ -279,7 +286,10 @@ class PlaylistStore(private val fContext: Context) {
                     serializer.startDocument("UTF-8", null)
                     serializer.startTag(null, kTAG_PLAYLIST)
                     serializer.attribute(null, kATTR_NAME, playlist.name)
-                    serializer.attribute(null, kATTR_STEREO, playlist.stereo.toString())
+                    if (playlist.stereo != Playlist.DEFAULT_STEREO)
+                        serializer.attribute(null, kATTR_STEREO, playlist.stereo.toString())
+                    if (playlist.announceTitle != Playlist.DEFAULT_ANNOUNCE_TITLE)
+                        serializer.attribute(null, kATTR_ANNOUNCE_TITLE, playlist.announceTitle.toString())
                     serializer.attribute(null, kATTR_WEIGHT, playlist.weight.toString())
                     for (song in playlist.songs) {
                         serializer.startTag(null, kTAG_SONG)
@@ -303,7 +313,10 @@ class PlaylistStore(private val fContext: Context) {
                                 kATTR_BEAT_COUNT,
                                 song.click.beatCount.toString()
                             )
-                        serializer.attribute(null, kATTR_COUNT_OFF, song.click.countOff.toString())
+                        if (song.click.countOff != ClickDescription.DEFAULT_COUNT_OFF)
+                            serializer.attribute(null, kATTR_COUNT_OFF, song.click.countOff.toString())
+                        if (song.click.twoBarCountOff != ClickDescription.DEFAULT_TWO_BAR_COUNT_OFF)
+                            serializer.attribute(null, kATTR_TWO_BAR_COUNT_OFF, song.click.twoBarCountOff.toString())
                         if (song.click.stereoTrackPath != null)
                             serializer.attribute(null, kATTR_STEREO_TRACK_PATH, song.click.stereoTrackPath)
                         if (song.click.monoTrackPath != null)
@@ -379,12 +392,14 @@ class PlaylistStore(private val fContext: Context) {
         private const val kTAG_SECTION = "section"
         private const val kATTR_NAME = "name"
         private const val kATTR_STEREO = "stereo"
+        private const val kATTR_ANNOUNCE_TITLE = "announce_title"
         private const val kATTR_WEIGHT = "weight"
         private const val kATTR_TEMPO = "tempo"
         private const val kATTR_CLICK_TYPE = "click_type"
         private const val kATTR_DIVISION_COUNT = "division_count"
         private const val kATTR_BEAT_COUNT = "beat_count"
         private const val kATTR_COUNT_OFF = "count_off"
+        private const val kATTR_TWO_BAR_COUNT_OFF = "two_bar_count_off"
         private const val kATTR_STEREO_TRACK_PATH = "stereo_track_path"
         private const val kATTR_MONO_TRACK_PATH = "mono_track_path"
         private const val kATTR_SCORE_LINK = "score_link"

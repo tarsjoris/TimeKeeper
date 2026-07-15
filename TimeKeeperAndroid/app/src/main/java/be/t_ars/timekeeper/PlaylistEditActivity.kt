@@ -16,6 +16,7 @@ import android.widget.EditText
 import android.widget.SimpleAdapter
 import be.t_ars.timekeeper.components.PlaylistList
 import be.t_ars.timekeeper.components.SongList
+import be.t_ars.timekeeper.components.parseTempo
 import be.t_ars.timekeeper.data.*
 import be.t_ars.timekeeper.databinding.PlaylisteditBinding
 import kotlin.math.max
@@ -24,18 +25,6 @@ import kotlin.math.min
 
 private const val kKEY_NAME = "name"
 private const val kKEY_TEMPO = "tempo"
-
-private fun parseTempo(tempo: CharSequence): Int {
-    if (tempo.isBlank()) {
-        return ClickDescription.DEFAULT_TEMPO
-    }
-    try {
-        return min(300, max(30, Integer.parseInt(tempo.toString())))
-    } catch (e: NumberFormatException) {
-        Log.e("TimeKeeper", "Invalid tempo: " + e.message, e)
-    }
-    return ClickDescription.DEFAULT_TEMPO
-}
 
 private enum class EditMode {
     NORMAL, SEND_TOP, SEND_BOTTOM
@@ -80,7 +69,8 @@ class PlaylistEditActivity : AbstractActivity() {
                             EClickType.DEFAULT,
                             ClickDescription.DEFAULT_DIVISION_COUNT,
                             ClickDescription.DEFAULT_BEAT_COUNT,
-                            ClickDescription.DEFAULT_COUNT_OFF
+                            ClickDescription.DEFAULT_COUNT_OFF,
+                            ClickDescription.DEFAULT_TWO_BAR_COUNT_OFF
                         )
                     )
                 fPlaylist?.addSong(fStore, song)
@@ -98,14 +88,18 @@ class PlaylistEditActivity : AbstractActivity() {
                 view.findViewById<EditText>(R.id.playlistedit_details_name)
                     .setText(fPlaylist?.name ?: "")
                 view.findViewById<CheckBox>(R.id.playlistedit_details_stereo)
-                    .isChecked = fPlaylist?.stereo ?: true
+                    .isChecked = fPlaylist?.stereo ?: Playlist.DEFAULT_STEREO
+                view.findViewById<CheckBox>(R.id.playlistedit_details_announce_title)
+                    .isChecked = fPlaylist?.announceTitle ?: Playlist.DEFAULT_ANNOUNCE_TITLE
             },
             { view ->
                 val name = view.findViewById<EditText>(R.id.playlistedit_details_name).text
                 val stereo = view.findViewById<CheckBox>(R.id.playlistedit_details_stereo).isChecked
+                val announceTitle = view.findViewById<CheckBox>(R.id.playlistedit_details_announce_title).isChecked
                 fPlaylist?.let {
                     it.name = name.toString()
                     it.stereo = stereo
+                    it.announceTitle = announceTitle
                     fStore.storePlaylistHeader(it)
                     reloadName()
                 }
@@ -384,7 +378,7 @@ class PlaylistEditActivity : AbstractActivity() {
             val song = playlist.songs[fPosition]
             TapSongActivity.startActivityForResult(
                 this,
-                ClickDetails(song.click, playlist.stereo),
+                ClickDetails(song.click, playlist.stereo, playlist.announceTitle),
                 song.name,
                 song.scoreLink,
                 kREQUEST_TEMPO

@@ -2,14 +2,30 @@ package be.t_ars.timekeeper.components
 
 import android.content.Context
 import android.os.Handler
+import android.util.Log
+import androidx.core.widget.doOnTextChanged
 import be.t_ars.timekeeper.SoundService
-import be.t_ars.timekeeper.TapActivity
 import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.EClickType
+import be.t_ars.timekeeper.data.Playlist
 import be.t_ars.timekeeper.databinding.TapPartBinding
 import java.io.Serializable
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
+
+fun parseTempo(tempo: CharSequence?): Int {
+    if (tempo.isNullOrBlank()) {
+        return ClickDescription.DEFAULT_TEMPO
+    }
+    try {
+        return min(300, max(30, Integer.parseInt(tempo.toString())))
+    } catch (e: NumberFormatException) {
+        Log.e("TimeKeeper", "Invalid tempo: " + e.message, e)
+    }
+    return ClickDescription.DEFAULT_TEMPO
+}
 
 class TapPartComponent(
     private val context: Context,
@@ -61,7 +77,9 @@ class TapPartComponent(
     private var divisionCount = 1
     private var beatCount = 1
     private var countOff = ClickDescription.DEFAULT_COUNT_OFF
-    private var stereo = ClickDetails.DEFAULT_STEREO
+    private var twoBarCountoff = ClickDescription.DEFAULT_TWO_BAR_COUNT_OFF
+    private var stereo = Playlist.DEFAULT_STEREO
+    private var announceTitle = Playlist.DEFAULT_ANNOUNCE_TITLE
     private var playing = false
 
     private inner class DelayedUpdate : Runnable {
@@ -90,16 +108,17 @@ class TapPartComponent(
             doTap()
         }
 
-        tapPart.tempoSpinner.minValue = 10
-        tapPart.tempoSpinner.maxValue = 500
-        tapPart.tempoSpinner.value = ClickDescription.DEFAULT_TEMPO
+        tapPart.textTempo.setText(ClickDescription.DEFAULT_TEMPO.toString())
 
-        tapPart.tempoSpinner.setOnValueChangedListener { _, _, newValue ->
-            tempo = newValue
+        tapPart.textTempo.doOnTextChanged { text, _, _, _ ->
+            tempo = parseTempo(text)
             delayedUpdate.update()
         }
         tapPart.checkboxCountOff.setOnCheckedChangeListener { _, newValue ->
             countOff = newValue
+        }
+        tapPart.checkboxTwoBarCountOff.setOnCheckedChangeListener { _, newValue ->
+            twoBarCountoff = newValue
         }
 
         tapPart.buttonStart.setOnClickListener {
@@ -114,11 +133,8 @@ class TapPartComponent(
 
     fun setClick(newClick: ClickDetails) {
         var changed = false
-        if (newClick.clickDescription.bpm >= tapPart.tempoSpinner.minValue &&
-            newClick.clickDescription.bpm <= tapPart.tempoSpinner.maxValue &&
-            newClick.clickDescription.bpm != tapPart.tempoSpinner.value
-        ) {
-            tapPart.tempoSpinner.value = newClick.clickDescription.bpm
+        if (newClick.clickDescription.bpm.toString() != tapPart.textTempo.text.toString()) {
+            tapPart.textTempo.setText(newClick.clickDescription.bpm.toString())
             tempo = newClick.clickDescription.bpm
             changed = true
         }
@@ -127,8 +143,17 @@ class TapPartComponent(
             countOff = newClick.clickDescription.countOff
             changed = true
         }
+        if (newClick.clickDescription.twoBarCountOff != tapPart.checkboxTwoBarCountOff.isChecked) {
+            tapPart.checkboxTwoBarCountOff.isChecked = newClick.clickDescription.twoBarCountOff
+            twoBarCountoff = newClick.clickDescription.twoBarCountOff
+            changed = true
+        }
         if (newClick.stereo != stereo) {
             stereo = newClick.stereo
+            changed = true
+        }
+        if (newClick.announceTitle != announceTitle) {
+            announceTitle = newClick.announceTitle
             changed = true
         }
         if (clickTypeSelection.setValue(newClick.clickDescription.type)) {
@@ -150,7 +175,7 @@ class TapPartComponent(
     }
 
     fun getClick() =
-        ClickDetails(ClickDescription(tempo, clickType, divisionCount, beatCount, countOff), stereo)
+        ClickDetails(ClickDescription(tempo, clickType, divisionCount, beatCount, countOff, twoBarCountoff), stereo, announceTitle)
 
     private fun doTap() {
         index = (index + 1) % timestamps.size
@@ -169,8 +194,9 @@ class TapPartComponent(
             tapPart.tempo8.text = "$tempo"
         }
         calculateBPM(16)?.let { tempo ->
-            tapPart.tempo16.text = "$tempo"
-            tapPart.tempoSpinner.value = tempo
+            val tempoS = "$tempo"
+            tapPart.tempo16.text = tempoS
+            tapPart.textTempo.setText(tempoS)
             this.tempo = tempo
         }
     }

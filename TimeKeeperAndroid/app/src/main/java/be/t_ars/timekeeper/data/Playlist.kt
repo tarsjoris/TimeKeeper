@@ -1,13 +1,13 @@
 package be.t_ars.timekeeper.data
 
-class Playlist(id: Long, name: String, stereo: Boolean, weight: Int) : PlaylistHeader(id, name, stereo, weight) {
+class Playlist(id: Long, name: String, stereo: Boolean, announceTitle: Boolean, weight: Int) : PlaylistHeader(id, name, stereo, announceTitle, weight) {
     val songs: MutableList<Song> = ArrayList()
 
-    constructor(other: Playlist, id: Long, name: String, weight: Int) : this(id, name, other.stereo, weight) {
+    constructor(other: Playlist, id: Long, name: String, weight: Int) : this(id, name, other.stereo, other.announceTitle, weight) {
         songs.addAll(other.songs.map { Song(it) })
     }
 
-    constructor(header: PlaylistHeader) : this(header.id, header.name, header.stereo, header.weight)
+    constructor(header: PlaylistHeader) : this(header.id, header.name, header.stereo, header.announceTitle, header.weight)
 
     fun addSong(store: PlaylistStore, song: Song) {
         addSong(song)
@@ -69,4 +69,9 @@ class Playlist(id: Long, name: String, stereo: Boolean, weight: Int) : PlaylistH
 
     override fun equals(other: Any?) =
         if (other is Playlist) other.id == id && other.songs == songs else false
+
+    companion object {
+        const val DEFAULT_STEREO = true
+        const val DEFAULT_ANNOUNCE_TITLE = false
+    }
 }

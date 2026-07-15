@@ -8,6 +8,7 @@ data class ClickDescription(
     val divisionCount: Int,
     val beatCount: Int,
     val countOff: Boolean,
+    val twoBarCountOff: Boolean,
     val sections: List<Section> = emptyList(),
     val stereoTrackPath: String? = null,
     val monoTrackPath: String? = null
@@ -20,5 +21,6 @@ data class ClickDescription(
         const val DEFAULT_DIVISION_COUNT = 1
         const val DEFAULT_BEAT_COUNT = 1
         const val DEFAULT_COUNT_OFF = false
+        const val DEFAULT_TWO_BAR_COUNT_OFF = false
     }
 }

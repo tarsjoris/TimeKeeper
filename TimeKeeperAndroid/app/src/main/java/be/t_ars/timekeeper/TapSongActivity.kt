@@ -90,7 +90,7 @@ class TapSongActivity : AbstractActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.tap_action_accept -> {
-                fBinding.tapPart.tempoSpinner.clearFocus()
+                fBinding.tapPart.textTempo.clearFocus()
 
                 val intent = Intent().also {
                     updateIntent(it)
@@ -117,11 +117,13 @@ class TapSongActivity : AbstractActivity() {
                     click.clickDescription.divisionCount,
                     click.clickDescription.beatCount,
                     click.clickDescription.countOff,
+                    click.clickDescription.twoBarCountOff,
                     fSectionsPartComponent.getSections(),
                     fStereoTrackPath,
                     fMonoTrackPath
                 ),
-                click.stereo
+                click.stereo,
+                click.announceTitle
             ),
             fBinding.name.text.toString(),
             fBinding.scoreLink.text.toString()

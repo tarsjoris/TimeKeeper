@@ -5,12 +5,9 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
 import android.media.SoundPool
-import be.t_ars.timekeeper.data.ClickDescription
 import be.t_ars.timekeeper.data.ClickDetails
 import be.t_ars.timekeeper.data.EClickType
-import be.t_ars.timekeeper.data.Section
 import be.t_ars.timekeeper.getSettingOutputDevice
-import java.util.concurrent.atomic.AtomicBoolean
 
 class SoundGenerator(
     private val context: Context,
@@ -76,9 +73,11 @@ class SoundGenerator(
         fAudioTrack = audioTrack
 
         Thread clickLoop@{
+            if (click.clickDescription.countOff) {
+                generateCountOff(audioTrack, waveUtil, clickBuffer, click)
+            }
             val sections = click.clickDescription.sections
             if (sections.isNotEmpty()) {
-                generateCountOff(audioTrack, waveUtil, clickBuffer, click)
                 for (i in sections.indices) {
                     repeat(sections[i].barCount - 1) {
                         if (audioTrack.playState != AudioTrack.PLAYSTATE_PLAYING) {
@@ -105,9 +104,6 @@ class SoundGenerator(
                     }
                 }
             } else {
-                if (click.clickDescription.countOff) {
-                    generateCountOff(audioTrack, waveUtil, clickBuffer, click)
-                }
                 while (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) {
                     audioTrack.write(clickBuffer, 0, clickBuffer.size)
                 }
@@ -116,7 +112,7 @@ class SoundGenerator(
     }
 
     private fun generateCountOff(audioTrack: AudioTrack, waveUtil: WaveUtil, clickBuffer: ByteArray, click: ClickDetails) {
-        if (click.clickDescription.beatCount == 4) {
+        if (click.clickDescription.beatCount == 4 && click.clickDescription.twoBarCountOff) {
             audioTrack.write(
                 waveUtil.mixCountOff(clickBuffer, click.clickDescription.bpm / 2, 2, fMainVolume, click.stereo),
                 0,
