@@ -2,18 +2,29 @@ import Foundation
 
 func syncDropBox() async throws {
     print("Syncing items ...")
+    
+    let remoteNames = try await downloadFiles()
+    deleteObsoleteFiles(remoteNames: remoteNames)
+    
+    print("Done")
+}
+
+private func downloadFiles() async throws -> [String] {
+    var remoteNames: [String] = []
     let accessToken = try await getAccessToken()
     var listing = try await listFolder(accessToken: accessToken, path: "/")
     while true {
         for e in listing.entries {
-            try await downloadFile(accessToken: accessToken, dropboxEntry: e)
+            remoteNames.append(e.name)
+            try await handleFile(accessToken: accessToken, dropboxEntry: e)
         }
         if (listing.has_more) {
             listing = try await listFolderContinue(accessToken: accessToken, cursor: listing.cursor)
         } else {
-            return
+            break
         }
     }
+    return remoteNames
 }
 
 private func listFolder(
@@ -68,20 +79,59 @@ private func performListRequest(
         throw URLError(.badServerResponse)
     }
     
+    //print(String(data: data, encoding: .utf8))
+    
     return try JSONDecoder().decode(
         DropboxListFolderResponse.self,
         from: data
     )
 }
 
+private func handleFile(
+    accessToken: String,
+    dropboxEntry: DropboxEntry
+) async throws {
+    //print("Checking file \(dropboxEntry.name) ...")
+    if dropboxEntry.tag != "file" {
+        print("Tag was \(dropboxEntry.tag ?? "nil") for \(dropboxEntry.name)")
+        return
+    }
+    guard let remoteSize =  dropboxEntry.size else {
+        print("Size was nil for \(dropboxEntry.name)")
+        return
+    }
+    
+    let localInfo = getLocalPlaylistFileInfo(filename: dropboxEntry.name)
+    
+    if isSizeDifferent(remoteSize: remoteSize, localSize: localInfo.size) ||
+        isNewerServerDate(remoteLastModified: dropboxEntry.server_modified, localLastModified: localInfo.modified) {
+        try await downloadFile(accessToken: accessToken, dropboxEntry: dropboxEntry)
+    }
+}
+
+private func isSizeDifferent(remoteSize: UInt64, localSize: UInt64?) -> Bool {
+    return localSize == nil || localSize != remoteSize
+}
+
+private func isNewerServerDate(remoteLastModified: String?, localLastModified: Date?) -> Bool {
+    if let remoteLastModified,
+       let serverModified = ISO8601DateFormatter().date(from: remoteLastModified) {
+        if let localLastModified {
+            //print("Local last modified \(localLastModified); remote last modified \(serverModified)")
+            return serverModified > localLastModified
+        }
+    }
+    return true
+}
+
 private func downloadFile(
     accessToken: String,
     dropboxEntry: DropboxEntry
 ) async throws {
-    print(dropboxEntry.name)
+    print("Downloading file \(dropboxEntry.name) ...")
     if dropboxEntry.path_display != nil, let p = dropboxEntry.path_display {
         let data = try await getFileContents(accessToken: accessToken, dropboxPath: p)
-        //saveFile(data, dropboxEntry.name)
+        savePlaylist(data: data, fileName: dropboxEntry.name)
     }
 }
 
@@ -89,7 +139,6 @@ private func getFileContents(
     accessToken: String,
     dropboxPath: String
 ) async throws -> Data {
-
     let url = URL(
         string: "https://content.dropboxapi.com/2/files/download"
     )!

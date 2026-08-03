@@ -2,18 +2,22 @@ import Foundation
 import UIKit
 import CryptoKit
 
-// https://www.dropbox.com/developers/apps/info?app_key=pm8yqqldb1ya1af
+// https://www.dropbox.com/developers/apps/info?app_key=eyuavikqfx9f6o7
 
-private let appKey = "pm8yqqldb1ya1af"
-private let appSecret = "elkk3eggl74cftp"
+private let appKey = "eyuavikqfx9f6o7"
+private let appSecret = "TODO"
 private let redirectURI = "BeTarsTimeKeeper://oauth"
 
 func getAccessToken() async throws -> String {
-    if let refreshToken = retrieveRefreshToken() {
-        return try await getAccessTokenForRefreshToken(refreshToken: refreshToken)
-    } else {
-        return try await createAccessToken()
+    do {
+        if let refreshToken = retrieveRefreshToken() {
+            return try await getAccessTokenForRefreshToken(refreshToken: refreshToken)
+        }
     }
+    catch {
+        print("Error while using refresh token: \(error)")
+    }
+    return try await createAccessToken()
 }
 
 private func createAccessToken() async throws -> String {
@@ -72,7 +76,12 @@ private func createAccessToken() async throws -> String {
     struct TokenResponse: Decodable { let access_token: String; let refresh_token: String? }
     let decoded = try JSONDecoder().decode(TokenResponse.self, from: data)
     if let refresh = decoded.refresh_token {
-        try? storeRefreshToken(refreshToken: refresh)
+        do {
+            try storeRefreshToken(refreshToken: refresh)
+        }
+        catch {
+            print("Could not store refresh token: \(error)")
+        }
     }
     return decoded.access_token
 }
@@ -159,12 +168,26 @@ private let service = "be.t-ars.timekeeper"
 private let account = "refreshtoken"
 
 private func storeRefreshToken(refreshToken: String) throws {
-    let addQuery: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-                                   kSecAttrService as String: service,
-                                   kSecAttrAccount as String: account,
-                                   kSecValueData as String: refreshToken.data(using: .utf8)!]
-    let status = SecItemAdd(addQuery as CFDictionary, nil)
-    guard status == errSecSuccess else { throw NSError(domain: "Auth", code: 6, userInfo: [NSLocalizedDescriptionKey: "Cannot store refresh token in keychain"]) }
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account
+    ]
+    let attributesToUpdate: [String: Any] = [
+        kSecValueData as String: refreshToken.data(using: .utf8)!
+    ]
+
+    let entryExists = retrieveRefreshToken() != nil
+    let status: OSStatus
+    if (entryExists) {
+        status = SecItemUpdate(query as CFDictionary, attributesToUpdate as CFDictionary)
+    } else {
+        let addQuery = query.merging(attributesToUpdate) { (_, new) in new }
+        status = SecItemAdd(addQuery as CFDictionary, nil)
+    }
+    guard status == errSecSuccess else {
+        throw NSError(domain: "Auth", code: 6, userInfo: [NSLocalizedDescriptionKey: "Cannot store refresh token in keychain: \(status)"])
+    }
 }
 
 private func retrieveRefreshToken() -> String? {

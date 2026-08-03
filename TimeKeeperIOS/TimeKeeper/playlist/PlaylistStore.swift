@@ -2,8 +2,7 @@ import SwiftUI
 
 internal func loadPlaylists() -> [PlaylistHeader] {
     do {
-        let folder = try ensurePlaylistsFolder()
-        let urls = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil, options: [])
+        let urls = try listAllPlaylistFiles()
         let xmlFiles = urls.filter { $0.pathExtension.lowercased() == "xml" }
         var entries: [PlaylistHeader] = []
         for url in xmlFiles {
@@ -54,18 +53,6 @@ internal func loadPlaylist(_ id: UInt64) -> PlaylistData? {
     }
 }
 
-private func ensurePlaylistsFolder() throws -> URL {
-    let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    guard let documentsURL = urls.first else {
-        throw NSError(domain: "PlaylistListView", code: 1, userInfo: [NSLocalizedDescriptionKey: "Documents directory not found"])
-    }
-    let playlistFolder = documentsURL.appendingPathComponent("playlists")
-    if !FileManager.default.fileExists(atPath: playlistFolder.path) {
-        try FileManager.default.createDirectory(at: playlistFolder, withIntermediateDirectories: true)
-    }
-    return playlistFolder
-}
-
 internal func savePlaylist(
     data: Data,
     fileName: String
@@ -91,4 +78,55 @@ internal func deletePlaylist(
     } catch {
         print("Failed to delete playlist: \(error)")
     }
+}
+
+internal func getLocalPlaylistFileInfo(filename: String) -> (size: UInt64?, modified: Date?) {
+    do {
+        let folder = try ensurePlaylistsFolder()
+        let fileURL = folder.appendingPathComponent(filename)
+        let attrs = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+        let sizeNumber = attrs[.size] as? NSNumber
+        let size = sizeNumber?.uint64Value
+        let modified = attrs[.modificationDate] as? Date
+        return (size, modified)
+    } catch {
+        return (nil, nil)
+    }
+}
+
+internal func deleteObsoleteFiles(remoteNames: [String]) {
+    do {
+        let urls = try listAllPlaylistFiles()
+        let keepSet = Set(remoteNames)
+        for url in urls {
+            let name = url.lastPathComponent
+            if !keepSet.contains(name) {
+                do {
+                    print("Deleting obsolete local file \(url.lastPathComponent) ...")
+                    try FileManager.default.removeItem(at: url)
+                } catch {
+                    print("Failed to delete obsolete file \(name): \(error)")
+                }
+            }
+        }
+    } catch {
+        print("Failed to delete obsolete files: \(error)")
+    }
+}
+
+private func listAllPlaylistFiles() throws -> [URL] {
+    let folder = try ensurePlaylistsFolder()
+    return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil, options: [])
+}
+
+private func ensurePlaylistsFolder() throws -> URL {
+    let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    guard let documentsURL = urls.first else {
+        throw NSError(domain: "PlaylistListView", code: 1, userInfo: [NSLocalizedDescriptionKey: "Documents directory not found"])
+    }
+    let playlistFolder = documentsURL.appendingPathComponent("playlists")
+    if !FileManager.default.fileExists(atPath: playlistFolder.path) {
+        try FileManager.default.createDirectory(at: playlistFolder, withIntermediateDirectories: true)
+    }
+    return playlistFolder
 }
