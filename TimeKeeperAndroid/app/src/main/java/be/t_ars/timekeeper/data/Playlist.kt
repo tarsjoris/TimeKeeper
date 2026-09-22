@@ -72,6 +72,6 @@ class Playlist(id: Long, name: String, stereo: Boolean, announceTitle: Boolean, 
 
     companion object {
         const val DEFAULT_STEREO = true
-        const val DEFAULT_ANNOUNCE_TITLE = false
+        const val DEFAULT_ANNOUNCE_TITLE = true
     }
 }
