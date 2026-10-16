@@ -11,7 +11,7 @@ internal final class PlaylistParser: NSObject, XMLParserDelegate {
         if elementName == "playlist" {
             playlistName = attributeDict["name"]
             stereo = attributeDict["stereo"] != "false"
-            announceTitle = attributeDict["announce_title"] == "true"
+            announceTitle = attributeDict["announce_title"] != "false"
         } else if elementName == "song" {
             songs.append(SongData(
                 id: songIndex,

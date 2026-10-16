@@ -75,7 +75,7 @@ private func performListRequest(
 
     guard let http = response as? HTTPURLResponse,
           http.statusCode == 200 else {
-        print(String(data: data, encoding: .utf8))
+        print(String(data: data, encoding: .utf8) ?? "NIL")
         throw URLError(.badServerResponse)
     }
     
